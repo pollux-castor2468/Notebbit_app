@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Expo Router Example
 
 Use [`expo-router`](https://docs.expo.dev/router/introduction/) to build native navigation using files in the `app/` directory.
@@ -22,3 +23,7 @@ Deploy on all platforms with Expo Application Services (EAS).
 ## 📝 Notes
 
 - [Expo Router: Docs](https://docs.expo.dev/router/introduction/)
+=======
+# Notebbit_app
+homework
+>>>>>>> 7cc6cf8a571959829794c3336c3e503c0e25c53a
