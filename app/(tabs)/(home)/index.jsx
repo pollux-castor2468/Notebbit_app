@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   View,
   Text,
@@ -8,19 +7,18 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Search,
   FileText,
   Book,
   FolderOpen,
   Clock,
-  Rabbit,
-  FileDown
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { colors } from '../../../constants/token';
-import { layoutStyles, textStyles, cardStyles } from '../../../styles';
+import { layoutStyles, textStyles } from '../../../styles';
+import TopHeader from '../../../components/TopHeader';
 
 export default function Home() {
 
@@ -56,47 +54,44 @@ export default function Home() {
     <SafeAreaView style={layoutStyles.root}>
       <ScrollView contentContainerStyle={layoutStyles.scrollContent}>
         
-        {/* Header */}
-        <View style={layoutStyles.header}>
-          <View style={[layoutStyles.rowCenter, { flex: 1 }]}>
-            <View style={styles.brandBox}>
-              <Rabbit size={28} color={colors.text} />
-            </View>
-            <Text style={[textStyles.h3, { marginLeft: 12 }]}>MyWorkspace</Text>
-          </View>
-          <Pressable style={layoutStyles.iconButtonBg}>
-            <Search size={24} color={colors.text} />
-          </Pressable>
-        </View>
+        {/* Unified RWD Header */}
+        <TopHeader />
 
-        <View style={styles.spacer} />
-
-        {/* Primary Actions Row 1 */}
-        <Pressable style={styles.primaryActionCard} onPress={handleOpenLocalFile}>
-          <FileDown size={32} color={colors.onPrimary} />
-          <View style={styles.actionTextContainer}>
-            <Text style={[textStyles.h2, { marginTop: 16 }]}>開啟手機文件</Text>
-            <Text style={[textStyles.subtitle, { marginTop: 4 }]}>匯入 TXT 或 Word 檔案</Text>
-          </View>
-        </Pressable>
-
-        {/* Action Row 2 */}
-        <View style={styles.twoColumnRow}>
-          <Pressable 
-            style={[styles.secondaryCard, { backgroundColor: colors.tertiary, marginRight: 12 }]} 
+        {/* Action Row */}
+        <View style={styles.actionRow}>
+          {/* Left large card */}
+          <Pressable
+            style={[styles.largeCard, { backgroundColor: colors.container }]}
             onPress={() => router.push('/document-editor')}
           >
-            <FileText size={28} color={colors.onPrimary} />
-            <Text style={[textStyles.h3, { color: colors.onPrimary }]}>建立新文件</Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <FileText size={48} color={colors.text} />
+              <Text style={[textStyles.h2, { marginTop: 16 }]}>建立文件</Text>
+            </View>
           </Pressable>
 
-          <Pressable 
-            style={[styles.secondaryCard, { backgroundColor: colors.secondary }]} 
-            onPress={() => router.push('/diary-editor')}
-          >
-            <Book size={28} color={colors.onPrimary} />
-            <Text style={[textStyles.h3, { color: colors.onPrimary }]}>建立新日記</Text>
-          </Pressable>
+          {/* Right column */}
+          <View style={styles.rightColumn}>
+            <Pressable
+              style={[styles.smallCard, { backgroundColor: colors.secondary, marginBottom: 16 }]}
+              onPress={() => router.push('/diary-editor')}
+            >
+              <View style={layoutStyles.rowCenter}>
+                <Book size={24} color={colors.onPrimary} />
+                <Text style={[textStyles.h3, { marginLeft: 12, color: colors.onPrimary }]}>建立日記</Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={[styles.smallCard, { backgroundColor: colors.surfaceVariant }]}
+              onPress={handleOpenLocalFile}
+            >
+              <View style={layoutStyles.rowCenter}>
+                <FolderOpen size={24} color={colors.text} />
+                <Text style={[textStyles.h3, { marginLeft: 12 }]}>開啟文件</Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         {/* History Area */}
@@ -105,14 +100,14 @@ export default function Home() {
             <Clock size={16} color={colors.text} />
             <Text style={[textStyles.h3, { marginLeft: 8 }]}>歷史紀錄瀏覽</Text>
           </View>
-          
+
           <View style={{ marginTop: 16 }}>
             {mockHistoryData.map(item => (
-              <Pressable 
-                key={item.id} 
+              <Pressable
+                key={item.id}
                 style={styles.historyItem}
                 onPress={() => {
-                  if(item.type === 'diary') {
+                  if (item.type === 'diary') {
                     router.push({ pathname: '/diary-editor', params: { title: item.title } });
                   } else {
                     router.push({ pathname: '/document-editor', params: { title: item.title } });
@@ -140,40 +135,26 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  brandBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 24,
-    backgroundColor: colors.container,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.text,
-  },
-  spacer: {
-    height: 24,
-  },
-  primaryActionCard: {
-    borderRadius: 28,
-    backgroundColor: colors.container, 
-    borderWidth: 1,
-    borderColor: 'rgba(101, 68, 69, 0.2)',
-    padding: 24,
-    justifyContent: 'space-between',
-    minHeight: 140,
-    marginBottom: 20,
-  },
-  twoColumnRow: {
+  actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    height: 190,
     marginBottom: 24,
   },
-  secondaryCard: {
+  largeCard: {
     flex: 1,
-    minHeight: 130,
     borderRadius: 28,
-    padding: 20,
+    marginRight: 16,
+    padding: 24,
+  },
+  rightColumn: {
+    flex: 0.8,
     justifyContent: 'space-between',
+  },
+  smallCard: {
+    height: 86,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
   },
   historySection: {
     backgroundColor: 'rgba(255,255,255,0.5)',
@@ -181,6 +162,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.8)',
+    minHeight: 400,
   },
   historyItem: {
     flexDirection: 'row',

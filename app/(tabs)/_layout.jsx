@@ -1,18 +1,3 @@
-<<<<<<< Updated upstream
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-
-export default function TabLayout() {
-    return (
-        <Tabs>
-            <Tabs.Screen name="(home)" options={{
-                title: 'HOME', headerShown: false,
-                tabBarIcon: ({focused}) => (<Ionicons name="home" size={20} color={focused ? 'black' : 'gray'} />)}} />
-            <Tabs.Screen name="setting" options={{title: 'setting'}} />
-        </Tabs>
-    )
-}
-=======
 import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import { colors as themeColors, fontSize } from "../../constants/token";
@@ -37,36 +22,44 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          tabBarShowLabel: true,
           tabBarStyle: {
-            backgroundColor: themeColors.onPrimary, // 白色背景
-            height: 85, 
-            paddingBottom: 20,
-            paddingTop: 10,
+            position: 'absolute',
+            bottom: 24,
+            left: 15,
+            right: 15,
+            height: 80, 
+            backgroundColor: '#FAFAFA', // 淺灰白背景
+            borderRadius: 40,
             borderTopWidth: 0,
-            elevation: 0, // 移除 Android 陰影
-            shadowOpacity: 0, // 移除 iOS 陰影
+            elevation: 0, 
+            shadowOpacity: 0, 
+            paddingBottom: 8, // Adjust label spacing
+            paddingTop: 8,
+            borderWidth: 1,
+            borderColor: 'rgba(101, 68, 69, 0.08)',
           },
-          tabBarActiveTintColor: themeColors.text, // 選中文字顏色
-          tabBarInactiveTintColor: themeColors.inactiveText, // 未選中文字顏色
+          tabBarActiveTintColor: themeColors.text, 
+          tabBarInactiveTintColor: themeColors.inactiveText,
           tabBarLabelStyle: {
-            fontSize: fontSize.xs,
+            fontSize: 10,
             fontWeight: '600',
-            marginTop: 5,
+            marginTop: 4,
           },
         }}
       >
         <Tabs.Screen
           name="(home)"
           options={{
-            title: '首頁',
-            tabBarIcon: ({ focused, color }) => (
+            title: 'home',
+            tabBarIcon: ({ focused }) => (
               <View style={{
-                backgroundColor: focused ? themeColors.container : 'transparent',
+                backgroundColor: focused ? 'rgba(139, 61, 255, 0.15)' : 'transparent', // Light Canva Purple
                 paddingHorizontal: 20,
                 paddingVertical: 4,
                 borderRadius: 20,
               }}>
-                <Home size={24} color={color} />
+                <Home size={24} color={focused ? themeColors.text : themeColors.inactiveText} />
               </View>
             ),
           }}
@@ -76,49 +69,57 @@ export default function TabLayout() {
           name="create"
           options={{
             title: '',
-            tabBarButton: (props) => (
-              <Pressable 
-                {...props} 
-                onPress={() => setAddMenuVisible(true)}
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <View style={{
-                  width: 56,
-                  height: 56,
-                  backgroundColor: themeColors.canva, // Canva 紫色
-                  borderRadius: 18,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: 10, 
-                  shadowColor: themeColors.canva,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 5,
-                }}>
-                  <Plus size={30} color={themeColors.onPrimary} />
-                </View>
-              </Pressable>
-            ),
+            tabBarButton: (props) => {
+              return (
+                <Pressable 
+                  style={[
+                    props.style,
+                    {
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }
+                  ]}
+                  onPress={(e) => {
+                    e.preventDefault();
+                    setAddMenuVisible(true);
+                  }}
+                >
+                  <View style={{
+                    width: 56,
+                    height: 56,
+                    backgroundColor: '#F3E5AB', // 淺米黃色(參考設計稿)
+                    borderRadius: 28, // 圓形
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 10, 
+                  }}>
+                    <Plus size={28} color={themeColors.text} strokeWidth={3} />
+                  </View>
+                </Pressable>
+              );
+            },
           }}
         />
 
         <Tabs.Screen
           name="(setting)"
           options={{
-            title: '設定',
-            tabBarIcon: ({ focused, color }) => (
+            title: 'setting',
+            tabBarIcon: ({ focused }) => (
               <View style={{
-                backgroundColor: focused ? themeColors.container : 'transparent',
+                backgroundColor: focused ? 'rgba(139, 61, 255, 0.15)' : 'transparent',
                 paddingHorizontal: 20,
                 paddingVertical: 4,
                 borderRadius: 20,
               }}>
-                <Settings size={24} color={color} />
+                <Text style={{ 
+                  fontSize: 20, 
+                  fontWeight: '900', 
+                  color: focused ? themeColors.text : themeColors.inactiveText,
+                  letterSpacing: 2,
+                  marginTop: -4 
+                }}>...</Text>
               </View>
             ),
           }}
@@ -131,22 +132,24 @@ export default function TabLayout() {
         animationType="fade"
         onRequestClose={() => setAddMenuVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setAddMenuVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.menuContainer}>
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setAddMenuVisible(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View style={styles.menuWrapper}>
+              <View style={styles.menuContainer}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('document')}>
+                  <Text style={styles.menuText}>建立文件</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('diary')}>
+                  <Text style={styles.menuText}>建立日記</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.menuArrow} />
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('document')}>
-                <FileText size={20} color={themeColors.text} />
-                <Text style={styles.menuText}>建立新文件</Text>
-              </TouchableOpacity>
-              <View style={styles.menuSeparator} />
-              <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('diary')}>
-                <Book size={20} color={themeColors.text} />
-                <Text style={styles.menuText}>建立新日記</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
+          </Pressable>
+        </Pressable>
       </Modal>
     </>
   );
@@ -155,55 +158,50 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.1)', // subtle dim
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
+  menuWrapper: {
+    marginBottom: 110, // Position right above the 80px tab bar (bottom: 24) -> 104px
+    alignItems: 'center',
+  },
   menuContainer: {
-    backgroundColor: themeColors.onPrimary,
+    flexDirection: 'row',
+    backgroundColor: '#E5E3E3', // 灰色背景
     borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    width: 180,
-    marginBottom: 100, // 就在 Tab Bar 上方
+    padding: 12,
+    gap: 12, // React Native 支援 gap
     shadowColor: themeColors.text,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
-    position: 'relative',
+  },
+  menuItem: {
+    width: 100,
+    height: 64,
+    backgroundColor: '#F5F5F5', // 按鈕為更亮的顏色
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: themeColors.text,
   },
   menuArrow: {
-    position: 'absolute',
-    bottom: -10,
-    alignSelf: 'center',
     width: 0,
     height: 0,
     backgroundColor: 'transparent',
     borderStyle: 'solid',
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 10,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderTopWidth: 14,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: themeColors.onPrimary,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-  },
-  menuSeparator: {
-    height: 1,
-    backgroundColor: themeColors.surfaceVariant,
-    marginHorizontal: 8,
-  },
-  menuText: {
-    marginLeft: 12,
-    fontSize: 16,
-    fontWeight: '600',
-    color: themeColors.text,
+    borderTopColor: '#E5E3E3', // 與 menuContainer 相同顏色
+    marginTop: 0, // No margin, it flush bounds exactly to popover container
   },
 });
->>>>>>> Stashed changes

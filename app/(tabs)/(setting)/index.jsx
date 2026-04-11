@@ -1,92 +1,100 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   View,
   Text,
   Pressable,
   StyleSheet,
+  Switch
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Files,
-  BookOpen,
+  FileText,
+  Edit,
   Star,
   CheckSquare,
   Settings as SettingsIcon,
-  ChevronRight
+  Moon,
+  Search,
+  Rabbit,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { colors } from '../../../constants/token';
-import { layoutStyles, textStyles, cardStyles } from '../../../styles';
+import TopHeader from '../../../components/TopHeader';
 
 export default function Setting() {
-  const SettingItem = ({ icon: Icon, title, onPress, showBorder = true, subtitle }) => (
-    <Pressable style={[cardStyles.listItem, showBorder && cardStyles.listItemBorder]} onPress={onPress}>
-      <View style={styles.iconBox}>
-        <Icon size={22} color={colors.text} />
-      </View>
-      <View style={styles.textGroup}>
-        <Text style={[textStyles.body, { fontWeight: '600' }]}>{title}</Text>
-        {subtitle && <Text style={[textStyles.subtitle, { marginTop: 4 }]}>{subtitle}</Text>}
-      </View>
-      <ChevronRight size={20} color={colors.inactiveText} />
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const ListSettingItem = ({ icon: Icon, title, onPress, children }) => (
+    <Pressable style={styles.listItem} onPress={onPress}>
+      <Icon size={24} color={colors.text} style={{ marginRight: 16 }} />
+      <Text style={styles.listItemText}>{title}</Text>
+      {children}
     </Pressable>
   );
 
   return (
-    <SafeAreaView style={layoutStyles.root}>
-      <ScrollView contentContainerStyle={layoutStyles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={textStyles.h1}>設定與管理</Text>
+    <SafeAreaView style={styles.root}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Extracted RWD Header */}
+        <TopHeader />
+
+        {/* Top Grid Area: 2 tiles of 182x120 */}
+        <View style={styles.topGridRow}>
+          <Pressable
+            style={styles.topGridCard}
+            onPress={() => router.push({ pathname: '/file-browser', params: { type: 'document' } })}
+          >
+            <View style={styles.topCardContent}>
+              <FileText size={26} color={colors.text} style={{ marginBottom: 6 }} />
+              <Text style={styles.gridTitle}>所有文件</Text>
+              <Text style={styles.gridCount}>共 8 篇</Text>
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={styles.topGridCard}
+            onPress={() => router.push({ pathname: '/file-browser', params: { type: 'diary' } })}
+          >
+            <View style={styles.topCardContent}>
+              <Edit size={26} color={colors.text} style={{ marginBottom: 6 }} />
+              <Text style={styles.gridTitle}>所有日記</Text>
+              <Text style={styles.gridCount}>共 8 篇</Text>
+            </View>
+          </Pressable>
         </View>
 
-        <View style={styles.cardGroup}>
-          <Text style={textStyles.h3}>內容圖書館</Text>
-          <View style={cardStyles.listContainer}>
-            <SettingItem 
-              icon={Files} 
-              title="瀏覽所有文件" 
-              subtitle="依上次開啟日期排序"
-              onPress={() => router.push({ pathname: '/file-browser', params: { type: 'document' } })} 
+        {/* List Items matching exactly 378x60 */}
+        <View style={styles.listSection}>
+          <ListSettingItem
+            icon={Star}
+            title="星號文件"
+            onPress={() => router.push({ pathname: '/file-browser', params: { type: 'starred' } })}
+          />
+          <ListSettingItem
+            icon={CheckSquare}
+            title="自訂任務"
+            onPress={() => { }}
+          />
+          <ListSettingItem
+            icon={SettingsIcon}
+            title="其他設定"
+            onPress={() => router.push('/settings-details')}
+          />
+          <ListSettingItem
+            icon={Moon}
+            title="深色模式"
+            onPress={() => setIsDarkMode(!isDarkMode)}
+          >
+            <Switch
+              value={isDarkMode}
+              onValueChange={setIsDarkMode}
+              trackColor={{ false: 'rgba(101,68,69,0.2)', true: colors.primary }}
+              thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
             />
-            <SettingItem 
-              icon={BookOpen} 
-              title="瀏覽所有日記" 
-              subtitle="依新增日期排序"
-              onPress={() => router.push({ pathname: '/file-browser', params: { type: 'diary' } })} 
-            />
-            <SettingItem 
-              icon={Star} 
-              title="標記星號文件" 
-              showBorder={false}
-              onPress={() => router.push({ pathname: '/file-browser', params: { type: 'starred' } })} 
-            />
-          </View>
-        </View>
-
-        <View style={styles.cardGroup}>
-          <Text style={textStyles.h3}>工作區</Text>
-          <View style={cardStyles.listContainer}>
-            <SettingItem 
-              icon={CheckSquare} 
-              title="自訂任務區" 
-              showBorder={false}
-              onPress={() => {}} // Placeholder
-            />
-          </View>
-        </View>
-
-        <View style={styles.cardGroup}>
-          <Text style={textStyles.h3}>系統</Text>
-          <View style={cardStyles.listContainer}>
-            <SettingItem 
-              icon={SettingsIcon} 
-              title="其他設定" 
-              subtitle="深色模式、背景樣式等"
-              showBorder={false}
-              onPress={() => router.push('/settings-details')} 
-            />
-          </View>
+          </ListSettingItem>
+          {/* Blank 378x60 block based on formatting requirement bottom tag */}
+          <View style={[styles.listItem, { backgroundColor: 'transparent', borderWidth: 0 }]} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -94,24 +102,63 @@ export default function Setting() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: 24,
-    marginTop: 10,
+  root: {
+    flex: 1,
+    backgroundColor: colors.surface,
   },
-  cardGroup: {
-    marginBottom: 32,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 120, // Tab bar clearance
+    paddingTop: 16,
   },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    backgroundColor: colors.container,
+  topGridRow: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  topGridCard: {
+    flex: 0.48,
+    height: 120,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(101, 68, 69, 0.2)',
+    justifyContent: 'center',
+  },
+  topCardContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
   },
-  textGroup: {
+  gridTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  gridCount: {
+    fontSize: 12,
+    color: colors.inactiveText,
+    marginTop: 2,
+  },
+  listSection: {
+    width: '100%',
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 60,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(101, 68, 69, 0.2)',
+  },
+  listItemText: {
+    fontSize: 16,
+    fontWeight: '600',
     flex: 1,
-    justifyContent: 'center',
+    color: colors.text,
   },
 });

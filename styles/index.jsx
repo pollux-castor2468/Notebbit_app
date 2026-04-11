@@ -37,22 +37,22 @@ export const layoutStyles = StyleSheet.create({
 
 export const textStyles = StyleSheet.create({
   h1: {
-    fontSize: fontSize.xxl,
+    fontSize: fontSize.lg,
     fontWeight: '800',
     color: colors.text,
   },
   h2: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  h3: {
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.text,
   },
+  h3: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: colors.text,
+  },
   body: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.md,
     color: colors.text,
   },
   subtitle: {
