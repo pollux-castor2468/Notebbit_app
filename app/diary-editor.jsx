@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Pla
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { colors } from '../constants/token';
 import { layoutStyles, textStyles } from '../styles';
 
@@ -21,6 +21,31 @@ export default function DiaryEditor() {
   const [date, setDate] = useState(new Date('2026-04-04T00:00:00'));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const wordCount = content.replace(/\s/g, '').length || 7; // fallback to 7 if empty to match Figma mock
+
+  const showDatepicker = () => {
+    try {
+      if (Platform.OS === 'android') {
+        if (!DateTimePickerAndroid || !DateTimePickerAndroid.open) {
+          alert('原生 DatePicker 模組未能載入，請重新編譯 App (Dev Client)。');
+          return;
+        }
+        DateTimePickerAndroid.open({
+          value: date,
+          mode: 'date',
+          display: 'default',
+          onChange: (event, selectedDate) => {
+            if (event.type === 'set' && selectedDate) {
+              setDate(selectedDate);
+            }
+          },
+        });
+      } else {
+        setShowDatePicker(true);
+      }
+    } catch (error) {
+      alert('無法開啟日曆：' + error.message);
+    }
+  };
 
   return (
     <SafeAreaView style={layoutStyles.root}>
@@ -56,21 +81,50 @@ export default function DiaryEditor() {
           {/* Metadata Section */}
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>日期：</Text>
-            <Pressable onPress={() => setShowDatePicker(true)}>
-              <Text style={[styles.metaText, { padding: 0 }]}>
-                {`${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`}
-              </Text>
-            </Pressable>
-            {showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(false);
-                  if (selectedDate) setDate(selectedDate);
-                }}
-              />
+            {Platform.OS === 'web' ? (
+              React.createElement('input', {
+                type: 'date',
+                value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+                onChange: (e) => {
+                  const newDate = new Date(e.target.value);
+                  if (!isNaN(newDate)) setDate(newDate);
+                },
+                style: {
+                  border: 'none',
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  color: colors.text,
+                }
+              })
+            ) : (
+              <>
+                <Pressable 
+                  key="date-pressable-fixed"
+                  onPress={showDatepicker}
+                  style={{ paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 8 }}
+                >
+                  <Text style={[styles.metaText, { padding: 0 }]} pointerEvents="none">
+                    {`${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`}
+                  </Text>
+                </Pressable>
+                {Platform.OS === 'ios' && showDatePicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (event.type === 'set' && selectedDate) {
+                        setDate(selectedDate);
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
           </View>
 
