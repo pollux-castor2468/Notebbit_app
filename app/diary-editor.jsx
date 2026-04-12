@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight, X as XIcon } from 'lucide-react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
+import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { colors } from '../constants/token';
 import { layoutStyles, textStyles } from '../styles';
 
@@ -18,9 +20,64 @@ export default function DiaryEditor() {
 
   // Content state for Word Count
   const [content, setContent] = useState('');
+  const richText = useRef(null);
   const [date, setDate] = useState(new Date('2026-04-04T00:00:00'));
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedWeather, setSelectedWeather] = useState(null);
+  const [selectedMood, setSelectedMood] = useState(null);
+  
+  // Link Modal State
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkTitle, setLinkTitle] = useState('');
   const wordCount = content.replace(/\s/g, '').length || 7; // fallback to 7 if empty to match Figma mock
+
+  const gridColors = [
+    ['#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280', '#4B5563', '#374151', '#000000'],
+    ['#0047AB', '#311432', '#4B0082', '#8B0000', '#A0522D', '#B8860B', '#556B2F'],
+    ['#00BFFF', '#4169E1', '#8A2BE2', '#C71585', '#FF4500', '#FFD700', '#9ACD32'],
+    ['#87CEFA', '#DDA0DD', '#EE82EE', '#FFB6C1', '#FFA07A', '#FFFACD', '#98FB98'],
+  ];
+  const circleColors = [
+    ['#000000', '#007AFF', '#34C759', '#FFCC00', '#FF3B30'],
+    ['#5AC8FA', '#AF52DE', '#5856D6', '#FF2D55', null], // null represents the plus button
+  ];
+
+  const handleSelectColor = (color) => {
+    if (activeModal === 'colors') {
+      richText.current?.sendAction('foreColor', 'result', color); 
+      // some editors use 'foreColor', others 'setForeColor' but pell-rich-editor uses HTML standard
+      // wait, pell-rich-editor uses actions.setForeColor natively if exported, but sending raw execCommand works usually. Let's try native actions.
+    } else if (activeModal === 'bgColors') {
+      richText.current?.sendAction('hiliteColor', 'result', color);
+    }
+    setActiveModal(null);
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'image/*' });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        richText.current?.insertImage(uri, 'width: 100%; max-width: 300px; border-radius: 8px;');
+      }
+    } catch (err) {
+      console.log('Image pick error:', err);
+    }
+  };
+
+  const handleInsertLink = () => {
+    if (linkUrl) {
+      richText.current?.insertLink(linkTitle || linkUrl, linkUrl);
+      setLinkUrl('');
+      setLinkTitle('');
+      setActiveModal(null);
+    }
+  };
+
+  const handleSave = () => {
+    // Navigate to All Diaries page (assuming it's home or file-browser with type=diary)
+    router.replace({ pathname: '/file-browser', params: { type: 'diary' } });
+  };
 
   const showDatepicker = () => {
     try {
@@ -51,14 +108,18 @@ export default function DiaryEditor() {
     <SafeAreaView style={layoutStyles.root}>
       {/* Top Header */}
       <View style={styles.header}>
-        <View style={layoutStyles.rowCenter}>
+        <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
           <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>{title || '日記名稱'}</Text>
+          <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+            {title || '日記名稱'}
+          </Text>
         </View>
         <View style={layoutStyles.rowCenter}>
-          <Pressable style={styles.iconButton}><Check size={24} color={colors.text} /></Pressable>
+          <Pressable style={styles.iconButton} onPress={handleSave}>
+            <Check size={24} color={colors.text} />
+          </Pressable>
           <Pressable
             style={[styles.iconButton, activeModal === 'more' ? styles.dotsBtnActive : null]}
             onPress={(e) => {
@@ -76,7 +137,8 @@ export default function DiaryEditor() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.content}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.content}>
 
           {/* Metadata Section */}
           <View style={styles.metaRow}>
@@ -131,47 +193,85 @@ export default function DiaryEditor() {
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>天氣：</Text>
             <View style={layoutStyles.rowCenter}>
-              <Sun size={24} color="#FACC15" style={styles.metaIcon} />
-              <Cloud size={24} color="#9CA3AF" style={styles.metaIcon} />
-              <CloudLightning size={24} color="#D1D5DB" style={styles.metaIcon} />
-              <CloudRain size={24} color="#3B82F6" style={styles.metaIcon} />
-              <Wind size={24} color="#14B8A6" style={styles.metaIcon} />
+              <TouchableOpacity onPress={() => setSelectedWeather('sun')} style={{ opacity: selectedWeather === 'sun' || !selectedWeather ? 1 : 0.3 }}>
+                <Sun size={24} color="#FACC15" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedWeather('cloud')} style={{ opacity: selectedWeather === 'cloud' || !selectedWeather ? 1 : 0.3 }}>
+                <Cloud size={24} color="#9CA3AF" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedWeather('lightning')} style={{ opacity: selectedWeather === 'lightning' || !selectedWeather ? 1 : 0.3 }}>
+                <CloudLightning size={24} color="#D1D5DB" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedWeather('rain')} style={{ opacity: selectedWeather === 'rain' || !selectedWeather ? 1 : 0.3 }}>
+                <CloudRain size={24} color="#3B82F6" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedWeather('wind')} style={{ opacity: selectedWeather === 'wind' || !selectedWeather ? 1 : 0.3 }}>
+                <Wind size={24} color="#14B8A6" style={styles.metaIcon} />
+              </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>心情：</Text>
             <View style={layoutStyles.rowCenter}>
-              <Smile size={24} color="#22C55E" style={styles.metaIcon} />
-              <Smile size={24} color="#84CC16" style={styles.metaIcon} />
-              <Meh size={24} color="#EAB308" style={styles.metaIcon} />
-              <Frown size={24} color="#F97316" style={styles.metaIcon} />
-              <Frown size={24} color="#EF4444" style={styles.metaIcon} />
+              <TouchableOpacity onPress={() => setSelectedMood('great')} style={{ opacity: selectedMood === 'great' || !selectedMood ? 1 : 0.3 }}>
+                <Smile size={24} color="#22C55E" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedMood('good')} style={{ opacity: selectedMood === 'good' || !selectedMood ? 1 : 0.3 }}>
+                <Smile size={24} color="#84CC16" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedMood('normal')} style={{ opacity: selectedMood === 'normal' || !selectedMood ? 1 : 0.3 }}>
+                <Meh size={24} color="#EAB308" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedMood('bad')} style={{ opacity: selectedMood === 'bad' || !selectedMood ? 1 : 0.3 }}>
+                <Frown size={24} color="#F97316" style={styles.metaIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedMood('awful')} style={{ opacity: selectedMood === 'awful' || !selectedMood ? 1 : 0.3 }}>
+                <Frown size={24} color="#EF4444" style={styles.metaIcon} />
+              </TouchableOpacity>
             </View>
           </View>
 
-          <TextInput
-            style={[textStyles.body, styles.bodyInput]}
-            placeholder="輸入內容..."
-            placeholderTextColor={'rgba(101, 68, 69, 0.4)'}
-            multiline
-            textAlignVertical="top"
-            value={content}
-            onChangeText={setContent}
-          />
+          <View style={[styles.bodyInput, { overflow: 'hidden' }]}>
+            {Platform.OS === 'web' ? (
+              <TextInput
+                style={[textStyles.body, { flex: 1, outline: 'none' }]}
+                placeholder="網頁版編輯器尚在測試中，請先使用純文字..."
+                placeholderTextColor={'rgba(101, 68, 69, 0.4)'}
+                multiline
+                textAlignVertical="top"
+                value={content}
+                onChangeText={setContent}
+              />
+            ) : (
+              <RichEditor
+                ref={richText}
+                style={{ flex: 1 }}
+                placeholder="輸入內容..."
+                initialContentHTML={content}
+                onChange={setContent}
+                editorStyle={{
+                  backgroundColor: 'transparent',
+                  color: colors.text,
+                  placeholderColor: 'rgba(101, 68, 69, 0.4)',
+                }}
+              />
+            )}
+          </View>
         </View>
+        </TouchableWithoutFeedback>
 
         {/* Bottom Toolbar Box */}
         <View style={styles.bottomToolbar}>
           <View style={styles.dragPill} />
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
-            <Pressable style={styles.toolIcon}><Bold size={24} color={colors.text} /></Pressable>
-            <Pressable style={styles.toolIcon}><Underline size={24} color={colors.text} /></Pressable>
-            <Pressable style={styles.toolIcon}><Baseline size={24} color={colors.text} /></Pressable>
-            <Pressable style={styles.toolIcon}><PaintBucket size={24} color={colors.text} /></Pressable>
-            <Pressable style={styles.toolIcon}><ImageIcon size={24} color={colors.text} /></Pressable>
-            <Pressable style={styles.toolIcon}><Link size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setBold, 'result')}><Bold size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setUnderline, 'result')}><Underline size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('colors'); }}><Baseline size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('bgColors'); }}><PaintBucket size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={handlePickImage}><ImageIcon size={24} color={colors.text} /></Pressable>
+            <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('link'); }}><Link size={24} color={colors.text} /></Pressable>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -206,6 +306,112 @@ export default function DiaryEditor() {
           </Pressable>
         </Pressable>
       )}
+
+      {/* Colors Modal / Bottom Sheet */}
+      <Modal
+        visible={activeModal === 'colors' || activeModal === 'bgColors'}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setActiveModal(null)}>
+          <Pressable style={styles.colorSheet} onPress={e => e.stopPropagation()}>
+            <View style={styles.colorHeader}>
+              <Text style={styles.colorTitle}>Colors</Text>
+              <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}>
+                <XIcon size={24} color="#666" />
+              </Pressable>
+            </View>
+
+            {/* Grid Colors */}
+            <View style={styles.colorGridWrapper}>
+              {gridColors.map((row, rowIndex) => (
+                <View key={rowIndex} style={styles.colorGridRow}>
+                  {row.map((color, colIndex) => {
+                    const isTopLeft = rowIndex === 0 && colIndex === 0;
+                    const isTopRight = rowIndex === 0 && colIndex === 6;
+                    const isBottomLeft = rowIndex === 3 && colIndex === 0;
+                    const isBottomRight = rowIndex === 3 && colIndex === 6;
+                    return (
+                      <TouchableOpacity
+                        key={color}
+                        style={[
+                          styles.colorGridSquare,
+                          { backgroundColor: color },
+                          isTopLeft && { borderTopLeftRadius: 16 },
+                          isTopRight && { borderTopRightRadius: 16 },
+                          isBottomLeft && { borderBottomLeftRadius: 16 },
+                          isBottomRight && { borderBottomRightRadius: 16 },
+                        ]}
+                        onPress={() => handleSelectColor(color)}
+                      />
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+
+            {/* Circle Colors */}
+            <View style={styles.circleColorsContainer}>
+              {circleColors.map((row, rIdx) => (
+                <View key={rIdx} style={styles.circleRow}>
+                  {row.map((color, cIdx) => (
+                    color ? (
+                      <TouchableOpacity
+                        key={color}
+                        style={[styles.circleColorBtn, { backgroundColor: color }]}
+                        onPress={() => handleSelectColor(color)}
+                      />
+                    ) : (
+                      <TouchableOpacity key="plus" style={styles.plusColorBtn}>
+                        <Text style={styles.plusColorText}>+</Text>
+                      </TouchableOpacity>
+                    )
+                  ))}
+                </View>
+              ))}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Link Modal */}
+      <Modal
+        visible={activeModal === 'link'}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setActiveModal(null)}
+      >
+        <Pressable style={styles.modalBackdropCenter} onPress={() => setActiveModal(null)}>
+          <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
+            <Text style={styles.colorTitle}>插入連結</Text>
+            <TextInput
+              style={styles.linkInput}
+              placeholder="連結標題 (選填)"
+              placeholderTextColor="#999"
+              value={linkTitle}
+              onChangeText={setLinkTitle}
+            />
+            <TextInput
+              style={styles.linkInput}
+              placeholder="請輸入網址 https://..."
+              placeholderTextColor="#999"
+              value={linkUrl}
+              onChangeText={setLinkUrl}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            <View style={layoutStyles.rowCenter}>
+              <Pressable style={styles.linkBtnCancel} onPress={() => setActiveModal(null)}>
+                <Text style={styles.linkBtnText}>取消</Text>
+              </Pressable>
+              <Pressable style={styles.linkBtnOk} onPress={handleInsertLink}>
+                <Text style={[styles.linkBtnText, { color: '#fff' }]}>確定</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -314,6 +520,126 @@ const styles = StyleSheet.create({
   popoverText: {
     fontSize: 16,
     fontWeight: '600',
+    color: colors.text,
+  },
+
+  // --- Colors Bottom Sheet Styles ---
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+  },
+  colorSheet: {
+    backgroundColor: '#F5F5F5',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  colorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  colorTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  closeBtn: {
+    backgroundColor: '#E5E5E5',
+    padding: 8,
+    borderRadius: 20,
+  },
+  colorGridWrapper: {
+    marginBottom: 30,
+    backgroundColor: 'transparent',
+  },
+  colorGridRow: {
+    flexDirection: 'row',
+  },
+  colorGridSquare: {
+    flex: 1,
+    aspectRatio: 1,
+  },
+  circleColorsContainer: {
+    gap: 16,
+    paddingHorizontal: 8,
+    marginBottom: 20,
+  },
+  circleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  circleColorBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  plusColorBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E5E5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  plusColorText: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#000',
+    lineHeight: 32,
+  },
+
+  // --- Link Modal Styles ---
+  modalBackdropCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  linkModalCard: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  linkInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.text,
+  },
+  linkBtnCancel: {
+    flex: 1,
+    marginRight: 8,
+    marginTop: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#E5E5E5',
+    alignItems: 'center',
+  },
+  linkBtnOk: {
+    flex: 1,
+    marginLeft: 8,
+    marginTop: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: colors.primary || '#666',
+    alignItems: 'center',
+  },
+  linkBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: colors.text,
   },
 });

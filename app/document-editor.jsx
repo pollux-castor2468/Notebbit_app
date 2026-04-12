@@ -35,11 +35,13 @@ export default function DocumentEditor() {
     <SafeAreaView style={layoutStyles.root}>
       {/* Top Header */}
       <View style={styles.header}>
-        <View style={layoutStyles.rowCenter}>
+        <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
           <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>{title || '文件名稱'}</Text>
+          <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+            {title || '文件名稱'}
+          </Text>
         </View>
         <View style={layoutStyles.rowCenter}>
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('source')}>
@@ -134,18 +136,20 @@ export default function DocumentEditor() {
                 <Text style={[styles.subheadText, { flex: 1.5, textAlign: 'right' }]}>儲存日期</Text>
               </View>
 
-              <View style={styles.sheetCard}>
-                 <CardDeleteBadge />
-                 <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
-                 <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                 <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-              </View>
-              <View style={styles.sheetCard}>
-                 <CardDeleteBadge />
-                 <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
-                 <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                 <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-              </View>
+              <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+                <View style={styles.sheetCard}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
+                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
+                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
+                </View>
+                <View style={styles.sheetCard}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
+                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
+                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
+                </View>
+              </ScrollView>
            </View>
         </View>
       </Modal>
@@ -312,13 +316,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheetContainer: {
-    backgroundColor: '#EBEBEB',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
+    backgroundColor: '#F5F5F5',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 40, // bottom screen spacing
-    minHeight: '45%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    maxHeight: '80%',
   },
   sheetDragPill: {
     width: 100,
