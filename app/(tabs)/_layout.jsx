@@ -1,7 +1,7 @@
 import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
 import { colors as themeColors, fontSize } from "../../constants/token";
-import { Home, Settings, Plus, FileText, Book } from "lucide-react-native"; 
+import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
 
 export default function TabLayout() {
@@ -28,18 +28,18 @@ export default function TabLayout() {
             bottom: 24,
             left: 15,
             right: 15,
-            height: 80, 
+            height: 80,
             backgroundColor: '#FAFAFA', // 淺灰白背景
             borderRadius: 40,
             borderTopWidth: 0,
-            elevation: 0, 
-            shadowOpacity: 0, 
+            elevation: 0,
+            shadowOpacity: 0,
             paddingBottom: 8, // Adjust label spacing
             paddingTop: 8,
             borderWidth: 1,
             borderColor: 'rgba(101, 68, 69, 0.08)',
           },
-          tabBarActiveTintColor: themeColors.text, 
+          tabBarActiveTintColor: themeColors.text,
           tabBarInactiveTintColor: themeColors.inactiveText,
           tabBarLabelStyle: {
             fontSize: 10,
@@ -71,7 +71,7 @@ export default function TabLayout() {
             title: '',
             tabBarButton: (props) => {
               return (
-                <Pressable 
+                <Pressable
                   style={[
                     props.style,
                     {
@@ -92,7 +92,7 @@ export default function TabLayout() {
                     borderRadius: 28, // 圓形
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: 10, 
+                    marginBottom: 10,
                   }}>
                     <Plus size={28} color={themeColors.text} strokeWidth={3} />
                   </View>
@@ -113,13 +113,7 @@ export default function TabLayout() {
                 paddingVertical: 4,
                 borderRadius: 20,
               }}>
-                <Text style={{ 
-                  fontSize: 20, 
-                  fontWeight: '900', 
-                  color: focused ? themeColors.text : themeColors.inactiveText,
-                  letterSpacing: 2,
-                  marginTop: -4 
-                }}>...</Text>
+                <Settings size={24} color={focused ? themeColors.text : themeColors.inactiveText} />
               </View>
             ),
           }}
@@ -132,8 +126,8 @@ export default function TabLayout() {
         animationType="fade"
         onRequestClose={() => setAddMenuVisible(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
+        <Pressable
+          style={styles.modalOverlay}
           onPress={() => setAddMenuVisible(false)}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
@@ -163,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuWrapper: {
-    marginBottom: 110, // Position right above the 80px tab bar (bottom: 24) -> 104px
+    marginBottom: 90, // Position right above the 80px tab bar (bottom: 24) -> 104px
     alignItems: 'center',
   },
   menuContainer: {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight } from 'lucide-react-native';
 import { colors } from '../constants/token';
@@ -84,7 +85,7 @@ export default function DocumentEditor() {
         <View style={styles.bottomToolbar}>
           <View style={styles.dragPill} />
           
-          <View style={styles.toolbarRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
             {/* Font Selectors */}
             <View style={styles.dropdownGroup}>
               <View style={styles.dropdownContainer}>
@@ -104,7 +105,7 @@ export default function DocumentEditor() {
               <Pressable style={styles.toolIcon}><Underline size={20} color={colors.text} /></Pressable>
               <Pressable style={styles.toolIcon}><Baseline size={20} color={colors.text} /></Pressable>
             </View>
-          </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
 
@@ -150,11 +151,9 @@ export default function DocumentEditor() {
       </Modal>
 
       {/* 2. Data Sources Bottom Sheet */}
-      <Modal visible={activeModal === 'source'} transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
-        <View style={styles.bottomSheetOverlay}>
-           <Pressable style={StyleSheet.absoluteFill} onPress={() => setActiveModal(null)} />
-           
-           <View style={styles.bottomSheetContainer}>
+      {activeModal === 'source' && (
+        <View style={[styles.bottomSheetOverlay, { position: 'absolute', bottom: 0, width: '100%', height: '50%', backgroundColor: 'transparent', zIndex: 50 }]} pointerEvents="box-none">
+           <View style={[styles.bottomSheetContainer, { flex: 1, shadowColor: '#000', shadowOffset: { width:0, height:-2 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 15 }]}>
               <View style={styles.sheetDragPill} />
               
               <View style={styles.sheetHeaderRow}>
@@ -168,25 +167,27 @@ export default function DocumentEditor() {
                 <Text style={[styles.subheadText, { flex: 1.5, textAlign: 'right' }]}>標記段落</Text>
               </View>
 
-              <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                 <CardDeleteBadge />
-                 <Text style={[styles.cardText, { flex: 0.8 }]}>1</Text>
-                 <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
-                 <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
-                   <Edit2 size={18} color={colors.text} />
-                 </View>
-              </View>
-              <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                 <CardDeleteBadge />
-                 <Text style={[styles.cardText, { flex: 0.8 }]}>2</Text>
-                 <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
-                 <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
-                   <Edit2 size={18} color={colors.text} />
-                 </View>
-              </View>
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 0.8 }]}>1</Text>
+                   <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
+                   <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
+                     <Edit2 size={18} color={colors.text} />
+                   </View>
+                </View>
+                <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 0.8 }]}>2</Text>
+                   <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
+                   <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
+                     <Edit2 size={18} color={colors.text} />
+                   </View>
+                </View>
+              </ScrollView>
            </View>
         </View>
-      </Modal>
+      )}
 
       {/* 3. More Options Popover overlay */}
       {activeModal === 'more' && (
@@ -271,11 +272,10 @@ const styles = StyleSheet.create({
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#fff',
-    borderRadius: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   dropdownGroup: {
     flexDirection: 'row',
@@ -298,12 +298,11 @@ const styles = StyleSheet.create({
   actionGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
-    marginLeft: 8,
+    marginLeft: 16,
   },
   toolIcon: {
-    padding: 4,
+    padding: 8,
+    marginHorizontal: 6,
   },
 
   // --- Bottom Sheets & Modals Styles ---

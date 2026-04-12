@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Switch } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ChevronLeft, Monitor, Moon, Image as ImageIcon } from 'lucide-react-native';
 import { colors } from '../constants/token';

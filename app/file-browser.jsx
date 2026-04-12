@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, FileText, Search, MoreVertical, Star } from 'lucide-react-native';
+import { ChevronLeft, FileText, Search, MoreVertical, Star, Book } from 'lucide-react-native';
 import { colors } from '../constants/token';
 import { layoutStyles, textStyles } from '../styles';
 
@@ -90,7 +90,11 @@ export default function FileBrowser() {
                  }}
                >
                  <View style={styles.iconBox}>
-                    <FileText size={24} color={colors.text} />
+                    {item.type === 'diary' ? (
+                      <Book size={24} color={colors.text} />
+                    ) : (
+                      <FileText size={24} color={colors.text} />
+                    )}
                  </View>
 
                  <View style={styles.itemTextContainer}>

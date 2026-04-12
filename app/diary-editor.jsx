@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../constants/token';
 import { layoutStyles, textStyles } from '../styles';
 
@@ -16,6 +18,8 @@ export default function DiaryEditor() {
 
   // Content state for Word Count
   const [content, setContent] = useState('');
+  const [date, setDate] = useState(new Date('2026-04-04T00:00:00'));
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const wordCount = content.replace(/\s/g, '').length || 7; // fallback to 7 if empty to match Figma mock
 
   return (
@@ -52,7 +56,22 @@ export default function DiaryEditor() {
           {/* Metadata Section */}
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>日期：</Text>
-            <Text style={styles.metaText}>2026.04.04</Text>
+            <Pressable onPress={() => setShowDatePicker(true)}>
+              <Text style={[styles.metaText, { padding: 0 }]}>
+                {`${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`}
+              </Text>
+            </Pressable>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setDate(selectedDate);
+                }}
+              />
+            )}
           </View>
 
           <View style={styles.metaRow}>
@@ -92,14 +111,14 @@ export default function DiaryEditor() {
         <View style={styles.bottomToolbar}>
           <View style={styles.dragPill} />
 
-          <View style={styles.toolbarRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
             <Pressable style={styles.toolIcon}><Bold size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon}><Underline size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon}><Baseline size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon}><PaintBucket size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon}><ImageIcon size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon}><Link size={24} color={colors.text} /></Pressable>
-          </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
 
@@ -204,14 +223,14 @@ const styles = StyleSheet.create({
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#fff',
-    borderRadius: 6,
+    borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   toolIcon: {
-    padding: 4,
+    padding: 8,
+    marginHorizontal: 6,
   },
 
   // --- Popover Styles ---

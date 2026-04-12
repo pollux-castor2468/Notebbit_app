@@ -74,7 +74,7 @@ export default function Setting() {
           <ListSettingItem
             icon={CheckSquare}
             title="自訂任務"
-            onPress={() => { }}
+            onPress={() => router.push('/custom-tasks')}
           />
           <ListSettingItem
             icon={SettingsIcon}

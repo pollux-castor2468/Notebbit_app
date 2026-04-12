@@ -10,6 +10,7 @@
     "deploy": "npx expo export -p web && npx eas-cli@latest deploy"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "8.4.4",
     "expo": "^54.0.1",
     "expo-constants": "~18.0.13",
     "expo-document-picker": "~14.0.8",
