@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, FileText, Search, MoreVertical, Star, Book } from 'lucide-react-native';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { colors } from '../../../constants/token';
+import { layoutStyles, textStyles } from '../../../styles';
+import { useFileStore } from '../../../store/useFileStore';
 
 export default function FileBrowser() {
   const params = useLocalSearchParams();
@@ -15,15 +16,13 @@ export default function FileBrowser() {
   );
 
   const [selectedItem, setSelectedItem] = useState(null);
-  const [popoverPos, setPopoverPos] = useState(0); // Only tracking Y coord
+  const [popoverPos, setPopoverPos] = useState(0);
 
-  const [data, setData] = useState([
-    { id: '1', title: '第一份研究報告', type: 'document', date: '2026.04.04 11:46', starred: true },
-    { id: '2', title: '日常隨記 01', type: 'diary', date: '2026.04.03 20:12', starred: false },
-    { id: '3', title: '神秘森林考察', type: 'document', date: '2026.04.02 09:30', starred: true },
-    { id: '4', title: '筆記：React Native', type: 'document', date: '2026.04.01 14:05', starred: false },
-    { id: '5', title: '心情日記', type: 'diary', date: '2026.03.28 22:55', starred: true },
-  ]);
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [itemToRename, setItemToRename] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+
+  const { data, setData, updateFile } = useFileStore();
 
   let emptyMessage = '目前沒有任何資料。';
 
@@ -39,8 +38,19 @@ export default function FileBrowser() {
     }
   };
 
-  const handleRename = () => {
+  const handleRenameClick = () => {
+    setItemToRename(selectedItem);
+    setNewTitle(selectedItem.title);
+    setRenameModalVisible(true);
     setSelectedItem(null);
+  };
+
+  const submitRename = () => {
+    if (newTitle.trim() && itemToRename) {
+      updateFile(itemToRename.id, { title: newTitle.trim() });
+    }
+    setRenameModalVisible(false);
+    setItemToRename(null);
   };
 
   return (
@@ -83,9 +93,9 @@ export default function FileBrowser() {
                  style={[styles.listItem, isMenuOpen && { borderColor: 'rgba(0,0,0,0.1)' }]}
                  onPress={() => {
                    if (item.type === 'diary') {
-                      router.push({ pathname: '/diary-editor', params: { title: item.title } });
+                      router.push(`/diary/${item.id}`);
                    } else {
-                      router.push({ pathname: '/document-editor', params: { title: item.title } });
+                      router.push(`/document/${item.id}`);
                    }
                  }}
                >
@@ -132,7 +142,7 @@ export default function FileBrowser() {
             style={[styles.modalInnerContainer, { top: popoverPos > 0 ? popoverPos + 10 : '50%' }]} 
             onPress={e => e.stopPropagation()}
           >
-            <Pressable style={styles.modalBtn} onPress={handleRename}>
+            <Pressable style={styles.modalBtn} onPress={handleRenameClick}>
               <Text style={styles.modalBtnText}>
                 {selectedItem?.type === 'diary' ? '重新命名日記' : '重新命名文件'}
               </Text>
@@ -145,6 +155,34 @@ export default function FileBrowser() {
             </Pressable>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Rename Dialog Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={renameModalVisible}
+        onRequestClose={() => setRenameModalVisible(false)}
+      >
+        <View style={styles.renameOverlay}>
+          <View style={styles.renameContent}>
+            <Text style={textStyles.h3}>重新命名</Text>
+            <TextInput
+              style={styles.renameInput}
+              value={newTitle}
+              onChangeText={setNewTitle}
+              autoFocus
+            />
+            <View style={styles.renameActions}>
+              <Pressable style={styles.renameBtnCancel} onPress={() => setRenameModalVisible(false)}>
+                <Text style={styles.renameBtnText}>取消</Text>
+              </Pressable>
+              <Pressable style={styles.renameBtnSubmit} onPress={submitRename}>
+                <Text style={[styles.renameBtnText, { color: '#FFF' }]}>確認</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -160,7 +198,7 @@ const styles = StyleSheet.create({
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.recentSection,
     borderRadius: 16,
     padding: 6,
     marginHorizontal: 16,
@@ -174,7 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   segmentActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -202,18 +240,18 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: colors.border,
   },
   iconBox: {
     width: 48,
     height: 52,
     borderRadius: 16,
-    backgroundColor: '#E8F5FA',
+    backgroundColor: colors.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -228,16 +266,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dotsBtnActive: {
-    backgroundColor: '#EBEBEB', // Light gray background when active
+    backgroundColor: colors.recentSection,
   },
   modalOverlay: {
     flex: 1,
   },
   modalInnerContainer: {
     position: 'absolute',
-    right: 28, // Docked to the right side where the dots naturally sit
+    right: 28,
     width: 160,
-    backgroundColor: '#F3F3F3', // Light gray outer wrapper
+    backgroundColor: colors.recentSection,
     borderRadius: 16,
     padding: 8,
     shadowColor: '#000',
@@ -247,7 +285,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   modalBtn: {
-    backgroundColor: '#FFFFFF', // White buttons
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -258,4 +296,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  renameOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  renameContent: {
+    width: '80%',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 24,
+  },
+  renameInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.text,
+  },
+  renameActions: {
+    flexDirection: 'row',
+    marginTop: 24,
+  },
+  renameBtnCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: colors.border,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  renameBtnSubmit: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: colors.fab,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  renameBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
 });

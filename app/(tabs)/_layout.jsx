@@ -29,15 +29,15 @@ export default function TabLayout() {
             left: 15,
             right: 15,
             height: 80,
-            backgroundColor: '#FAFAFA', // 淺灰白背景
+            backgroundColor: themeColors.surface, // 淺黃背景
             borderRadius: 40,
-            borderTopWidth: 0,
+            borderTopWidth: 1, // Need border top
             elevation: 0,
             shadowOpacity: 0,
             paddingBottom: 8, // Adjust label spacing
             paddingTop: 8,
             borderWidth: 1,
-            borderColor: 'rgba(101, 68, 69, 0.08)',
+            borderColor: themeColors.border,
           },
           tabBarActiveTintColor: themeColors.text,
           tabBarInactiveTintColor: themeColors.inactiveText,
@@ -88,7 +88,8 @@ export default function TabLayout() {
                   <View style={{
                     width: 56,
                     height: 56,
-                    backgroundColor: '#F3E5AB', // 淺米黃色(參考設計稿)
+                    backgroundColor: themeColors.fab, // 黃色
+
                     borderRadius: 28, // 圓形
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E5E3E3', // 灰色背景
+    backgroundColor: themeColors.recentHeader,
     borderRadius: 24,
     padding: 12,
     gap: 12, // React Native 支援 gap
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   menuItem: {
     width: 100,
     height: 64,
-    backgroundColor: '#F5F5F5', // 按鈕為更亮的顏色
+    backgroundColor: themeColors.surface,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 14,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#E5E3E3', // 與 menuContainer 相同顏色
+    borderTopColor: themeColors.recentHeader,
     marginTop: 0, // No margin, it flush bounds exactly to popover container
   },
 });

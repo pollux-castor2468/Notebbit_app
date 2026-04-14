@@ -21,9 +21,15 @@ import {
 import { router } from 'expo-router';
 import { colors } from '../../../constants/token';
 import TopHeader from '../../../components/TopHeader';
+import { useSettingsStore } from '../../../store/useSettingsStore';
+import { useFileStore } from '../../../store/useFileStore';
 
 export default function Setting() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, setIsDarkMode } = useSettingsStore();
+  const data = useFileStore(state => state.data);
+
+  const documentCount = data.filter(d => d.type === 'document').length;
+  const diaryCount = data.filter(d => d.type === 'diary').length;
 
   const ListSettingItem = ({ icon: Icon, title, onPress, children }) => (
     <Pressable style={styles.listItem} onPress={onPress}>
@@ -42,24 +48,24 @@ export default function Setting() {
         {/* Top Grid Area: 2 tiles of 182x120 */}
         <View style={styles.topGridRow}>
           <Pressable
-            style={styles.topGridCard}
+            style={[styles.topGridCard, { backgroundColor: colors.container }]}
             onPress={() => router.push({ pathname: '/file-browser', params: { type: 'document' } })}
           >
             <View style={styles.topCardContent}>
               <FileText size={26} color={colors.text} style={{ marginBottom: 6 }} />
               <Text style={styles.gridTitle}>所有文件</Text>
-              <Text style={styles.gridCount}>共 8 篇</Text>
+              <Text style={styles.gridCount}>共 {documentCount} 篇</Text>
             </View>
           </Pressable>
 
           <Pressable
-            style={styles.topGridCard}
+            style={[styles.topGridCard, { backgroundColor: colors.secondary }]}
             onPress={() => router.push({ pathname: '/file-browser', params: { type: 'diary' } })}
           >
             <View style={styles.topCardContent}>
               <Edit size={26} color={colors.text} style={{ marginBottom: 6 }} />
               <Text style={styles.gridTitle}>所有日記</Text>
-              <Text style={styles.gridCount}>共 8 篇</Text>
+              <Text style={styles.gridCount}>共 {diaryCount} 篇</Text>
             </View>
           </Pressable>
         </View>
@@ -89,8 +95,8 @@ export default function Setting() {
             <Switch
               value={isDarkMode}
               onValueChange={setIsDarkMode}
-              trackColor={{ false: 'rgba(101,68,69,0.2)', true: colors.primary }}
-              thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
+              trackColor={{ false: 'rgba(101,68,69,0.2)', true: colors.fab }}
+              thumbColor={isDarkMode ? colors.surface : colors.text}
             />
           </ListSettingItem>
           {/* Blank 378x60 block based on formatting requirement bottom tag */}
@@ -121,9 +127,8 @@ const styles = StyleSheet.create({
     flex: 0.48,
     height: 120,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: 'rgba(101, 68, 69, 0.2)',
+    borderColor: colors.border,
     justifyContent: 'center',
   },
   topCardContent: {
@@ -148,12 +153,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     height: 60,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: colors.tertiary,
     borderRadius: 16,
     paddingHorizontal: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(101, 68, 69, 0.2)',
+    borderColor: colors.border,
   },
   listItemText: {
     fontSize: 16,

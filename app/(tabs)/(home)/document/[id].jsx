@@ -5,8 +5,10 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight, Highlighter, Trash2, PaintBucket, Image as ImageIcon, Link, X as XIcon } from 'lucide-react-native';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { colors } from '../../../../constants/token';
+import { layoutStyles, textStyles } from '../../../../styles';
+import { useFileStore } from '../../../../store/useFileStore';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 // Helper for the custom red floating delete badge (used in version control)
 const CardDeleteBadge = ({ onPress }) => (
@@ -19,27 +21,43 @@ const CardDeleteBadge = ({ onPress }) => (
 
 export default function DocumentEditor() {
   const params = useLocalSearchParams();
-  const { title } = params;
+  const { id } = params;
 
-  // --- States ---
-  const [content, setContent] = useState('');
+  const fileData = useFileStore(state => state.data.find(d => d.id === id));
+  const updateFile = useFileStore(state => state.updateFile);
+  const toggleStar = useFileStore(state => state.toggleStar);
+  const saveVersion = useFileStore(state => state.saveVersion);
+  const deleteVersion = useFileStore(state => state.deleteVersion);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(fileData?.title || '未命名');
+  const [content, setContent] = useState(fileData?.content || '');
   const richText = useRef(null);
+  
+  const bottomSheetRef = useRef(null);
+  const snapPoints = React.useMemo(() => ['15%', '40%'], []);
   const wordCount = content.replace(/<[^>]*>?/gm, '').replace(/\s/g, '').length || 7; // Basic HTML stripping for wordCount
+
+  // Data Source System
+  const [sources, setSources] = useState(fileData?.sources && fileData.sources.length > 0 ? fileData.sources : [{ id: 1, text: '' }]);
+
+  // 自動儲存
+  React.useEffect(() => {
+    if (id) {
+      updateFile(id, { title, content, sources });
+    }
+  }, [title, content, sources, id, updateFile]);
 
   // Modals state: 'version' | 'source' | 'more' | 'colors' | 'bgColors' | 'link' | null
   const [activeModal, setActiveModal] = useState(null); 
   const [popoverPos, setPopoverPos] = useState(0);
   const [popoverState, setPopoverState] = useState('menu');
 
-  // Title processing (strictly 7 characters maximum)
-  const trimmedTitle = title ? (title.length > 7 ? title.slice(0, 7) + '...' : title) : '文件名稱';
-
   // Link Modal
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
 
-  // Data Source System
-  const [sources, setSources] = useState([{ id: 1, text: '' }]);
+  // Data Source System handled above
   // Formatting tracking
   const [currentFont, setCurrentFont] = useState('Arial');
   const [currentSize, setCurrentSize] = useState('14');
@@ -130,8 +148,38 @@ export default function DocumentEditor() {
   };
 
   const handleHighlightParagraph = () => {
-    // Prototyping "Highlighting Paragraph" behavior
     richText.current?.sendAction('hiliteColor', 'result', '#FEF08A'); // yellow highlight
+  };
+
+  const handleSaveVersion = () => {
+    const versionData = {
+      id: String(Date.now()),
+      title,
+      content,
+      sources,
+      date: new Date().toLocaleDateString()
+    };
+    saveVersion(id, versionData);
+  };
+
+  const handleRestoreVersion = (versionData) => {
+    Alert.alert(
+      '還原版本',
+      '是否確定要還原你並未儲存？這將會覆蓋當前的內容。',
+      [
+        { text: '取消', style: 'cancel' },
+        { 
+          text: '確定', 
+          style: 'destructive',
+          onPress: () => {
+            setTitle(versionData.title || '未命名');
+            setContent(versionData.content || '');
+            if (versionData.sources) setSources(versionData.sources);
+            setActiveModal(null);
+          } 
+        }
+      ]
+    );
   };
 
   return (
@@ -142,9 +190,26 @@ export default function DocumentEditor() {
           <Pressable onPress={() => router.back()} style={{ marginRight: 8 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
-          <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1}>
-            {trimmedTitle}
-          </Text>
+          {isEditingTitle ? (
+            <TextInput 
+              style={[styles.headerTitle, { flex: 1, padding: 0, margin: 0, outline: 'none' }]} 
+              numberOfLines={1} 
+              value={title} 
+              onChangeText={setTitle} 
+              autoFocus
+              onBlur={() => setIsEditingTitle(false)}
+              onSubmitEditing={() => setIsEditingTitle(false)}
+            />
+          ) : (
+            <Text 
+              style={[styles.headerTitle, { flex: 1 }]} 
+              numberOfLines={1} 
+              ellipsizeMode="tail"
+              onPress={() => setIsEditingTitle(true)}
+            >
+              {title || '未命名'}
+            </Text>
+          )}
         </View>
         <View style={layoutStyles.rowCenter}>
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('source')}>
@@ -153,8 +218,8 @@ export default function DocumentEditor() {
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('version')}>
             <Clock size={24} color={colors.text} />
           </Pressable>
-          <Pressable style={styles.iconButton}>
-            <Star size={24} color={colors.text} />
+          <Pressable style={styles.iconButton} onPress={() => toggleStar(id)}>
+            <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />
           </Pressable>
           <Pressable 
             style={[styles.iconButton, activeModal === 'more' ? styles.dotsBtnActive : null]} 
@@ -204,10 +269,17 @@ export default function DocumentEditor() {
           </View>
         </TouchableWithoutFeedback>
 
-        {/* Bottom Format Toolbar Box (Floating) */}
-        <View style={styles.bottomToolbar}>
-          <View style={styles.dragPill} />
-          
+      </KeyboardAvoidingView>
+
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose={false}
+        index={0}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.sheetHandleIndicator}
+      >
+        <BottomSheetView style={styles.sheetContentContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
             {/* Font Selectors */}
             <View style={styles.dropdownGroup}>
@@ -232,8 +304,8 @@ export default function DocumentEditor() {
               <Pressable style={styles.toolIcon} onPress={() => setActiveModal('link')}><Link size={20} color={colors.text} /></Pressable>
             </View>
           </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
+        </BottomSheetView>
+      </BottomSheet>
 
       {/* --- OVERLAY MODALS --- */}
 
@@ -247,7 +319,7 @@ export default function DocumentEditor() {
               <View style={styles.sheetHeaderRow}>
                  <Text style={styles.sheetTitle}>版本控制</Text>
                  <View style={layoutStyles.rowCenter}>
-                    <Pressable style={styles.bluePlusBtn}><Plus size={20} color={colors.text} /></Pressable>
+                    <Pressable style={styles.bluePlusBtn} onPress={handleSaveVersion}><Plus size={20} color={colors.text} /></Pressable>
                     <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
                  </View>
               </View>
@@ -259,18 +331,16 @@ export default function DocumentEditor() {
               </View>
 
               <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-                <View style={styles.sheetCard}>
-                   <CardDeleteBadge />
-                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
-                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-                </View>
-                <View style={styles.sheetCard}>
-                   <CardDeleteBadge />
-                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
-                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-                </View>
+                {fileData?.versions?.length > 0 ? fileData.versions.map((ver, idx) => (
+                  <Pressable key={ver.id} style={styles.sheetCard} onPress={() => handleRestoreVersion(ver)}>
+                     <CardDeleteBadge onPress={() => deleteVersion(id, ver.id)} />
+                     <Text style={[styles.cardText, { flex: 1.2 }]} numberOfLines={1}>版本{fileData.versions.length - idx}</Text>
+                     <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]} numberOfLines={1}>{ver.title}</Text>
+                     <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>{ver.date}</Text>
+                  </Pressable>
+                )) : (
+                  <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>目前沒有版本紀錄</Text>
+                )}
               </ScrollView>
            </View>
         </View>
@@ -457,7 +527,7 @@ export default function DocumentEditor() {
                 onPress={() => handleSetFontFamily(font)}
               >
                 <Text style={[styles.fontOptionText, { fontFamily: Platform.OS === 'web' ? font : undefined }]}>{font}</Text>
-                {currentFont === font && <ChevronLeft size={20} color={colors.primary || '#666'} style={{ transform: [{ rotate: '180deg' }] }} />}
+                {currentFont === font && <ChevronLeft size={20} color={colors.fab} style={{ transform: [{ rotate: '180deg' }] }} />}
               </Pressable>
             ))}
           </Pressable>
@@ -476,7 +546,7 @@ export default function DocumentEditor() {
                 onPress={() => handleSetFontSize(size)}
               >
                 <Text style={styles.fontOptionText}>{size.label}</Text>
-                {currentSize === size.label && <ChevronLeft size={20} color={colors.primary || '#666'} style={{ transform: [{ rotate: '180deg' }] }} />}
+                {currentSize === size.label && <ChevronLeft size={20} color={colors.fab} style={{ transform: [{ rotate: '180deg' }] }} />}
               </Pressable>
             ))}
           </Pressable>
@@ -506,7 +576,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   dotsBtnActive: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
   },
   content: {
     flex: 1,
@@ -524,7 +594,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === 'ios' ? 24 : 16,
     left: 20,
     right: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     paddingTop: 8,
     paddingBottom: 16,
@@ -538,10 +608,22 @@ const styles = StyleSheet.create({
   dragPill: {
     width: 40,
     height: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 12,
+  },
+  bottomSheetBackground: {
+    backgroundColor: colors.recentSection,
+    borderRadius: 24,
+  },
+  sheetHandleIndicator: {
+    backgroundColor: colors.inactiveText,
+    width: 80,
+  },
+  sheetContentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
   toolbarRow: {
     flexDirection: 'row',
@@ -550,9 +632,9 @@ const styles = StyleSheet.create({
   dropdownGroup: {
     flexDirection: 'row',
     marginRight: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -562,7 +644,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
+    borderRightColor: colors.border,
   },
   dropdownText: {
     fontSize: 16,
@@ -582,7 +664,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheetContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
@@ -593,7 +675,7 @@ const styles = StyleSheet.create({
   sheetDragPill: {
     width: 100,
     height: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 20,
@@ -610,19 +692,19 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   closeBtn: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
     padding: 6,
     borderRadius: 20,
     marginLeft: 8,
   },
   bluePlusBtn: {
-    backgroundColor: '#D6E4FF',
+    backgroundColor: colors.secondary,
     padding: 8,
     borderRadius: 20,
   },
   sheetSubheadPill: {
     flexDirection: 'row',
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentHeader,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -630,18 +712,18 @@ const styles = StyleSheet.create({
   subheadText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#6B7280',
+    color: colors.inactiveText,
   },
   subheadTextDesc: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: colors.inactiveText,
     flex: 1,
   },
   sheetCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     marginTop: 12,
     paddingHorizontal: 16,
@@ -671,7 +753,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     minWidth: 150,
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 8,
     shadowColor: '#000',
@@ -686,7 +768,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: colors.recentSection,
     borderRadius: 8,
     marginBottom: 8,
   },
@@ -699,7 +781,7 @@ const styles = StyleSheet.create({
   sourceCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     marginTop: 12,
     paddingHorizontal: 16,
@@ -709,7 +791,7 @@ const styles = StyleSheet.create({
     flex: 0.5,
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.primary || '#666',
+    color: colors.fab,
   },
   sourceInput: {
     flex: 3,

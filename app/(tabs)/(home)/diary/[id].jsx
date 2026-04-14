@@ -2,34 +2,54 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight, X as XIcon } from 'lucide-react-native';
+import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight, X as XIcon, Star } from 'lucide-react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { colors } from '../../../../constants/token';
+import { layoutStyles, textStyles } from '../../../../styles';
+import { useFileStore } from '../../../../store/useFileStore';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 export default function DiaryEditor() {
   const params = useLocalSearchParams();
-  const { title } = params;
+  const { id } = params;
+
+  const fileData = useFileStore(state => state.data.find(d => d.id === id));
+  const updateFile = useFileStore(state => state.updateFile);
+  const toggleStar = useFileStore(state => state.toggleStar);
 
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'more' | null
   const [popoverPos, setPopoverPos] = useState(0);
   const [popoverState, setPopoverState] = useState('menu'); // 'menu' | 'wordCount'
 
-  // Content state for Word Count
-  const [content, setContent] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(fileData?.title || '未命名日記');
+  const [content, setContent] = useState(fileData?.content || '');
   const richText = useRef(null);
-  const [date, setDate] = useState(new Date('2026-04-04T00:00:00'));
+
+  const bottomSheetRef = useRef(null);
+  const snapPoints = React.useMemo(() => ['15%', '40%'], []);
+  
+  // Try to parse the saved date, otherwise use current date
+  const [date, setDate] = useState(fileData?.date ? new Date(fileData.date.replace(/\./g, '-')) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedWeather, setSelectedWeather] = useState(null);
-  const [selectedMood, setSelectedMood] = useState(null);
+  const [selectedWeather, setSelectedWeather] = useState(fileData?.weather || null);
+  const [selectedMood, setSelectedMood] = useState(fileData?.mood || null);
   
   // Link Modal State
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
-  const wordCount = content.replace(/\s/g, '').length || 7; // fallback to 7 if empty to match Figma mock
+  const wordCount = content.replace(/\s/g, '').length || 7;
+
+  // 自動儲存
+  React.useEffect(() => {
+    if (id) {
+      const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      updateFile(id, { title, content, date: formattedDate, weather: selectedWeather, mood: selectedMood });
+    }
+  }, [title, content, date, selectedWeather, selectedMood, id, updateFile]);
 
   const gridColors = [
     ['#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280', '#4B5563', '#374151', '#000000'],
@@ -112,11 +132,31 @@ export default function DiaryEditor() {
           <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
-          <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-            {title || '日記名稱'}
-          </Text>
+          {isEditingTitle ? (
+            <TextInput 
+              style={[styles.headerTitle, { flex: 1, padding: 0, margin: 0, outline: 'none' }]} 
+              numberOfLines={1} 
+              value={title} 
+              onChangeText={setTitle}
+              autoFocus
+              onBlur={() => setIsEditingTitle(false)}
+              onSubmitEditing={() => setIsEditingTitle(false)}
+            />
+          ) : (
+            <Text 
+              style={[styles.headerTitle, { flex: 1 }]} 
+              numberOfLines={1} 
+              ellipsizeMode="tail"
+              onPress={() => setIsEditingTitle(true)}
+            >
+              {title || '未命名日記'}
+            </Text>
+          )}
         </View>
         <View style={layoutStyles.rowCenter}>
+          <Pressable style={styles.iconButton} onPress={() => toggleStar(id)}>
+            <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />
+          </Pressable>
           <Pressable style={styles.iconButton} onPress={handleSave}>
             <Check size={24} color={colors.text} />
           </Pressable>
@@ -261,10 +301,17 @@ export default function DiaryEditor() {
         </View>
         </TouchableWithoutFeedback>
 
-        {/* Bottom Toolbar Box */}
-        <View style={styles.bottomToolbar}>
-          <View style={styles.dragPill} />
+      </KeyboardAvoidingView>
 
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose={false}
+        index={0}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.sheetHandleIndicator}
+      >
+        <BottomSheetView style={styles.sheetContentContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
             <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setBold, 'result')}><Bold size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setUnderline, 'result')}><Underline size={24} color={colors.text} /></Pressable>
@@ -273,8 +320,8 @@ export default function DiaryEditor() {
             <Pressable style={styles.toolIcon} onPress={handlePickImage}><ImageIcon size={24} color={colors.text} /></Pressable>
             <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('link'); }}><Link size={24} color={colors.text} /></Pressable>
           </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
+        </BottomSheetView>
+      </BottomSheet>
 
       {/* Popover overlay (rendered manually instead of using Modal to avoid layering issues) */}
       {activeModal === 'more' && (
@@ -435,7 +482,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   dotsBtnActive: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
   },
   content: {
     flex: 1,
@@ -465,25 +512,37 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   bottomToolbar: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 36, // Safe area lift
+    paddingBottom: 36,
   },
   dragPill: {
     width: 80,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#ADADAD',
+    backgroundColor: colors.inactiveText,
     alignSelf: 'center',
     marginBottom: 20,
+  },
+  bottomSheetBackground: {
+    backgroundColor: colors.recentSection,
+    borderRadius: 24,
+  },
+  sheetHandleIndicator: {
+    backgroundColor: colors.inactiveText,
+    width: 80,
+  },
+  sheetContentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -498,7 +557,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     width: 170,
-    backgroundColor: '#F3F3F3', // Light grey container
+    backgroundColor: colors.recentSection,
     borderRadius: 16,
     padding: 8,
     shadowColor: '#000',
@@ -511,7 +570,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF', // White solid button
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -530,7 +589,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   colorSheet: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
@@ -548,7 +607,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   closeBtn: {
-    backgroundColor: '#E5E5E5',
+    backgroundColor: colors.recentSection,
     padding: 8,
     borderRadius: 20,
   },
@@ -581,14 +640,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   plusColorText: {
     fontSize: 28,
     fontWeight: '300',
-    color: '#000',
+    color: colors.text,
     lineHeight: 32,
   },
 
@@ -601,7 +660,7 @@ const styles = StyleSheet.create({
   },
   linkModalCard: {
     width: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',
@@ -612,7 +671,7 @@ const styles = StyleSheet.create({
   },
   linkInput: {
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     marginTop: 16,
@@ -625,7 +684,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: colors.border,
     alignItems: 'center',
   },
   linkBtnOk: {
@@ -634,7 +693,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: colors.primary || '#666',
+    backgroundColor: colors.fab,
     alignItems: 'center',
   },
   linkBtnText: {

@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ChevronLeft, Monitor, Moon, Image as ImageIcon } from 'lucide-react-native';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { colors } from '../../../constants/token';
+import { layoutStyles, textStyles } from '../../../styles';
+import { useSettingsStore } from '../../../store/useSettingsStore';
 
 export default function SettingsDetails() {
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const { isDarkMode, setIsDarkMode } = useSettingsStore();
 
   return (
     <SafeAreaView style={layoutStyles.root}>
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   settingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     paddingVertical: 8,
   },
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(101, 68, 69, 0.06)',
+    backgroundColor: `rgba(108, 94, 79, 0.1)`,
     marginHorizontal: 20,
   },
 });

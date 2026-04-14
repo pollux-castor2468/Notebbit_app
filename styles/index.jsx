@@ -71,7 +71,7 @@ export const cardStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: '#FFF',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   listItem: {
@@ -83,6 +83,6 @@ export const cardStyles = StyleSheet.create({
   },
   listItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(101, 68, 69, 0.08)',
+    borderBottomColor: colors.border,
   },
 });

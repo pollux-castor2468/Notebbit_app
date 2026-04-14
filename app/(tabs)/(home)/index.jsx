@@ -16,11 +16,15 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { colors } from '../../../constants/token';
 import { layoutStyles, textStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
+import { useFileStore } from '../../../store/useFileStore';
 
 export default function Home() {
+
+  const { data: historyData, createFile, updateFile } = useFileStore();
 
   const handleOpenLocalFile = async () => {
     try {
@@ -32,11 +36,25 @@ export default function Home() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         console.log('Selected file:', file);
-        // Navigate to document editor passing the file uri and name
-        router.push({
-          pathname: '/document-editor',
-          params: { fileUri: file.uri, fileName: file.name, isLocal: 'true' }
-        });
+
+        let content = '';
+        if (file.mimeType === 'text/plain' || file.name.endsWith('.txt')) {
+          try {
+            content = await FileSystem.readAsStringAsync(file.uri);
+          } catch (e) {
+            console.error('Error reading txt file:', e);
+            Alert.alert('提示', '目前僅支援純文字檔 (TXT) 內容匯入，其他格式將以空白檔案開啟。');
+          }
+        } else {
+          Alert.alert('提示', '目前僅支援純文字檔 (TXT) 內容匯入，其他格式將以空白檔案開啟。');
+        }
+
+        const newDoc = createFile('document', file.name.replace(/\.[^/.]+$/, ""));
+        if (content) {
+          updateFile(newDoc.id, { content });
+        }
+
+        router.push(`/document/${newDoc.id}`);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -44,11 +62,17 @@ export default function Home() {
     }
   };
 
-  const mockHistoryData = [
-    { id: 1, title: '生態研究報告草稿', type: 'document', time: '今天 10:23' },
-    { id: 2, title: '觀察日記：林間活動', type: 'diary', time: '昨天 15:40' },
-    { id: 3, title: '未命名文件 1', type: 'document', time: '前天 09:15' },
-  ];
+  const recentHistory = historyData.slice(0, 5); // Show latest 5
+
+  const handleCreateDocument = () => {
+    const newFile = createFile('document', '未命名文件');
+    router.push(`/document/${newFile.id}`);
+  };
+
+  const handleCreateDiary = () => {
+    const newFile = createFile('diary', '未命名日記');
+    router.push(`/diary/${newFile.id}`);
+  };
 
   return (
     <SafeAreaView style={layoutStyles.root}>
@@ -62,7 +86,7 @@ export default function Home() {
           {/* Left large card */}
           <Pressable
             style={[styles.largeCard, { backgroundColor: colors.container }]}
-            onPress={() => router.push('/document-editor')}
+            onPress={handleCreateDocument}
           >
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               <FileText size={48} color={colors.text} />
@@ -74,7 +98,7 @@ export default function Home() {
           <View style={styles.rightColumn}>
             <Pressable
               style={[styles.smallCard, { backgroundColor: colors.secondary, marginBottom: 16 }]}
-              onPress={() => router.push('/diary-editor')}
+              onPress={handleCreateDiary}
             >
               <View style={layoutStyles.rowCenter}>
                 <Book size={24} color={colors.onPrimary} />
@@ -96,21 +120,21 @@ export default function Home() {
 
         {/* History Area */}
         <View style={styles.historySection}>
-          <View style={layoutStyles.rowCenter}>
+          <View style={[layoutStyles.rowCenter, styles.historyHeader]}>
             <Clock size={16} color={colors.text} />
-            <Text style={[textStyles.h3, { marginLeft: 8 }]}>歷史紀錄瀏覽</Text>
+            <Text style={[textStyles.h3, { marginLeft: 8 }]}>最近開啟</Text>
           </View>
 
-          <View style={{ marginTop: 16 }}>
-            {mockHistoryData.map(item => (
+          <View style={styles.historyBody}>
+            {recentHistory.map(item => (
               <Pressable
                 key={item.id}
                 style={styles.historyItem}
                 onPress={() => {
                   if (item.type === 'diary') {
-                    router.push({ pathname: '/diary-editor', params: { title: item.title } });
+                    router.push(`/diary/${item.id}`);
                   } else {
-                    router.push({ pathname: '/document-editor', params: { title: item.title } });
+                    router.push(`/document/${item.id}`);
                   }
                 }}
               >
@@ -123,7 +147,7 @@ export default function Home() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[textStyles.body, { fontWeight: '700', marginBottom: 4 }]}>{item.title}</Text>
-                  <Text style={[textStyles.subtitle, { fontSize: 12 }]}>{item.time} 編輯</Text>
+                  <Text style={[textStyles.subtitle, { fontSize: 12 }]}>{item.date || item.time} 編輯</Text>
                 </View>
               </Pressable>
             ))}
@@ -141,13 +165,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   largeCard: {
-    flex: 1,
+    flex: 0.9,
     borderRadius: 28,
     marginRight: 16,
     padding: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   rightColumn: {
-    flex: 0.8,
+    flex: 1.1,
     justifyContent: 'space-between',
   },
   smallCard: {
@@ -155,20 +181,32 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   historySection: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.recentSection,
     borderRadius: 32,
-    padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: colors.border,
     minHeight: 400,
+    overflow: 'hidden',
+  },
+  historyHeader: {
+    backgroundColor: colors.recentHeader,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  historyBody: {
+    padding: 24,
   },
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 14,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: 'transparent',
     padding: 12,
     borderRadius: 20,
   },

@@ -1,13 +1,17 @@
 export const colors = {
-  text: 'rgb(101, 68, 69)',      // 深木色
-  inactiveText: 'rgb(96, 96, 96)', // 鼠尾草綠
-  onPrimary: '#FFFFFF',
-  surface: 'rgb(255, 239, 222)',   // 明亮米色
-  secondary: 'rgb(149, 175, 152)',  // 鼠尾草綠
-  tertiary: 'rgb(255, 137, 126)',   // 鮭魚粉
-  container: 'rgb(231, 207, 206)',  // 淺木色
-  surfaceVariant: '#F5EBE0',
-  canva: '#8B3DFF', // Canva 紫色
+  text: '#6C5E4F',      // 邊框與文字顏色 (咖啡)
+  inactiveText: 'rgba(108, 94, 79, 0.6)', 
+  onPrimary: '#6C5E4F', // Icon/Text colors
+  surface: '#FFFFF9',   // 背景顏色 (淺黃)
+  secondary: '#FFF1E3', // 建立日記 (粉橘)
+  tertiary: '#FFFAE3',  // 開啟文件 (淺黃)
+  container: '#FFD1D0', // 建立文件 (粉紅)
+  surfaceVariant: '#FFFAE3', // 開啟文件 (淺黃)
+  recentSection: '#FFFEEE',  // 最近開啟區 (淺黃)
+  recentHeader: '#FFE9B9',   // 最近開啟頭 (橘黃)
+  fab: '#FFED64',            // fab按鍵 (黃色)
+  border: '#6C5E4F',         // 邊框顏色 (咖啡)
+  canva: '#8B3DFF',          
 }
 
 export const fontSize = {

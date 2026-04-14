@@ -1,11 +1,36 @@
 {
   "expo": {
-    "scheme": "acme",
+    "name": "notes-app",
+    "slug": "notebbit-app",
+    "version": "1.0.0",
+    "scheme": "notebbit",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFF9"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFF9"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
     "plugins": [
+      "react-native-reanimated/plugin",
       "expo-router",
       "@react-native-community/datetimepicker"
-    ],
-    "name": "notes-app",
-    "slug": "notes-app"
+    ]
   }
 }
