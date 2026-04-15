@@ -1,17 +1,17 @@
 export const colors = {
-  text: '#6C5E4F',      // 邊框與文字顏色 (咖啡)
+  text: '#6C5E4F',           // 邊框與文字顏色 (咖啡)
   inactiveText: 'rgba(108, 94, 79, 0.6)', 
-  onPrimary: '#6C5E4F', // Icon/Text colors
-  surface: '#FFFFF9',   // 背景顏色 (淺黃)
-  secondary: '#FFF1E3', // 建立日記 (粉橘)
-  tertiary: '#FFFAE3',  // 開啟文件 (淺黃)
-  container: '#FFD1D0', // 建立文件 (粉紅)
-  surfaceVariant: '#FFFAE3', // 開啟文件 (淺黃)
+  onPrimary: '#6C5E4F',      // Icon/Text colors  (和第一個重複了啦！
+  surface: '#FFFFF9',        // 背景顏色 (淺黃)
+  secondary: '#FFF1E3',      // 建立日記 (粉橘)
+  tertiary: '#FFFAE3',       // 開啟文件 (淺黃)
+  container: '#FFD1D0',      // 建立文件 (粉紅)
+  surfaceVariant: '#FFFAE3', // 開啟文件 (淺黃)    (和第一個重複了啦！
   recentSection: '#FFFEEE',  // 最近開啟區 (淺黃)
   recentHeader: '#FFE9B9',   // 最近開啟頭 (橘黃)
   fab: '#FFED64',            // fab按鍵 (黃色)
-  border: '#6C5E4F',         // 邊框顏色 (咖啡)
-  canva: '#8B3DFF',          
+  border: '#6C5E4F',         // 邊框顏色 (咖啡)    (所以說和第一個重複了啦！
+  canva: '#8B3DFF',          // 不是說好的不用google紫色嗎
 }
 
 export const fontSize = {

@@ -1,21 +1,24 @@
 import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
-import { colors as themeColors, fontSize } from "../../constants/token";
+import { colors as themeColors, fontSize, colors } from "../../constants/token";
 import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
 import { useFileStore } from "../../store/useFileStore";
 
 export default function TabLayout() {
+  //寫程式怎麼可以沒有註解(怒(掀桌
+  //這是什麼? 喔喔一樣是下面tab的+號鍵，有觸發是true，關閉是false
   const [isAddMenuVisible, setAddMenuVisible] = useState(false);
+  //用全域變數儲存！這樣才不會不見
   const { data: historyData, createFile, updateFile } = useFileStore();
 
-  // Close menu and navigate
+  // Close menu and navigate 點擊下面的tab鍵後觸發，在最下面
   const handleNavCreate = (type) => {
     setAddMenuVisible(false);
-    if (type === 'document') {
+    if (type === 'document') {  //連到編輯文件頁
       const newFile = createFile('document', '未命名文件');
       router.push(`/(tabs)/(home)/document/${newFile.id}`);
-    } else {
+    } else {  //連到日記頁
       const newFile = createFile('diary', '未命名日記');
       router.push(`/(tabs)/(home)/diary/${newFile.id}`);
     }
@@ -23,17 +26,19 @@ export default function TabLayout() {
 
   return (
     <>
-      <Tabs
+      <Tabs  //下面的tab區域
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,
           tabBarStyle: {
             position: 'absolute',
-            bottom: 24,
-            left: 15,
-            right: 15,
+            bottom: 35,  //調整這個可以逾留出下面空間嗎?
+            // left: 15,
+            // right: 15,
             height: 80,
-            backgroundColor: themeColors.surface, // 淺黃背景
+            width: '95%',
+            marginLeft: 8,
+            backgroundColor: themeColors.recentSection, // 淺黃背景
             borderRadius: 40,
             borderTopWidth: 1, // Need border top
             elevation: 0,
@@ -52,13 +57,13 @@ export default function TabLayout() {
           },
         }}
       >
-        <Tabs.Screen
+        <Tabs.Screen  //左邊的首頁按鈕
           name="(home)"
           options={{
             title: 'home',
             tabBarIcon: ({ focused }) => (
               <View style={{
-                backgroundColor: focused ? 'rgba(139, 61, 255, 0.15)' : 'transparent', // Light Canva Purple
+                backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
                 paddingHorizontal: 20,
                 paddingVertical: 4,
                 borderRadius: 20,
@@ -69,7 +74,7 @@ export default function TabLayout() {
           }}
         />
 
-        <Tabs.Screen
+        <Tabs.Screen  //中間的+號按鈕
           name="create"
           options={{
             title: '',
@@ -107,13 +112,13 @@ export default function TabLayout() {
           }}
         />
 
-        <Tabs.Screen
+        <Tabs.Screen  //右邊的設定按鈕
           name="(setting)"
           options={{
             title: 'setting',
             tabBarIcon: ({ focused }) => (
               <View style={{
-                backgroundColor: focused ? 'rgba(139, 61, 255, 0.15)' : 'transparent',
+                backgroundColor: focused ? colors.recentHeader : 'transparent',
                 paddingHorizontal: 20,
                 paddingVertical: 4,
                 borderRadius: 20,

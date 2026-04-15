@@ -7,8 +7,10 @@ export const layoutStyles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   scrollContent: {
-    padding: screenPadding.horizontal,
-    paddingBottom: 120, // Tab bar padding
+    // padding: screenPadding.horizontal,
+    padding: 16,
+    paddingTop: 0,
+    paddingBottom: 80, // Tab bar padding
   },
   header: {
     flexDirection: 'row',
@@ -19,6 +21,7 @@ export const layoutStyles = StyleSheet.create({
   rowCenter: {
     flexDirection: 'row',
     alignItems: 'center',
+    // justifyContent: 'center',
   },
   rowBetween: {
     flexDirection: 'row',

@@ -23,9 +23,9 @@ import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
 
 export default function Home() {
-
+  //使用全域變數儲存！
   const { data: historyData, createFile, updateFile } = useFileStore();
-
+  //開啟手機檔案(目標是可以開啟world黨！)
   const handleOpenLocalFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -49,7 +49,7 @@ export default function Home() {
           Alert.alert('提示', '目前僅支援純文字檔 (TXT) 內容匯入，其他格式將以空白檔案開啟。');
         }
 
-        const newDoc = createFile('document', file.name.replace(/\.[^/.]+$/, ""));
+        const newDoc = createFile('document', file.name.replace(/\.[^/.]+$/, ""));  //會出現選擇的文件名稱
         if (content) {
           updateFile(newDoc.id, { content });
         }
@@ -62,13 +62,14 @@ export default function Home() {
     }
   };
 
-  const recentHistory = historyData.slice(0, 5); // Show latest 5
-
+  //最近開啟
+  const recentHistory = historyData.slice(0, 3); // Show latest 5 -> 3
+  //開啟新文件
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
     router.push(`/(tabs)/(home)/document/${newFile.id}`);
   };
-
+  //開啟新日記
   const handleCreateDiary = () => {
     const newFile = createFile('diary', '未命名日記');
     router.push(`/(tabs)/(home)/diary/${newFile.id}`);
@@ -84,35 +85,35 @@ export default function Home() {
         {/* Action Row */}
         <View style={styles.actionRow}>
           {/* Left large card */}
-          <Pressable
+          <Pressable  //建立文件
             style={[styles.largeCard, { backgroundColor: colors.container }]}
             onPress={handleCreateDocument}
           >
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <FileText size={48} color={colors.text} />
-              <Text style={[textStyles.h2, { marginTop: 16 }]}>建立文件</Text>
+              <FileText size={36} color={colors.text} />
+              <Text style={[textStyles.h3, { marginTop: 16 }]}>建立文件</Text>
             </View>
           </Pressable>
 
           {/* Right column */}
           <View style={styles.rightColumn}>
-            <Pressable
+            <Pressable  //建立日記
               style={[styles.smallCard, { backgroundColor: colors.secondary, marginBottom: 16 }]}
               onPress={handleCreateDiary}
             >
               <View style={layoutStyles.rowCenter}>
-                <Book size={24} color={colors.onPrimary} />
-                <Text style={[textStyles.h3, { marginLeft: 12, color: colors.onPrimary }]}>建立日記</Text>
+                <Book size={24} color={colors.onPrimary} style={{marginLeft: 5,}} />
+                <Text style={[textStyles.h3, { marginLeft: 5, color: colors.onPrimary }]}>建立日記</Text>
               </View>
             </Pressable>
 
-            <Pressable
+            <Pressable  //開啟手機檔案
               style={[styles.smallCard, { backgroundColor: colors.surfaceVariant }]}
               onPress={handleOpenLocalFile}
             >
               <View style={layoutStyles.rowCenter}>
-                <FolderOpen size={24} color={colors.text} />
-                <Text style={[textStyles.h3, { marginLeft: 12 }]}>開啟文件</Text>
+                <FolderOpen size={24} color={colors.text} style={{marginLeft: 5,}} />
+                <Text style={[textStyles.h3, { marginLeft: 5 }]}>開啟文件</Text>
               </View>
             </Pressable>
           </View>
@@ -120,11 +121,12 @@ export default function Home() {
 
         {/* History Area */}
         <View style={styles.historySection}>
+          {/* 最近開啟頭 */}
           <View style={[layoutStyles.rowCenter, styles.historyHeader]}>
-            <Clock size={16} color={colors.text} />
+            <Clock size={20} color={colors.text} />
             <Text style={[textStyles.h3, { marginLeft: 8 }]}>最近開啟</Text>
           </View>
-
+          {/* 最近開啟區 */}
           <View style={styles.historyBody}>
             {recentHistory.map(item => (
               <Pressable
@@ -138,7 +140,9 @@ export default function Home() {
                   }
                 }}
               >
-                <View style={styles.historyIconBox}>
+                {/* icon和背景顏色記得要切換 */}
+                <View style={[styles.historyIconBox, 
+                    {backgroundColor: item.type === 'diary' ? colors.secondary : colors.container,}]}>
                   {item.type === 'diary' ? (
                     <Book size={20} color={colors.text} />
                   ) : (
@@ -161,23 +165,24 @@ export default function Home() {
 const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
-    height: 190,
+    height: 165,
     marginBottom: 24,
+    // marginTop: 0,
   },
   largeCard: {
-    flex: 0.9,
-    borderRadius: 28,
+    flex: 0.8,
+    borderRadius: 20, //大的一律20，小的10
     marginRight: 16,
     padding: 24,
     borderWidth: 1,
     borderColor: colors.border,
   },
   rightColumn: {
-    flex: 1.1,
+    flex: 1.2,
     justifyContent: 'space-between',
   },
   smallCard: {
-    height: 86,
+    height: 75,
     borderRadius: 20,
     paddingHorizontal: 16,
     justifyContent: 'center',
@@ -186,10 +191,10 @@ const styles = StyleSheet.create({
   },
   historySection: {
     backgroundColor: colors.recentSection,
-    borderRadius: 32,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    minHeight: 400,
+    minHeight: 300,
     overflow: 'hidden',
   },
   historyHeader: {
@@ -200,23 +205,29 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   historyBody: {
-    padding: 24,
+    padding: 16,
   },
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 14,
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
+    backgroundColor: '#fff',
     padding: 12,
-    borderRadius: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    // borderColor: colors.border,
   },
   historyIconBox: {
     width: 48,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceVariant,
+    borderRadius: 10,
+    // backgroundColor: colors.container,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

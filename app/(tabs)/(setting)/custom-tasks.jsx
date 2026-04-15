@@ -1,26 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { ChevronLeft, Info, Check, Plus, Trash2 } from 'lucide-react-native';
+import { router, useNavigation } from 'expo-router';
+import { ChevronLeft, Info, Check, Plus, Trash2, Pencil } from 'lucide-react-native';
 import { colors } from '../../../constants/token';
 import { layoutStyles, textStyles } from '../../../styles';
 import { useTaskStore } from '../../../store/useTaskStore';
 
 export default function CustomTasks() {
-  const { tasks, toggleTask, addTask, deleteTask } = useTaskStore();
+  const { tasks, toggleTask, addTask, deleteTask, updateTask } = useTaskStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const navigation = useNavigation();
+  
+  //讓下面的tab區看不見
+  useLayoutEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: 'none' }
+    });
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          position: 'absolute',
+            bottom: 35,  //調整這個可以逾留出下面空間嗎?
+            height: 80,
+            width: '95%',
+            marginLeft: 8,
+            backgroundColor: colors.recentSection, // 淺黃背景
+            borderRadius: 40,
+            borderTopWidth: 1, // Need border top
+            elevation: 0,
+            shadowOpacity: 0,
+            paddingBottom: 8, // Adjust label spacing
+            paddingTop: 8,
+            borderWidth: 1,
+            borderColor: colors.border,
+        }
+      });
+    };
+  }, [navigation]);
 
+  //新增一個自訂任務
   const handleAddTask = () => {
+    //確保不是空字串?
     if (newTaskTitle.trim()) {
       addTask(newTaskTitle.trim());
       setNewTaskTitle('');
       setModalVisible(false);
     }
   };
+  //修改任務內容
+  const handleEditPress = (task) => {
+    setEditingTaskId(task.id);
+    setEditTaskTitle(task.title);
+    setEditModalVisible(true);
+  };
+  const handleUpdateTask = () => {
+    if (editTaskTitle.trim()) {
+      updateTask(editingTaskId, editTaskTitle.trim());
+      setEditModalVisible(false);
+      setEditingTaskId(null);
+      setEditTaskTitle('');
+    }
+  };
 
+  //計算完成的任務數量?
   const completedCount = tasks.filter(t => t.completed).length;
+  //至少顯示5(??不對吧)
   const totalCount = Math.max(5, tasks.length);
 
   return (
@@ -54,17 +103,23 @@ export default function CustomTasks() {
           {/* Tasks List */}
           {tasks.map(task => (
             <View key={task.id} style={styles.taskCard}>
-              <Pressable 
-                style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-                onPress={() => toggleTask(task.id)}
-              >
-                <View style={[styles.checkbox, task.completed && styles.checkboxActive]}>
-                  {task.completed && <Check size={14} color="#FFF" strokeWidth={4} />}
-                </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <Pressable 
+                  // style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                  onPress={() => toggleTask(task.id)}
+                >
+                  <View style={[styles.checkbox, task.completed && styles.checkboxActive]}>
+                    {task.completed && <Check size={14} color="#FFF" strokeWidth={4} />}
+                  </View>
+                </Pressable>
                 <Text style={styles.taskTitle}>{task.title}</Text>
-              </Pressable>
-              <Pressable onPress={() => deleteTask(task.id)} style={{ padding: 4 }}>
+              </View>
+              {/* 把刪除改成重新定義任務(跳出重新命名modal) */}
+              {/* <Pressable onPress={() => deleteTask(task.id)} style={{ padding: 4 }}>
                 <Trash2 size={18} color={colors.inactiveText || '#999'} />
+              </Pressable> */}
+              <Pressable onPress={() => handleEditPress(task)} style={{ padding: 4 }}>
+                <Pencil size={18} color={colors.inactiveText || '#999'} />
               </Pressable>
             </View>
           ))}
@@ -102,6 +157,44 @@ export default function CustomTasks() {
               </Pressable>
               <Pressable style={styles.modalBtnSubmit} onPress={handleAddTask}>
                 <Text style={[styles.modalBtnText, { color: '#FFF' }]}>新增</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {/* 修改任務目標的視窗，其實應該和新增視窗差不多 */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={textStyles.h3}>編輯任務</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="請輸入任務名稱"
+              value={editTaskTitle}
+              onChangeText={setEditTaskTitle}
+              autoFocus
+            />
+
+            <View style={styles.modalActions}>
+              {/* 取消 */}
+              <Pressable
+                style={styles.modalBtnCancel}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.modalBtnText}>取消</Text>
+              </Pressable>
+              {/* 確認 */}
+              <Pressable
+                style={styles.modalBtnSubmit}
+                onPress={handleUpdateTask}
+              >
+                <Text style={[styles.modalBtnText, { color: '#FFF' }]}>確認</Text>
               </Pressable>
             </View>
           </View>

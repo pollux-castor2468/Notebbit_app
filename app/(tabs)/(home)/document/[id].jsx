@@ -24,6 +24,7 @@ export default function DocumentEditor() {
   const { id } = params;
   const navigation = useNavigation();
 
+  //讓下面的tab區看不見
   useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
       tabBarStyle: { display: 'none' }
@@ -32,19 +33,19 @@ export default function DocumentEditor() {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
           position: 'absolute',
-          bottom: 24,
-          left: 15,
-          right: 15,
+          bottom: 35,  //調整這個可以逾留出下面空間嗎?
           height: 80,
-          backgroundColor: '#F4E4D5',
+          width: '95%',
+          marginLeft: 8,
+          backgroundColor: colors.recentSection, // 淺黃背景
           borderRadius: 40,
-          borderTopWidth: 1,
+          borderTopWidth: 1, // Need border top
           elevation: 0,
           shadowOpacity: 0,
-          paddingBottom: 8,
+          paddingBottom: 8, // Adjust label spacing
           paddingTop: 8,
           borderWidth: 1,
-          borderColor: '#E0D0C0',
+          borderColor: colors.border,
         }
       });
     };
