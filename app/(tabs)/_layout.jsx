@@ -3,17 +3,21 @@ import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWi
 import { colors as themeColors, fontSize } from "../../constants/token";
 import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
+import { useFileStore } from "../../store/useFileStore";
 
 export default function TabLayout() {
   const [isAddMenuVisible, setAddMenuVisible] = useState(false);
+  const { data: historyData, createFile, updateFile } = useFileStore();
 
   // Close menu and navigate
   const handleNavCreate = (type) => {
     setAddMenuVisible(false);
     if (type === 'document') {
-      router.push('/document-editor');
+      const newFile = createFile('document', '未命名文件');
+      router.push(`/(tabs)/(home)/document/${newFile.id}`);
     } else {
-      router.push('/diary-editor');
+      const newFile = createFile('diary', '未命名日記');
+      router.push(`/(tabs)/(home)/diary/${newFile.id}`);
     }
   };
 
