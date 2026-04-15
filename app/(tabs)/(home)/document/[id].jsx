@@ -1,18 +1,18 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Modal, Alert } from 'react-native';
+﻿import React, { useState, useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight, Highlighter, Trash2, PaintBucket, Image as ImageIcon, Link, X as XIcon } from 'lucide-react-native';
-import { RichEditor, actions } from 'react-native-pell-rich-editor';
-import * as DocumentPicker from 'expo-document-picker';
+import { useLocalSearchParams, router, useNavigation } from 'expo-router';
+import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight } from 'lucide-react-native';
 import { colors } from '../../../../constants/token';
 import { layoutStyles, textStyles } from '../../../../styles';
 import { useFileStore } from '../../../../store/useFileStore';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-// Helper for the custom red floating delete badge (used in version control)
+// Helper for the custom red floating delete button on modal cards
 const CardDeleteBadge = ({ onPress }) => (
-  <Pressable style={styles.cardDeleteBadgeWrapper} onPress={onPress}>
+  <Pressable 
+    style={styles.cardDeleteBadgeWrapper}
+    onPress={onPress}
+  >
     <View style={styles.cardDeleteBadge}>
        <X size={12} color="#FFF" />
     </View>
@@ -22,194 +22,64 @@ const CardDeleteBadge = ({ onPress }) => (
 export default function DocumentEditor() {
   const params = useLocalSearchParams();
   const { id } = params;
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: 'none' }
+    });
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 24,
+          left: 15,
+          right: 15,
+          height: 80,
+          backgroundColor: '#F4E4D5',
+          borderRadius: 40,
+          borderTopWidth: 1,
+          elevation: 0,
+          shadowOpacity: 0,
+          paddingBottom: 8,
+          paddingTop: 8,
+          borderWidth: 1,
+          borderColor: '#E0D0C0',
+        }
+      });
+    };
+  }, [navigation]);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
   const updateFile = useFileStore(state => state.updateFile);
   const toggleStar = useFileStore(state => state.toggleStar);
-  const saveVersion = useFileStore(state => state.saveVersion);
-  const deleteVersion = useFileStore(state => state.deleteVersion);
 
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [title, setTitle] = useState(fileData?.title || '未命名');
+  // Modals state
+  const [activeModal, setActiveModal] = useState(null); // 'version' | 'source' | 'more' | null
+  const [popoverPos, setPopoverPos] = useState(0);
+  const [popoverState, setPopoverState] = useState('menu'); // 'menu' | 'wordCount'
+
+  // Content state for Word Count
   const [content, setContent] = useState(fileData?.content || '');
-  const richText = useRef(null);
-  
-  const bottomSheetRef = useRef(null);
-  const snapPoints = React.useMemo(() => ['15%', '40%'], []);
-  const wordCount = content.replace(/<[^>]*>?/gm, '').replace(/\s/g, '').length || 7; // Basic HTML stripping for wordCount
+  const wordCount = content.replace(/\s/g, '').length || 7;
 
-  // Data Source System
-  const [sources, setSources] = useState(fileData?.sources && fileData.sources.length > 0 ? fileData.sources : [{ id: 1, text: '' }]);
-
-  // 自動儲存
   React.useEffect(() => {
     if (id) {
-      updateFile(id, { title, content, sources });
+      updateFile(id, { content });
     }
-  }, [title, content, sources, id, updateFile]);
-
-  // Modals state: 'version' | 'source' | 'more' | 'colors' | 'bgColors' | 'link' | null
-  const [activeModal, setActiveModal] = useState(null); 
-  const [popoverPos, setPopoverPos] = useState(0);
-  const [popoverState, setPopoverState] = useState('menu');
-
-  // Link Modal
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkTitle, setLinkTitle] = useState('');
-
-  // Data Source System handled above
-  // Formatting tracking
-  const [currentFont, setCurrentFont] = useState('Arial');
-  const [currentSize, setCurrentSize] = useState('14');
-
-  const fontFamilies = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana'];
-  const fontSizes = [
-    { label: '12', value: 2 },
-    { label: '14', value: 3 },
-    { label: '16', value: 4 },
-    { label: '18', value: 5 },
-    { label: '24', value: 6 },
-    { label: '36', value: 7 },
-  ];
-  // --- Data & Constants ---
-  const gridColors = [
-    ['#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280', '#4B5563', '#374151', '#000000'],
-    ['#0047AB', '#311432', '#4B0082', '#8B0000', '#A0522D', '#B8860B', '#556B2F'],
-    ['#00BFFF', '#4169E1', '#8A2BE2', '#C71585', '#FF4500', '#FFD700', '#9ACD32'],
-    ['#87CEFA', '#DDA0DD', '#EE82EE', '#FFB6C1', '#FFA07A', '#FFFACD', '#98FB98'],
-  ];
-  const circleColors = [
-    ['#000000', '#007AFF', '#34C759', '#FFCC00', '#FF3B30'],
-    ['#5AC8FA', '#AF52DE', '#5856D6', '#FF2D55', null], // null represents the plus button
-  ];
-
-  // --- Handlers ---
-  const handleSetFontFamily = (font) => {
-    setCurrentFont(font);
-    richText.current?.sendAction('fontName', 'result', font);
-    setActiveModal(null);
-  };
-
-  const handleSetFontSize = (sizeObj) => {
-    setCurrentSize(sizeObj.label);
-    richText.current?.sendAction('fontSize', 'result', sizeObj.value);
-    setActiveModal(null);
-  };
-
-  const handleSelectColor = (color) => {
-    if (activeModal === 'colors') {
-      richText.current?.sendAction('foreColor', 'result', color); 
-    } else if (activeModal === 'bgColors') {
-      richText.current?.sendAction('hiliteColor', 'result', color);
-    }
-    setActiveModal(null);
-  };
-
-  const handlePickImage = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({ type: 'image/*' });
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = result.assets[0].uri;
-        richText.current?.insertImage(uri, 'width: 100%; max-width: 300px; border-radius: 8px;');
-      }
-    } catch (err) {
-      console.log('Image pick error:', err);
-    }
-  };
-
-  const handleInsertLink = () => {
-    if (linkUrl) {
-      richText.current?.insertLink(linkTitle || linkUrl, linkUrl);
-      setLinkUrl('');
-      setLinkTitle('');
-      setActiveModal(null);
-    }
-  };
-
-  // Data Source Handlers
-  const handleAddSource = () => {
-    const newId = sources.length > 0 ? Math.max(...sources.map(s => s.id)) + 1 : 1;
-    setSources([...sources, { id: newId, text: '' }]);
-  };
-
-  const handleUpdateSource = (id, text) => {
-    setSources(sources.map(s => s.id === id ? { ...s, text } : s));
-  };
-
-  const confirmDeleteSource = (id) => {
-    Alert.alert(
-      "刪除資料",
-      "確定要刪除這筆資料來源嗎？",
-      [
-        { text: "取消", style: "cancel" },
-        { text: "確認", style: "destructive", onPress: () => setSources(sources.filter(s => s.id !== id)) }
-      ]
-    );
-  };
-
-  const handleHighlightParagraph = () => {
-    richText.current?.sendAction('hiliteColor', 'result', '#FEF08A'); // yellow highlight
-  };
-
-  const handleSaveVersion = () => {
-    const versionData = {
-      id: String(Date.now()),
-      title,
-      content,
-      sources,
-      date: new Date().toLocaleDateString()
-    };
-    saveVersion(id, versionData);
-  };
-
-  const handleRestoreVersion = (versionData) => {
-    Alert.alert(
-      '還原版本',
-      '是否確定要還原你並未儲存？這將會覆蓋當前的內容。',
-      [
-        { text: '取消', style: 'cancel' },
-        { 
-          text: '確定', 
-          style: 'destructive',
-          onPress: () => {
-            setTitle(versionData.title || '未命名');
-            setContent(versionData.content || '');
-            if (versionData.sources) setSources(versionData.sources);
-            setActiveModal(null);
-          } 
-        }
-      ]
-    );
-  };
+  }, [content, id, updateFile]);
 
   return (
     <SafeAreaView style={layoutStyles.root}>
       {/* Top Header */}
       <View style={styles.header}>
-        <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 8 }]}>
-          <Pressable onPress={() => router.back()} style={{ marginRight: 8 }}>
+        <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
+          <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
-          {isEditingTitle ? (
-            <TextInput 
-              style={[styles.headerTitle, { flex: 1, padding: 0, margin: 0, outline: 'none' }]} 
-              numberOfLines={1} 
-              value={title} 
-              onChangeText={setTitle} 
-              autoFocus
-              onBlur={() => setIsEditingTitle(false)}
-              onSubmitEditing={() => setIsEditingTitle(false)}
-            />
-          ) : (
-            <Text 
-              style={[styles.headerTitle, { flex: 1 }]} 
-              numberOfLines={1} 
-              ellipsizeMode="tail"
-              onPress={() => setIsEditingTitle(true)}
-            >
-              {title || '未命名'}
-            </Text>
-          )}
+          <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+            {fileData?.title || '文件名稱'}
+          </Text>
         </View>
         <View style={layoutStyles.rowCenter}>
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('source')}>
@@ -218,7 +88,7 @@ export default function DocumentEditor() {
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('version')}>
             <Clock size={24} color={colors.text} />
           </Pressable>
-          <Pressable style={styles.iconButton} onPress={() => toggleStar(id)}>
+          <Pressable style={styles.iconButton} onPress={() => fileData && toggleStar(id)}>
             <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />
           </Pressable>
           <Pressable 
@@ -238,88 +108,62 @@ export default function DocumentEditor() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.content}>
-            <View style={[styles.bodyInput, { overflow: 'hidden' }]}>
-              {Platform.OS === 'web' ? (
-                <TextInput
-                  style={[textStyles.body, { flex: 1, outline: 'none' }]}
-                  placeholder="網頁版編輯器尚在測試中，請先使用純文字..."
-                  placeholderTextColor={'rgba(101, 68, 69, 0.4)'}
-                  multiline
-                  textAlignVertical="top"
-                  value={content}
-                  onChangeText={setContent}
-                />
-              ) : (
-                <RichEditor
-                  ref={richText}
-                  style={{ flex: 1 }}
-                  placeholder="輸入內容..."
-                  initialContentHTML={content}
-                  onChange={setContent}
-                  editorStyle={{
-                    backgroundColor: 'transparent',
-                    color: colors.text,
-                    placeholderColor: 'rgba(101, 68, 69, 0.4)',
-                  }}
-                />
-              )}
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
+        {/* Content Area */}
+        <View style={styles.content}>
+          <TextInput
+            style={[textStyles.body, styles.bodyInput]}
+            placeholder="輸入內容..."
+            placeholderTextColor={'rgba(101, 68, 69, 0.4)'}
+            multiline
+            textAlignVertical="top"
+            value={content}
+            onChangeText={setContent}
+          />
+        </View>
 
-      </KeyboardAvoidingView>
-
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose={false}
-        index={0}
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.sheetHandleIndicator}
-      >
-        <BottomSheetView style={styles.sheetContentContainer}>
+        {/* Bottom Format Toolbar Box (Floating) */}
+        <View style={styles.bottomToolbar}>
+          <View style={styles.dragPill} />
+          
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
             {/* Font Selectors */}
             <View style={styles.dropdownGroup}>
-              <Pressable style={styles.dropdownContainer} onPress={() => setActiveModal('fontFamily')}>
-                <Text style={styles.dropdownText}>{currentFont}</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownText}>Arial</Text>
                 <ChevronDown size={16} color={colors.text} style={{ marginLeft: 16 }} />
-              </Pressable>
-              <Pressable style={styles.dropdownContainer} onPress={() => setActiveModal('fontSize')}>
-                <Text style={styles.dropdownText}>{currentSize}</Text>
+              </View>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownText}>14</Text>
                 <ChevronDown size={16} color={colors.text} style={{ marginLeft: 8 }} />
-              </Pressable>
+              </View>
             </View>
 
             {/* Action Icons */}
             <View style={styles.actionGroup}>
-              <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setBold, 'result')}><Bold size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setItalic, 'result')}><Italic size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setUnderline, 'result')}><Underline size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={() => setActiveModal('colors')}><Baseline size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={() => setActiveModal('bgColors')}><PaintBucket size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={handlePickImage}><ImageIcon size={20} color={colors.text} /></Pressable>
-              <Pressable style={styles.toolIcon} onPress={() => setActiveModal('link')}><Link size={20} color={colors.text} /></Pressable>
+              <Pressable style={styles.toolIcon}><Bold size={20} color={colors.text} /></Pressable>
+              <Pressable style={styles.toolIcon}><Italic size={20} color={colors.text} /></Pressable>
+              <Pressable style={styles.toolIcon}><Underline size={20} color={colors.text} /></Pressable>
+              <Pressable style={styles.toolIcon}><Baseline size={20} color={colors.text} /></Pressable>
             </View>
           </ScrollView>
-        </BottomSheetView>
-      </BottomSheet>
+        </View>
+      </KeyboardAvoidingView>
 
       {/* --- OVERLAY MODALS --- */}
 
       {/* 1. Version Control Bottom Sheet */}
       <Modal visible={activeModal === 'version'} transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
         <View style={styles.bottomSheetOverlay}>
+           {/* Invisible dismiss layer */}
            <Pressable style={StyleSheet.absoluteFill} onPress={() => setActiveModal(null)} />
+           
            <View style={styles.bottomSheetContainer}>
               <View style={styles.sheetDragPill} />
               
               <View style={styles.sheetHeaderRow}>
                  <Text style={styles.sheetTitle}>版本控制</Text>
                  <View style={layoutStyles.rowCenter}>
-                    <Pressable style={styles.bluePlusBtn} onPress={handleSaveVersion}><Plus size={20} color={colors.text} /></Pressable>
+                    <Pressable style={styles.bluePlusBtn}><Plus size={20} color={colors.text} /></Pressable>
                     <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
                  </View>
               </View>
@@ -331,62 +175,61 @@ export default function DocumentEditor() {
               </View>
 
               <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-                {fileData?.versions?.length > 0 ? fileData.versions.map((ver, idx) => (
-                  <Pressable key={ver.id} style={styles.sheetCard} onPress={() => handleRestoreVersion(ver)}>
-                     <CardDeleteBadge onPress={() => deleteVersion(id, ver.id)} />
-                     <Text style={[styles.cardText, { flex: 1.2 }]} numberOfLines={1}>版本{fileData.versions.length - idx}</Text>
-                     <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]} numberOfLines={1}>{ver.title}</Text>
-                     <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>{ver.date}</Text>
-                  </Pressable>
-                )) : (
-                  <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>目前沒有版本紀錄</Text>
-                )}
+                <View style={styles.sheetCard}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
+                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
+                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
+                </View>
+                <View style={styles.sheetCard}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
+                   <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
+                   <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
+                </View>
               </ScrollView>
            </View>
         </View>
       </Modal>
 
       {/* 2. Data Sources Bottom Sheet */}
-      <Modal visible={activeModal === 'source'} transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
-        <View style={styles.bottomSheetOverlay}>
-           <Pressable style={StyleSheet.absoluteFill} onPress={() => setActiveModal(null)} />
-           <View style={styles.bottomSheetContainer}>
+      {activeModal === 'source' && (
+        <View style={[styles.bottomSheetOverlay, { position: 'absolute', bottom: 0, width: '100%', height: '50%', backgroundColor: 'transparent', zIndex: 50 }]} pointerEvents="box-none">
+           <View style={[styles.bottomSheetContainer, { flex: 1, shadowColor: '#000', shadowOffset: { width:0, height:-2 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 15 }]}>
               <View style={styles.sheetDragPill} />
               
               <View style={styles.sheetHeaderRow}>
                  <Text style={styles.sheetTitle}>資料來源</Text>
-                 <View style={layoutStyles.rowCenter}>
-                    <Pressable style={styles.bluePlusBtn} onPress={handleAddSource}><Plus size={20} color={colors.text} /></Pressable>
-                    <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
-                 </View>
+                 <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
               </View>
 
               <View style={styles.sheetSubheadPill}>
-                <Text style={styles.subheadTextDesc}>標題欄：用來介紹下面的資料文字或按鈕代表的意思</Text>
+                <Text style={[styles.subheadText, { flex: 0.8 }]}>編號</Text>
+                <Text style={[styles.subheadText, { flex: 3 }]}>資料內容</Text>
+                <Text style={[styles.subheadText, { flex: 1.5, textAlign: 'right' }]}>標記段落</Text>
               </View>
 
-              <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-                {sources.map((source, index) => (
-                  <View key={source.id} style={styles.sourceCardRow}>
-                    <Text style={styles.sourceIndex}>{index + 1}</Text>
-                    <TextInput
-                      style={styles.sourceInput}
-                      placeholder="輸入資料內容..."
-                      value={source.text}
-                      onChangeText={(t) => handleUpdateSource(source.id, t)}
-                    />
-                    <Pressable style={styles.sourceActionBtn} onPress={handleHighlightParagraph}>
-                      <Highlighter size={20} color={colors.primary} />
-                    </Pressable>
-                    <Pressable style={styles.sourceActionBtn} onPress={() => confirmDeleteSource(source.id)}>
-                      <Trash2 size={20} color="#FF3B30" />
-                    </Pressable>
-                  </View>
-                ))}
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 0.8 }]}>1</Text>
+                   <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
+                   <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
+                     <Edit2 size={18} color={colors.text} />
+                   </View>
+                </View>
+                <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
+                   <CardDeleteBadge />
+                   <Text style={[styles.cardText, { flex: 0.8 }]}>2</Text>
+                   <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
+                   <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
+                     <Edit2 size={18} color={colors.text} />
+                   </View>
+                </View>
               </ScrollView>
            </View>
         </View>
-      </Modal>
+      )}
 
       {/* 3. More Options Popover overlay */}
       {activeModal === 'more' && (
@@ -418,141 +261,6 @@ export default function DocumentEditor() {
           </Pressable>
         </Pressable>
       )}
-
-      {/* 4. Colors Modal */}
-      <Modal visible={activeModal === 'colors' || activeModal === 'bgColors'} transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
-        <Pressable style={styles.modalBackdropColor} onPress={() => setActiveModal(null)}>
-          <Pressable style={styles.colorSheet} onPress={e => e.stopPropagation()}>
-            <View style={styles.colorHeader}>
-              <Text style={styles.colorTitle}>Colors</Text>
-              <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}>
-                <XIcon size={24} color="#666" />
-              </Pressable>
-            </View>
-
-            {/* Grid Colors */}
-            <View style={styles.colorGridWrapper}>
-              {gridColors.map((row, rowIndex) => (
-                <View key={rowIndex} style={styles.colorGridRow}>
-                  {row.map((color, colIndex) => {
-                    const isTopLeft = rowIndex === 0 && colIndex === 0;
-                    const isTopRight = rowIndex === 0 && colIndex === 6;
-                    const isBottomLeft = rowIndex === 3 && colIndex === 0;
-                    const isBottomRight = rowIndex === 3 && colIndex === 6;
-                    return (
-                      <TouchableOpacity
-                        key={color}
-                        style={[
-                          styles.colorGridSquare,
-                          { backgroundColor: color },
-                          isTopLeft && { borderTopLeftRadius: 16 },
-                          isTopRight && { borderTopRightRadius: 16 },
-                          isBottomLeft && { borderBottomLeftRadius: 16 },
-                          isBottomRight && { borderBottomRightRadius: 16 },
-                        ]}
-                        onPress={() => handleSelectColor(color)}
-                      />
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
-
-            {/* Circle Colors */}
-            <View style={styles.circleColorsContainer}>
-              {circleColors.map((row, rIdx) => (
-                <View key={rIdx} style={styles.circleRow}>
-                  {row.map((color, cIdx) => (
-                    color ? (
-                      <TouchableOpacity
-                        key={color}
-                        style={[styles.circleColorBtn, { backgroundColor: color }]}
-                        onPress={() => handleSelectColor(color)}
-                      />
-                    ) : (
-                      <TouchableOpacity key="plus" style={styles.plusColorBtn}>
-                        <Text style={styles.plusColorText}>+</Text>
-                      </TouchableOpacity>
-                    )
-                  ))}
-                </View>
-              ))}
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* 5. Link Modal */}
-      <Modal visible={activeModal === 'link'} transparent animationType="fade" onRequestClose={() => setActiveModal(null)}>
-        <Pressable style={styles.modalBackdropCenter} onPress={() => setActiveModal(null)}>
-          <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
-            <Text style={styles.colorTitle}>插入連結</Text>
-            <TextInput
-              style={styles.linkInput}
-              placeholder="連結標題 (選填)"
-              placeholderTextColor="#999"
-              value={linkTitle}
-              onChangeText={setLinkTitle}
-            />
-            <TextInput
-              style={styles.linkInput}
-              placeholder="請輸入網址 https://..."
-              placeholderTextColor="#999"
-              value={linkUrl}
-              onChangeText={setLinkUrl}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-            <View style={layoutStyles.rowCenter}>
-              <Pressable style={styles.linkBtnCancel} onPress={() => setActiveModal(null)}>
-                <Text style={styles.linkBtnText}>取消</Text>
-              </Pressable>
-              <Pressable style={styles.linkBtnOk} onPress={handleInsertLink}>
-                <Text style={[styles.linkBtnText, { color: '#fff' }]}>確定</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* 6. Font Family Modal */}
-      <Modal visible={activeModal === 'fontFamily'} transparent animationType="fade" onRequestClose={() => setActiveModal(null)}>
-        <Pressable style={styles.modalBackdropCenter} onPress={() => setActiveModal(null)}>
-          <Pressable style={styles.fontModalCard} onPress={e => e.stopPropagation()}>
-            <Text style={[styles.colorTitle, { marginBottom: 16 }]}>選擇字體</Text>
-            {fontFamilies.map((font) => (
-              <Pressable 
-                key={font} 
-                style={[styles.fontOptionBtn, currentFont === font && styles.fontOptionActive]} 
-                onPress={() => handleSetFontFamily(font)}
-              >
-                <Text style={[styles.fontOptionText, { fontFamily: Platform.OS === 'web' ? font : undefined }]}>{font}</Text>
-                {currentFont === font && <ChevronLeft size={20} color={colors.fab} style={{ transform: [{ rotate: '180deg' }] }} />}
-              </Pressable>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* 7. Font Size Modal */}
-      <Modal visible={activeModal === 'fontSize'} transparent animationType="fade" onRequestClose={() => setActiveModal(null)}>
-        <Pressable style={styles.modalBackdropCenter} onPress={() => setActiveModal(null)}>
-          <Pressable style={styles.fontModalCard} onPress={e => e.stopPropagation()}>
-            <Text style={[styles.colorTitle, { marginBottom: 16 }]}>選擇字型大小</Text>
-            {fontSizes.map((size) => (
-              <Pressable 
-                key={size.label} 
-                style={[styles.fontOptionBtn, currentSize === size.label && styles.fontOptionActive]} 
-                onPress={() => handleSetFontSize(size)}
-              >
-                <Text style={styles.fontOptionText}>{size.label}</Text>
-                {currentSize === size.label && <ChevronLeft size={20} color={colors.fab} style={{ transform: [{ rotate: '180deg' }] }} />}
-              </Pressable>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
     </SafeAreaView>
   );
 }
@@ -571,100 +279,80 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   iconButton: {
-    marginLeft: 6,
+    marginLeft: 12,
     padding: 6,
     borderRadius: 20,
   },
   dotsBtnActive: {
-    backgroundColor: colors.recentSection,
+    backgroundColor: '#EBEBEB',
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 80, 
   },
   bodyInput: {
-    padding: 0,
-    margin: 0,
     flex: 1,
+    lineHeight: 28,
   },
   bottomToolbar: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 20,
-    right: 20,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width:0, height:4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  dragPill: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  bottomSheetBackground: {
-    backgroundColor: colors.recentSection,
-    borderRadius: 24,
-  },
-  sheetHandleIndicator: {
-    backgroundColor: colors.inactiveText,
-    width: 80,
-  },
-  sheetContentContainer: {
+    backgroundColor: '#EBEBEB',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
+    paddingBottom: 36,
+  },
+  dragPill: {
+    width: 80,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ADADAD',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   dropdownGroup: {
     flexDirection: 'row',
-    marginRight: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    overflow: 'hidden',
+    alignItems: 'center',
   },
   dropdownContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
   },
   dropdownText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
   },
   actionGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginLeft: 16,
   },
   toolIcon: {
-    padding: 10,
+    padding: 8,
+    marginHorizontal: 6,
   },
   bottomSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   bottomSheetContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#F5F5F5',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
@@ -675,7 +363,7 @@ const styles = StyleSheet.create({
   sheetDragPill: {
     width: 100,
     height: 4,
-    backgroundColor: colors.border,
+    backgroundColor: '#AEAEAE',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 20,
@@ -684,267 +372,93 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    paddingHorizontal: 8,
   },
   sheetTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.text,
   },
-  closeBtn: {
-    backgroundColor: colors.recentSection,
-    padding: 6,
-    borderRadius: 20,
-    marginLeft: 8,
-  },
   bluePlusBtn: {
-    backgroundColor: colors.secondary,
-    padding: 8,
+    backgroundColor: '#BCE0F3',
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  closeBtn: {
+    padding: 4,
   },
   sheetSubheadPill: {
     flexDirection: 'row',
-    backgroundColor: colors.recentHeader,
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
+    marginBottom: 16,
   },
   subheadText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.inactiveText,
-  },
-  subheadTextDesc: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.inactiveText,
-    flex: 1,
+    color: '#555',
+    fontWeight: '600',
   },
   sheetCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    marginTop: 12,
     paddingHorizontal: 16,
-    paddingVertical: 18,
-    position: 'relative',
+    paddingVertical: 20,
+    marginBottom: 12,
+  },
+  cardText: {
+    fontSize: 15,
+    color: colors.text,
   },
   cardDeleteBadgeWrapper: {
     position: 'absolute',
     top: -6,
     left: -6,
+    padding: 6,
     zIndex: 10,
-    padding: 8,
   },
   cardDeleteBadge: {
-    backgroundColor: '#FF3B30',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
+    backgroundColor: '#C1272D',
+    width: 22,
+    height: 22,
+    borderRadius: 12,
     alignItems: 'center',
-  },
-  cardText: {
-    fontSize: 16,
-    color: colors.text,
+    justifyContent: 'center',
   },
   popoverContainer: {
     position: 'absolute',
     right: 20,
-    minWidth: 150,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    width: 170,
+    backgroundColor: '#F3F3F3',
+    borderRadius: 16,
     padding: 8,
     shadowColor: '#000',
-    shadowOffset: { width:0, height:4 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
     shadowRadius: 10,
-    elevation: 8,
+    elevation: 6,
   },
   popoverBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: colors.recentSection,
-    borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   popoverText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
-  },
-  // Data Source specific row
-  sourceCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  sourceIndex: {
-    flex: 0.5,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.fab,
-  },
-  sourceInput: {
-    flex: 3,
-    fontSize: 16,
-    color: colors.text,
-    paddingVertical: 8,
-  },
-  sourceActionBtn: {
-    flex: 0.8,
-    alignItems: 'center',
-    padding: 8,
-  },
-  // Colors Modal
-  modalBackdropColor: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'flex-end',
-  },
-  colorSheet: {
-    backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-  },
-  colorHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  colorTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  colorGridWrapper: {
-    marginBottom: 30,
-    backgroundColor: 'transparent',
-  },
-  colorGridRow: {
-    flexDirection: 'row',
-  },
-  colorGridSquare: {
-    flex: 1,
-    aspectRatio: 1,
-  },
-  circleColorsContainer: {
-    gap: 16,
-    paddingHorizontal: 8,
-    marginBottom: 20,
-  },
-  circleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  circleColorBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  plusColorBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#E5E5E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  plusColorText: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: '#000',
-    lineHeight: 32,
-  },
-  // Link Modal
-  modalBackdropCenter: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  linkModalCard: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  linkInput: {
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.text,
-  },
-  linkBtnCancel: {
-    flex: 1,
-    marginRight: 8,
-    marginTop: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#E5E5E5',
-    alignItems: 'center',
-  },
-  linkBtnOk: {
-    flex: 1,
-    marginLeft: 8,
-    marginTop: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.primary || '#666',
-    alignItems: 'center',
-  },
-  linkBtnText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  
-  // --- Font Selection Modals Styles ---
-  fontModalCard: {
-    width: '70%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  fontOptionBtn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  fontOptionActive: {
-    backgroundColor: '#F9F9F9',
-    borderRadius: 8,
-  },
-  fontOptionText: {
-    fontSize: 18,
     color: colors.text,
   },
 });

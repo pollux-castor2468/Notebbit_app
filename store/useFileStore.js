@@ -1,26 +1,25 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { Platform } from 'react-native';
 
-const customStorage = {
-  getItem: (name) => {
-    if (Platform.OS === 'web') return localStorage.getItem(name);
-    return AsyncStorage.getItem(name);
-  },
-  setItem: (name, value) => {
-    if (Platform.OS === 'web') return localStorage.setItem(name, value);
-    return AsyncStorage.setItem(name, value);
-  },
-  removeItem: (name) => {
-    if (Platform.OS === 'web') return localStorage.removeItem(name);
-    return AsyncStorage.removeItem(name);
-  },
-};
+// const customStorage = {
+//   getItem: (name) => {
+//     if (Platform.OS === 'web') return localStorage.getItem(name);
+//     return AsyncStorage.getItem(name);
+//   },
+//   setItem: (name, value) => {
+//     if (Platform.OS === 'web') return localStorage.setItem(name, value);
+//     return AsyncStorage.setItem(name, value);
+//   },
+//   removeItem: (name) => {
+//     if (Platform.OS === 'web') return localStorage.removeItem(name);
+//     return AsyncStorage.removeItem(name);
+//   },
+// };
 
 export const useFileStore = create(
-  persist(
-    (set) => ({
+  (set) => ({
       data: [
         { id: '1', title: '第一份研究報告', type: 'document', date: '2026.04.04 11:46', starred: true },
         { id: '2', title: '日常隨記 01', type: 'diary', date: '2026.04.03 20:12', starred: false },
@@ -74,10 +73,6 @@ export const useFileStore = create(
           return item;
         })
       })),
-    }),
-    {
-      name: 'file-storage',
-      storage: createJSONStorage(() => customStorage),
     }
   )
 );

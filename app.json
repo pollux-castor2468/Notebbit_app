@@ -28,9 +28,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "react-native-reanimated/plugin",
-      "expo-router",
-      "@react-native-community/datetimepicker"
+      "expo-router"
     ]
   }
 }

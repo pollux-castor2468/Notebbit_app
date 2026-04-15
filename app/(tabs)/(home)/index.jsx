@@ -54,7 +54,7 @@ export default function Home() {
           updateFile(newDoc.id, { content });
         }
 
-        router.push(`/document/${newDoc.id}`);
+        router.push(`/(tabs)/(home)/document/${newDoc.id}`);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -66,12 +66,12 @@ export default function Home() {
 
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
-    router.push(`/document/${newFile.id}`);
+    router.push(`/(tabs)/(home)/document/${newFile.id}`);
   };
 
   const handleCreateDiary = () => {
     const newFile = createFile('diary', '未命名日記');
-    router.push(`/diary/${newFile.id}`);
+    router.push(`/(tabs)/(home)/diary/${newFile.id}`);
   };
 
   return (
@@ -132,9 +132,9 @@ export default function Home() {
                 style={styles.historyItem}
                 onPress={() => {
                   if (item.type === 'diary') {
-                    router.push(`/diary/${item.id}`);
+                    router.push(`/(tabs)/(home)/diary/${item.id}`);
                   } else {
-                    router.push(`/document/${item.id}`);
+                    router.push(`/(tabs)/(home)/document/${item.id}`);
                   }
                 }}
               >

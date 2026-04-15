@@ -93,9 +93,9 @@ export default function FileBrowser() {
                  style={[styles.listItem, isMenuOpen && { borderColor: 'rgba(0,0,0,0.1)' }]}
                  onPress={() => {
                    if (item.type === 'diary') {
-                      router.push(`/diary/${item.id}`);
+                      router.push(`/(tabs)/(home)/diary/${item.id}`);
                    } else {
-                      router.push(`/document/${item.id}`);
+                      router.push(`/(tabs)/(home)/document/${item.id}`);
                    }
                  }}
                >
