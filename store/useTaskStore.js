@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-//總之這是關於自訂任的內容儲存的地方
+//總之這一頁是關於自訂任的內容儲存的地方
 //如果是用web的話就用其他方式儲存(這是AI加的吧(AI自己稱讚自己诶
 const customStorage = {
   getItem: (name) => {
@@ -19,30 +19,11 @@ const customStorage = {
     return AsyncStorage.removeItem(name);
   },
 };
-// const customStorage = {
-//   getItem: async (name) => {
-//     if (typeof window !== 'undefined') {
-//       return localStorage.getItem(name);
-//     }
-//     return AsyncStorage.getItem(name);
-//   },
-//   setItem: async (name, value) => {
-//     if (typeof window !== 'undefined') {
-//       return localStorage.setItem(name, value);
-//     }
-//     return AsyncStorage.setItem(name, value);
-//   },
-//   removeItem: async (name) => {
-//     if (typeof window !== 'undefined') {
-//       return localStorage.removeItem(name);
-//     }
-//     return AsyncStorage.removeItem(name);
-//   },
-// };
 
 export const useTaskStore = create(
   persist(
     (set) => ({
+      //任務內容儲存陣列
       tasks: [
         { id: '1', title: '完成今天的日記', completed: true },
         { id: '2', title: '完成心得報告800字', completed: true },
@@ -68,7 +49,7 @@ export const useTaskStore = create(
     }),
     {
       name: 'task-storage',
-      storage: createJSONStorage(() => customStorage),
+      storage: createJSONStorage(() => customStorage),  //用上面的方法儲存
     }
   )
 );

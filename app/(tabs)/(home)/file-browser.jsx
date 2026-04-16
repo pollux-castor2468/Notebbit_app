@@ -8,15 +8,16 @@ import { layoutStyles, textStyles } from '../../../styles';
 import { useFileStore } from '../../../store/useFileStore';
 
 export default function FileBrowser() {
+  //這一頁是所有文件/星號文件/所有日記頁...嗎???
+  //啊啊啊為什麼這個會在(home)的資料夾裡啊(抓狂
+  //讓下面的tab區看不見(跑錯地方啦先偷偷藏起來
   const navigation = useNavigation();
-  
-  //讓下面的tab區看不見
-  //啊啊啊為什麼這個會在(home)的資料夾裡啊(抓狂(先偷偷藏起來
   useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
       tabBarStyle: { display: 'none' }
     });
     return () => {
+      //恢復tab的樣式?(總之先把原本的樣式直接搬過來
       navigation.getParent()?.setOptions({
         tabBarStyle: {
           position: 'absolute',
@@ -61,20 +62,20 @@ export default function FileBrowser() {
     return item.type === activeTab;
   });
 
+  //刪除檔案功能
   const handleDelete = () => {
     if (selectedItem) {
       setData(prev => prev.filter(item => item.id !== selectedItem.id));
       setSelectedItem(null);
     }
   };
-
+  //重新命名?
   const handleRenameClick = () => {
     setItemToRename(selectedItem);
     setNewTitle(selectedItem.title);
     setRenameModalVisible(true);
     setSelectedItem(null);
   };
-
   const submitRename = () => {
     if (newTitle.trim() && itemToRename) {
       updateFile(itemToRename.id, { title: newTitle.trim() });

@@ -51,6 +51,7 @@ export default function DocumentEditor() {
     };
   }, [navigation]);
 
+  //關於這份文件(找到文件?儲存文件、修改文件之類的都放這裡)
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
   const updateFile = useFileStore(state => state.updateFile);
   const toggleStar = useFileStore(state => state.toggleStar);
@@ -64,6 +65,7 @@ export default function DocumentEditor() {
   const [content, setContent] = useState(fileData?.content || '');
   const wordCount = content.replace(/\s/g, '').length || 7;
 
+  //這是自動儲存嗎? 沒看過的寫法，可以看看能不能運作
   React.useEffect(() => {
     if (id) {
       updateFile(id, { content });
@@ -74,24 +76,31 @@ export default function DocumentEditor() {
     <SafeAreaView style={layoutStyles.root}>
       {/* Top Header */}
       <View style={styles.header}>
+        {/* 左邊的返回和文件名稱 */}
         <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
           <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
             <ChevronLeft size={28} color={colors.text} />
           </Pressable>
+          {/* 會顯示文件名稱 */}
           <Text style={[styles.headerTitle, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
             {fileData?.title || '文件名稱'}
           </Text>
         </View>
+        {/* 右邊的icon區 */}
         <View style={layoutStyles.rowCenter}>
+          {/* 資料來源按鈕(會在螢幕下半部跳出一個視窗) */}
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('source')}>
             <Edit2 size={24} color={colors.text} />
           </Pressable>
+          {/* 版本控制按鈕(會在螢幕下半部跳出一個視窗) */}
           <Pressable style={styles.iconButton} onPress={() => setActiveModal('version')}>
             <Clock size={24} color={colors.text} />
           </Pressable>
+          {/* 標記星號按鈕 */}
           <Pressable style={styles.iconButton} onPress={() => fileData && toggleStar(id)}>
             <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />
           </Pressable>
+          {/* 其他功能按鈕(會在按鈕下方開啟一個小視窗) */}
           <Pressable 
             style={[styles.iconButton, activeModal === 'more' ? styles.dotsBtnActive : null]} 
             onPress={(e) => {
@@ -201,7 +210,10 @@ export default function DocumentEditor() {
               
               <View style={styles.sheetHeaderRow}>
                  <Text style={styles.sheetTitle}>資料來源</Text>
-                 <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
+                 <View style={layoutStyles.rowCenter}>
+                    <Pressable style={styles.bluePlusBtn}><Plus size={20} color={colors.text} /></Pressable>
+                    <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
+                 </View>
               </View>
 
               <View style={styles.sheetSubheadPill}>
@@ -262,6 +274,36 @@ export default function DocumentEditor() {
           </Pressable>
         </Pressable>
       )}
+
+      {/* 新增版本視窗 */}
+      {/* <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={textStyles.h3}>新增任務</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="新增版本名稱"
+              value={newTaskTitle}
+              onChangeText={setNewTaskTitle}
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <Pressable style={styles.modalBtnCancel} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalBtnText}>取消</Text>
+              </Pressable>
+              <Pressable style={styles.modalBtnSubmit} onPress={handleAddTask}>
+                <Text style={[styles.modalBtnText, { color: '#FFF' }]}>新增</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal> */}
+
     </SafeAreaView>
   );
 }

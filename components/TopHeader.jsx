@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { Rabbit, Search } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { colors } from '../constants/token';
@@ -10,7 +10,8 @@ export default function TopHeader() {
     <View style={styles.header}>
       <View style={[layoutStyles.rowCenter, { flex: 1 }]}>
         <View style={styles.brandBox}>
-          <Rabbit size={28} color={colors.text} />
+          {/* <Rabbit size={28} color={colors.text} /> */}
+          <Image source={require('../assets/img/1.png')} style={styles.rabbit} resizeMode="contain" />
         </View>
         <Text style={styles.brandText}>Notebbit</Text>
       </View>
@@ -35,11 +36,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 24,
-    backgroundColor: colors.container,
+    // backgroundColor: colors.container,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.text,
+    // borderColor: colors.text,
   },
   brandText: {
     fontSize: 16,
@@ -47,4 +48,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: 12,
   },
+  rabbit: {
+    height: 70,
+  }
 });

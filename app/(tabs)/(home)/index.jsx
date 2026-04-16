@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -126,6 +127,7 @@ export default function Home() {
             <Clock size={20} color={colors.text} />
             <Text style={[textStyles.h3, { marginLeft: 8 }]}>最近開啟</Text>
           </View>
+          <Image source={require('../../../assets/img/3.png')} style={styles.rabbit} resizeMode="contain" />
           {/* 最近開啟區 */}
           <View style={styles.historyBody}>
             {recentHistory.map(item => (
@@ -196,6 +198,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     minHeight: 300,
     overflow: 'hidden',
+    // position: 'relative',
   },
   historyHeader: {
     backgroundColor: colors.recentHeader,
@@ -230,4 +233,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  rabbit: {
+    position: 'absolute',
+    height: 70,
+    top: 5,
+    right: -85,
+  }
 });
