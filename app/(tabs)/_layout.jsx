@@ -1,5 +1,5 @@
 import { Tabs, router } from "expo-router";
-import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from "react-native";
+import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image } from "react-native";
 import { colors as themeColors, fontSize, colors } from "../../constants/token";
 import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
@@ -141,16 +141,18 @@ export default function TabLayout() {
           onPress={() => setAddMenuVisible(false)}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
+            
             <View style={styles.menuWrapper}>
               <View style={styles.menuContainer}>
-                <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('document')}>
+                <TouchableOpacity style={styles.menuItemL} onPress={() => handleNavCreate('document')}>
                   <Text style={styles.menuText}>建立文件</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.menuItem} onPress={() => handleNavCreate('diary')}>
+                <TouchableOpacity style={styles.menuItemR} onPress={() => handleNavCreate('diary')}>
                   <Text style={styles.menuText}>建立日記</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.menuArrow} />
+              <Image source={require('../../assets/img/3.png')} style={styles.rabbit} resizeMode="contain" />
             </View>
           </Pressable>
         </Pressable>
@@ -162,31 +164,45 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)', // subtle dim
+    // backgroundColor: 'rgba(0,0,0,0.1)', // subtle dim
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   menuWrapper: {
-    marginBottom: 90, // Position right above the 80px tab bar (bottom: 24) -> 104px
+    marginBottom: 60, // Position right above the 80px tab bar (bottom: 24) -> 104px
     alignItems: 'center',
   },
   menuContainer: {
     flexDirection: 'row',
-    backgroundColor: themeColors.recentHeader,
+    backgroundColor: colors.surface,
     borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 12,
     gap: 12, // React Native 支援 gap
-    shadowColor: themeColors.text,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    // shadowColor: themeColors.text,
+    // shadowOffset: { width: 0, height: 8 },
+    // shadowOpacity: 0.15,
+    // shadowRadius: 16,
     elevation: 8,
   },
-  menuItem: {
+  menuItemL: {
     width: 100,
     height: 64,
-    backgroundColor: themeColors.surface,
+    backgroundColor: colors.container,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuItemR: {
+    width: 100,
+    height: 64,
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -205,7 +221,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 14,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: themeColors.recentHeader,
+    borderTopColor: colors.surface,
     marginTop: 0, // No margin, it flush bounds exactly to popover container
   },
+  rabbit: {
+    position: 'absolute',
+    height: 70,
+    top: -30,
+    right: -90
+  }
 });

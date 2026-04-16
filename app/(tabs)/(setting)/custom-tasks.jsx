@@ -1,9 +1,9 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Info, Check, Plus, Trash2, Pencil } from 'lucide-react-native';
-import { colors } from '../../../constants/token';
+import { borderRadius, colors } from '../../../constants/token';
 import { layoutStyles, textStyles } from '../../../styles';
 import { useTaskStore } from '../../../store/useTaskStore';
 
@@ -88,7 +88,28 @@ export default function CustomTasks() {
       </View>
 
       {/* Top empty white space area as seen in screenshot */}
-      <View style={styles.topEmptySpace} />
+      <View style={styles.topEmptySpace}>
+        {/* 上面的經驗進度條 */}
+        <View style={styles.topRowSection}>
+          {/* Lv. */}
+          <View style={styles.levelText}>
+            <Text style={styles.topLv}>Lv.</Text>
+            <Text style={styles.topLv}>1</Text>
+          </View>
+          {/* 進度條(中間跑步出來qwqq) */}
+          <View style={styles.topLvBar}>
+            <View style={[styles.topLvBarInner, {width: '10%'}]}></View>
+          </View>
+          {/* 進度條數字 */}
+          <View style={styles.levelText}>
+            <Text style={styles.experienceText}>1</Text>
+            <Text style={styles.experienceText}>/</Text>
+            <Text style={styles.experienceText}>10</Text>
+          </View>
+        </View>
+        {/* 兔子圖片 */}
+        <Image source={require('../../../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" />
+      </View>
 
       {/* Bottom Gray Section */}
       <View style={styles.bottomSection}>
@@ -142,22 +163,24 @@ export default function CustomTasks() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={textStyles.h3}>新增任務</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="請輸入任務名稱"
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalBtnCancel} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalBtnText}>取消</Text>
-              </Pressable>
-              <Pressable style={styles.modalBtnSubmit} onPress={handleAddTask}>
-                <Text style={[styles.modalBtnText, { color: '#FFF' }]}>新增</Text>
-              </Pressable>
+          <View style={styles.modalBigContent}>
+            <View style={styles.modalContent}>
+              <Text style={textStyles.h3}>新增任務</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="請輸入任務名稱"
+                value={newTaskTitle}
+                onChangeText={setNewTaskTitle}
+                autoFocus
+              />
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalBtnCancel} onPress={() => setModalVisible(false)}>
+                  <Text style={styles.modalBtnTextC}>取消</Text>
+                </Pressable>
+                <Pressable style={styles.modalBtnSubmit} onPress={handleAddTask}>
+                  <Text style={styles.modalBtnTextS}>新增</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -170,32 +193,34 @@ export default function CustomTasks() {
         onRequestClose={() => setEditModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={textStyles.h3}>編輯任務</Text>
+          <View style={styles.modalBigContent}>
+            <View style={styles.modalContent}>
+              <Text style={textStyles.h3}>重新定義任務目標</Text>
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder="請輸入任務名稱"
-              value={editTaskTitle}
-              onChangeText={setEditTaskTitle}
-              autoFocus
-            />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="請輸入任務名稱"
+                value={editTaskTitle}
+                onChangeText={setEditTaskTitle}
+                autoFocus
+              />
 
-            <View style={styles.modalActions}>
-              {/* 取消 */}
-              <Pressable
-                style={styles.modalBtnCancel}
-                onPress={() => setEditModalVisible(false)}
-              >
-                <Text style={styles.modalBtnText}>取消</Text>
-              </Pressable>
-              {/* 確認 */}
-              <Pressable
-                style={styles.modalBtnSubmit}
-                onPress={handleUpdateTask}
-              >
-                <Text style={[styles.modalBtnText, { color: '#FFF' }]}>確認</Text>
-              </Pressable>
+              <View style={styles.modalActions}>
+                {/* 取消 */}
+                <Pressable
+                  style={styles.modalBtnCancel}
+                  onPress={() => setEditModalVisible(false)}
+                >
+                  <Text style={styles.modalBtnTextC}>取消</Text>
+                </Pressable>
+                {/* 確認 */}
+                <Pressable
+                  style={styles.modalBtnSubmit}
+                  onPress={handleUpdateTask}
+                >
+                  <Text style={styles.modalBtnTextS}>確認</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -218,19 +243,82 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topEmptySpace: {
-    height: '35%',
+    position: 'relative',
+    height: '40%',
+  },
+  topRowSection: {
+    flexDirection: 'row',
+    hight: 60,
+    padding: 16,
+    marginLeft: 16,
+    marginRight: 16,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  levelText: {
+    flexDirection: 'row',
+    marginLeft: 16,
+    alignItems: 'center',
+  },
+  topLv: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  topLvBar: {
+    position: 'relative',
+    width: '50%',
+    height: 20,
+    backgroundColor: '#fff',
+    margin: 5,
+    // marginRight: 10,
+    marginLeft: 20,
+    // alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  topLvBarInner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    heinght: 20,
+    width: '10%',
+    backgroundColor: colors.container,
+  },
+  // experience: {
+  //   flexDirection: 'row',
+  //   marginLeft: 16,
+  // },
+  experienceText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  rabbit: {
+    height: 180,
+    position: 'absolute',
+    bottom: 20,
+    left: -150,
   },
   bottomSection: {
     flex: 1,
-    backgroundColor: colors.recentSection,
+    backgroundColor: colors.surfaceVariant,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    paddingTop: 24,
   },
   scrollContent: {
     padding: 24,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   titleBadge: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderColor: colors.border,
+    borderWidth: 1,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 16,
@@ -247,7 +335,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 12,
   },
@@ -277,10 +367,12 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.container,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   addButtonText: {
     fontSize: 14,
@@ -290,14 +382,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
+  modalBigContent: {
+    padding: 10,
     width: '80%',
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalContent: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 24,
   },
   modalInput: {
@@ -316,21 +417,30 @@ const styles = StyleSheet.create({
   modalBtnCancel: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.border,
-    borderRadius: 8,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     marginRight: 8,
   },
   modalBtnSubmit: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.fab,
-    borderRadius: 8,
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     marginLeft: 8,
   },
-  modalBtnText: {
+  modalBtnTextS: {
     fontSize: 16,
     fontWeight: 'bold',
-  }
+    color: colors.errow,
+  },
+  modalBtnTextC: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

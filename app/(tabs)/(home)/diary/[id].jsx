@@ -142,7 +142,7 @@ export default function DiaryEditor() {
   };
 
   return (
-    <SafeAreaView style={layoutStyles.root}>
+    <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
         <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
@@ -437,12 +437,19 @@ export default function DiaryEditor() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 22,
@@ -485,18 +492,20 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   bottomToolbar: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   dragPill: {
     width: 80,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#ADADAD',
+    backgroundColor: colors.border,
     alignSelf: 'center',
     marginBottom: 20,
   },
@@ -507,6 +516,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   toolIcon: {
     padding: 8,
@@ -516,13 +527,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     width: 170,
-    backgroundColor: '#F3F3F3',
-    borderRadius: 16,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 6 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 10,
     elevation: 6,
   },
   popoverBtn: {
@@ -530,7 +543,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 6,

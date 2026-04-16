@@ -12,6 +12,7 @@ export const colors = {
   fab: '#FFED64',            // fab按鍵 (黃色)
   border: '#6C5E4F',         // 邊框顏色 (咖啡)    (所以說和第一個重複了啦！
   canva: '#8B3DFF',          // 不是說好的不用google紫色嗎
+  errow: '#B00020',          // 警告文字(深紅)
 }
 
 export const fontSize = {

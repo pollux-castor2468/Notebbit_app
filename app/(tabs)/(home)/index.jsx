@@ -127,7 +127,7 @@ export default function Home() {
             <Clock size={20} color={colors.text} />
             <Text style={[textStyles.h3, { marginLeft: 8 }]}>最近開啟</Text>
           </View>
-          <Image source={require('../../../assets/img/3.png')} style={styles.rabbit} resizeMode="contain" />
+          <Image source={require('../../../assets/img/8.png')} style={styles.rabbit} resizeMode="contain" />
           {/* 最近開啟區 */}
           <View style={styles.historyBody}>
             {recentHistory.map(item => (

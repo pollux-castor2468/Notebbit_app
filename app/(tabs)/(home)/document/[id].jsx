@@ -73,7 +73,7 @@ export default function DocumentEditor() {
   }, [content, id, updateFile]);
 
   return (
-    <SafeAreaView style={layoutStyles.root}>
+    <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
         {/* 左邊的返回和文件名稱 */}
@@ -309,12 +309,19 @@ export default function DocumentEditor() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 22,
@@ -339,18 +346,20 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   bottomToolbar: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   dragPill: {
     width: 80,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#ADADAD',
+    backgroundColor: colors.border,
     alignSelf: 'center',
     marginBottom: 20,
   },
@@ -358,9 +367,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   dropdownGroup: {
     flexDirection: 'row',
@@ -391,25 +402,27 @@ const styles = StyleSheet.create({
   },
   bottomSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    // backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   bottomSheetContainer: {
-    backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    backgroundColor: colors.recentSection,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sheetDragPill: {
     width: 100,
     height: 4,
-    backgroundColor: '#AEAEAE',
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   sheetHeaderRow: {
     flexDirection: 'row',
@@ -417,6 +430,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     paddingHorizontal: 8,
+    // position: 'relative',
+    // top: -20,
   },
   sheetTitle: {
     fontSize: 20,
@@ -424,7 +439,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   bluePlusBtn: {
-    backgroundColor: '#BCE0F3',
+    backgroundColor: colors.container,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -437,8 +452,10 @@ const styles = StyleSheet.create({
   },
   sheetSubheadPill: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 8,
+    backgroundColor: colors.recentHeader,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -480,13 +497,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     width: 170,
-    backgroundColor: '#F3F3F3',
-    borderRadius: 16,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 6 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 10,
     elevation: 6,
   },
   popoverBtn: {
@@ -494,7 +513,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 6,

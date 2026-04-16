@@ -11,33 +11,33 @@ export default function FileBrowser() {
   //這一頁是所有文件/星號文件/所有日記頁...嗎???
   //啊啊啊為什麼這個會在(home)的資料夾裡啊(抓狂
   //讓下面的tab區看不見(跑錯地方啦先偷偷藏起來
-  const navigation = useNavigation();
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: 'none' }
-    });
-    return () => {
-      //恢復tab的樣式?(總之先把原本的樣式直接搬過來
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          position: 'absolute',
-            bottom: 35,  //調整這個可以逾留出下面空間嗎?
-            height: 80,
-            width: '95%',
-            marginLeft: 8,
-            backgroundColor: colors.recentSection, // 淺黃背景
-            borderRadius: 40,
-            borderTopWidth: 1, // Need border top
-            elevation: 0,
-            shadowOpacity: 0,
-            paddingBottom: 8, // Adjust label spacing
-            paddingTop: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-        }
-      });
-    };
-  }, [navigation]);
+  // const navigation = useNavigation();
+  // useLayoutEffect(() => {
+  //   navigation.getParent()?.setOptions({
+  //     tabBarStyle: { display: 'none' }
+  //   });
+  //   return () => {
+  //     //恢復tab的樣式?(總之先把原本的樣式直接搬過來
+  //     navigation.getParent()?.setOptions({
+  //       tabBarStyle: {
+  //         position: 'absolute',
+  //           bottom: 35,  //調整這個可以逾留出下面空間嗎?
+  //           height: 80,
+  //           width: '95%',
+  //           marginLeft: 8,
+  //           backgroundColor: colors.recentSection, // 淺黃背景
+  //           borderRadius: 40,
+  //           borderTopWidth: 1, // Need border top
+  //           elevation: 0,
+  //           shadowOpacity: 0,
+  //           paddingBottom: 8, // Adjust label spacing
+  //           paddingTop: 8,
+  //           borderWidth: 1,
+  //           borderColor: colors.border,
+  //       }
+  //     });
+  //   };
+  // }, [navigation]);
   
   const params = useLocalSearchParams();
   const initialType = params.type || 'document';
@@ -97,74 +97,77 @@ export default function FileBrowser() {
       </View>
 
       {/* Pill Segmented Tabs */}
-      <View style={styles.segmentedControl}>
-        {['document', 'starred', 'diary'].map((tab) => (
-          <Pressable 
-            key={tab} 
-            style={[styles.segmentItem, activeTab === tab && styles.segmentActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.segmentText, activeTab === tab && styles.segmentTextActive]}>
-              {tab === 'document' ? '所有文件' : tab === 'starred' ? '星號文件' : '所有日記'}
-            </Text>
-          </Pressable>
-        ))}
+      <View style={styles.allFileSection}>
+        <View style={styles.segmentedControl}>
+          {['document', 'starred', 'diary'].map((tab) => (
+            <Pressable 
+              key={tab} 
+              style={[styles.segmentItem, activeTab === tab && styles.segmentActive]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[styles.segmentText, activeTab === tab && styles.segmentTextActive]}>
+                {tab === 'document' ? '所有文件' : tab === 'starred' ? '星號文件' : '所有日記'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <FlatList 
+          data={filteredData}
+          contentContainerStyle={styles.listContent}
+          keyExtractor={item => item.id}
+          ListEmptyComponent={<Text style={styles.emptyText}>{emptyMessage}</Text>}
+          renderItem={({ item }) => {
+            const isMenuOpen = selectedItem?.id === item.id;
+            return (
+              <View style={{ zIndex: isMenuOpen ? 100 : 1 }}>
+                <Pressable 
+                  style={[styles.listItem, isMenuOpen && { borderColor: 'rgba(0,0,0,0.1)' }]}
+                  onPress={() => {
+                    if (item.type === 'diary') {
+                        router.push(`/(tabs)/(home)/diary/${item.id}`);
+                    } else {
+                        router.push(`/(tabs)/(home)/document/${item.id}`);
+                    }
+                  }}
+                >
+                  {/* icon和背景顏色記得要切換 */}
+                  <View style={[styles.iconBox, {backgroundColor: item.type === 'diary' ? colors.secondary : colors.container,}]}>
+                      {item.type === 'diary' ? (
+                        <Book size={24} color={colors.text} />
+                      ) : (
+                        <FileText size={24} color={colors.text} />
+                      )}
+                  </View>
+
+                  <View style={styles.itemTextContainer}>
+                    <Text style={[textStyles.body, { fontWeight: '700' }]}>{item.title}</Text>
+                    <Text style={[textStyles.subtitle, { marginTop: 4, color: 'rgba(101,68,69,0.5)', fontSize: 12 }]}>{item.date}</Text>
+                  </View>
+
+                  <Pressable 
+                    style={{ padding: 4, marginRight: 8 }}
+                    onPress={() => setData(prev => prev.map(d => d.id === item.id ? { ...d, starred: !d.starred } : d))}
+                  >
+                    <Star size={20} color={colors.text} fill={item.starred ? colors.text : "transparent"} opacity={item.starred ? 1 : 0.3} />
+                  </Pressable>
+
+                  {/* Dots trigger */}
+                  <Pressable 
+                    style={[styles.dotsBtn, isMenuOpen && styles.dotsBtnActive]}
+                    onPress={(e) => {
+                      setPopoverPos(e.nativeEvent.pageY);
+                      setSelectedItem(item);
+                    }}
+                  >
+                    <MoreVertical size={20} color={colors.text} opacity={isMenuOpen ? 1 : 0.5} />
+                  </Pressable>
+                </Pressable>
+              </View>
+            );
+          }}
+        />
       </View>
-
-      <FlatList 
-        data={filteredData}
-        contentContainerStyle={styles.listContent}
-        keyExtractor={item => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>{emptyMessage}</Text>}
-        renderItem={({ item }) => {
-          const isMenuOpen = selectedItem?.id === item.id;
-          return (
-            <View style={{ zIndex: isMenuOpen ? 100 : 1 }}>
-               <Pressable 
-                 style={[styles.listItem, isMenuOpen && { borderColor: 'rgba(0,0,0,0.1)' }]}
-                 onPress={() => {
-                   if (item.type === 'diary') {
-                      router.push(`/(tabs)/(home)/diary/${item.id}`);
-                   } else {
-                      router.push(`/(tabs)/(home)/document/${item.id}`);
-                   }
-                 }}
-               >
-                 <View style={styles.iconBox}>
-                    {item.type === 'diary' ? (
-                      <Book size={24} color={colors.text} />
-                    ) : (
-                      <FileText size={24} color={colors.text} />
-                    )}
-                 </View>
-
-                 <View style={styles.itemTextContainer}>
-                   <Text style={[textStyles.body, { fontWeight: '700' }]}>{item.title}</Text>
-                   <Text style={[textStyles.subtitle, { marginTop: 4, color: 'rgba(101,68,69,0.5)', fontSize: 12 }]}>{item.date}</Text>
-                 </View>
-
-                 <Pressable 
-                   style={{ padding: 4, marginRight: 8 }}
-                   onPress={() => setData(prev => prev.map(d => d.id === item.id ? { ...d, starred: !d.starred } : d))}
-                 >
-                   <Star size={20} color={colors.text} fill={item.starred ? colors.text : "transparent"} opacity={item.starred ? 1 : 0.3} />
-                 </Pressable>
-
-                 {/* Dots trigger */}
-                 <Pressable 
-                   style={[styles.dotsBtn, isMenuOpen && styles.dotsBtnActive]}
-                   onPress={(e) => {
-                     setPopoverPos(e.nativeEvent.pageY);
-                     setSelectedItem(item);
-                   }}
-                 >
-                   <MoreVertical size={20} color={colors.text} opacity={isMenuOpen ? 1 : 0.5} />
-                 </Pressable>
-               </Pressable>
-            </View>
-          );
-        }}
-      />
 
       {/* Floating Modal Popover */}
       <Modal transparent visible={!!selectedItem} animationType="fade" onRequestClose={() => setSelectedItem(null)}>
@@ -227,13 +230,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     height: 62,
   },
+  allFileSection: {
+    flex: 1,
+    margin: 16,
+    marginTop: 0,
+    marginBottom: 90,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 20,
+  },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: colors.recentSection,
-    borderRadius: 16,
+    backgroundColor: colors.recentHeader,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 6,
-    marginHorizontal: 16,
-    marginTop: 8,
+    // margin: 1,
+    // marginTop: 8,
     marginBottom: 16,
   },
   segmentItem: {
@@ -243,12 +256,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   segmentActive: {
-    backgroundColor: colors.surface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: colors.secondary,
+    // padding: 5,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.05,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   segmentText: {
     fontSize: 16,
@@ -281,8 +295,10 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 48,
     height: 52,
-    borderRadius: 16,
-    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    // backgroundColor: colors.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -306,18 +322,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 28,
     width: 160,
-    backgroundColor: colors.recentSection,
-    borderRadius: 16,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 10,
     padding: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 8 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 16,
+    // elevation: 6,
   },
   modalBtn: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 6,
