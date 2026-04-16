@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "notes-app",
-    "slug": "notebbit-app",
+    "name": "Notebbit",
+    "slug": "mid_13_Notebbit",
     "version": "1.0.0",
     "scheme": "notebbit",
     "orientation": "portrait",
@@ -29,6 +29,18 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "10c395dc-8f30-4d9e-8960-0450c17274d7"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/10c395dc-8f30-4d9e-8960-0450c17274d7"
+    }
   }
 }
