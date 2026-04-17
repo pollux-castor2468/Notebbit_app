@@ -183,7 +183,7 @@ export default function FileBrowser() {
             </Pressable>
             
             <Pressable style={[styles.modalBtn, { marginBottom: 0 }]} onPress={handleDelete}>
-              <Text style={[styles.modalBtnText, { color: '#C1272D' }]}>
+              <Text style={[styles.modalBtnText, { color: colors.errow }]}>
                 {selectedItem?.type === 'diary' ? '刪除日記' : '刪除文件'}
               </Text>
             </Pressable>
@@ -199,21 +199,23 @@ export default function FileBrowser() {
         onRequestClose={() => setRenameModalVisible(false)}
       >
         <View style={styles.renameOverlay}>
-          <View style={styles.renameContent}>
-            <Text style={textStyles.h3}>重新命名</Text>
-            <TextInput
-              style={styles.renameInput}
-              value={newTitle}
-              onChangeText={setNewTitle}
-              autoFocus
-            />
-            <View style={styles.renameActions}>
-              <Pressable style={styles.renameBtnCancel} onPress={() => setRenameModalVisible(false)}>
-                <Text style={styles.renameBtnText}>取消</Text>
-              </Pressable>
-              <Pressable style={styles.renameBtnSubmit} onPress={submitRename}>
-                <Text style={[styles.renameBtnText, { color: '#FFF' }]}>確認</Text>
-              </Pressable>
+          <View style={styles.modalBigContent}>
+            <View style={styles.renameContent}>
+              <Text style={textStyles.h3}>重新命名</Text>
+              <TextInput
+                style={styles.renameInput}
+                value={newTitle}
+                onChangeText={setNewTitle}
+                autoFocus
+              />
+              <View style={styles.renameActions}>
+                <Pressable style={styles.renameBtnCancel} onPress={() => setRenameModalVisible(false)}>
+                  <Text style={styles.modalBtnTextC}>取消</Text>
+                </Pressable>
+                <Pressable style={styles.renameBtnSubmit} onPress={submitRename}>
+                  <Text style={styles.modalBtnTextS}>確認</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -353,10 +355,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  renameContent: {
+  modalBigContent: {
+    padding: 10,
     width: '80%',
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  renameContent: {
+    // width: '80%',
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 24,
   },
   renameInput: {
@@ -375,21 +387,30 @@ const styles = StyleSheet.create({
   renameBtnCancel: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.border,
-    borderRadius: 8,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     marginRight: 8,
   },
   renameBtnSubmit: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.fab,
-    borderRadius: 8,
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     marginLeft: 8,
   },
-  renameBtnText: {
+  modalBtnTextS: {
     fontSize: 16,
     fontWeight: 'bold',
-  }
+    color: colors.errow,
+  },
+  modalBtnTextC: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

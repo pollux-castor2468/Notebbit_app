@@ -403,33 +403,35 @@ export default function DiaryEditor() {
         onRequestClose={() => setActiveModal(null)}
       >
         <Pressable style={styles.modalBackdropCenter} onPress={() => setActiveModal(null)}>
-          <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
-            <Text style={styles.colorTitle}>插入連結</Text>
-            <TextInput
-              style={styles.linkInput}
-              placeholder="連結標題 (選填)"
-              placeholderTextColor="#999"
-              value={linkTitle}
-              onChangeText={setLinkTitle}
-            />
-            <TextInput
-              style={styles.linkInput}
-              placeholder="請輸入網址 https://..."
-              placeholderTextColor="#999"
-              value={linkUrl}
-              onChangeText={setLinkUrl}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-            <View style={layoutStyles.rowCenter}>
-              <Pressable style={styles.linkBtnCancel} onPress={() => setActiveModal(null)}>
-                <Text style={styles.linkBtnText}>取消</Text>
-              </Pressable>
-              <Pressable style={styles.linkBtnOk} onPress={handleInsertLink}>
-                <Text style={[styles.linkBtnText, { color: '#fff' }]}>確定</Text>
-              </Pressable>
-            </View>
-          </Pressable>
+          <View style={styles.linkBigCard}>
+            <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
+              <Text style={styles.colorTitle}>插入連結</Text>
+              <TextInput
+                style={styles.linkInput}
+                placeholder="連結標題 (選填)"
+                placeholderTextColor="#999"
+                value={linkTitle}
+                onChangeText={setLinkTitle}
+              />
+              <TextInput
+                style={styles.linkInput}
+                placeholder="請輸入網址 https://..."
+                placeholderTextColor="#999"
+                value={linkUrl}
+                onChangeText={setLinkUrl}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              <View style={layoutStyles.rowCenter}>
+                <Pressable style={styles.linkBtnCancel} onPress={() => setActiveModal(null)}>
+                  <Text style={styles.linkBtnTextC}>取消</Text>
+                </Pressable>
+                <Pressable style={styles.linkBtnOk} onPress={handleInsertLink}>
+                  <Text style={styles.linkBtnTextS}>確定</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </View>
         </Pressable>
       </Modal>
     </SafeAreaView>
@@ -628,16 +630,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  linkModalCard: {
+  linkBigCard: {
+    padding: 10,
     width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: colors.tertiary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  linkModalCard: {
+    // width: '80%',
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 10,
+    // elevation: 8,
   },
   linkInput: {
     borderWidth: 1,
@@ -653,8 +665,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginTop: 24,
     paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#E5E5E5',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.tertiary,
     alignItems: 'center',
   },
   linkBtnOk: {
@@ -662,13 +676,20 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginTop: 24,
     paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.primary || '#666',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
   },
-  linkBtnText: {
+  linkBtnTextC: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
+    // color: colors.text,
+  },
+  linkBtnTextS: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.errow,
   },
 });
