@@ -15,6 +15,23 @@ export const colors = {
   errow: '#B00020',          // 警告文字(深紅)
 }
 
+export const defaultTabBarStyle = {
+  position: 'absolute',
+  bottom: 35,
+  height: 80,
+  width: '95%',
+  marginLeft: 8,
+  backgroundColor: colors.recentSection, // 淺黃背景
+  borderRadius: 40,
+  borderTopWidth: 1, // Need border top
+  elevation: 0,
+  shadowOpacity: 0,
+  paddingBottom: 8, // Adjust label spacing
+  paddingTop: 8,
+  borderWidth: 1,
+  borderColor: colors.border,
+};
+
 export const fontSize = {
   sm: 12,
   md: 16,

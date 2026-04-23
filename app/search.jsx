@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, FlatList, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Search, X, FileText, Book } from 'lucide-react-native';
@@ -39,46 +39,48 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView style={layoutStyles.root}>
-      {/* Header aligned with 402x62 dimensions */}
-      <View style={styles.header}>
-        <View style={styles.searchBar}>
-          <Search size={22} color={colors.inactiveText} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor={colors.inactiveText}
-            value={searchText}
-            onChangeText={setSearchText}
-            autoFocus
-          />
-          {searchText.length > 0 && (
-            <Pressable onPress={() => setSearchText('')} style={{ padding: 4 }}>
-              <X size={20} color={colors.text} />
-            </Pressable>
+    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+      {/* 點鍵盤外面可收回 */}
+      <SafeAreaView style={layoutStyles.root}>
+        <View style={styles.header}>
+          <View style={styles.searchBar}>
+            <Search size={22} color={colors.inactiveText} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor={colors.inactiveText}
+              value={searchText}
+              onChangeText={setSearchText}
+              autoFocus
+            />
+            {searchText.length > 0 && (
+              <Pressable onPress={() => setSearchText('')} style={{ padding: 4 }}>
+                <X size={20} color={colors.text} />
+              </Pressable>
+            )}
+          </View>
+          <Pressable onPress={() => router.back()} style={{ marginLeft: 16 }}>
+            <Text style={[textStyles.body, { color: colors.container, fontWeight: '600' }]}>取消</Text>
+          </Pressable>
+        </View>
+
+        <View style={[styles.content, searchResults.length > 0 && { justifyContent: 'flex-start', paddingTop: 16 }]}>
+          {searchText.trim() === '' ? (
+            <Text style={styles.emptyText}>請輸入關鍵字...</Text>
+          ) : searchResults.length > 0 ? (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => String(item.id)}
+              renderItem={renderItem}
+              contentContainerStyle={styles.listContent}
+              style={{ width: '100%' }}
+            />
+          ) : (
+            <Text style={styles.emptyText}>找不到結果</Text>
           )}
         </View>
-        <Pressable onPress={() => router.back()} style={{ marginLeft: 16 }}>
-          <Text style={[textStyles.body, { color: colors.container, fontWeight: '600' }]}>取消</Text>
-        </Pressable>
-      </View>
-
-      <View style={[styles.content, searchResults.length > 0 && { justifyContent: 'flex-start', paddingTop: 16 }]}>
-        {searchText.trim() === '' ? (
-          <Text style={styles.emptyText}>請輸入關鍵字...</Text>
-        ) : searchResults.length > 0 ? (
-          <FlatList
-            data={searchResults}
-            keyExtractor={item => String(item.id)}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-            style={{ width: '100%' }}
-          />
-        ) : (
-          <Text style={styles.emptyText}>找不到結果</Text>
-        )}
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </Pressable>
   );
 }
 

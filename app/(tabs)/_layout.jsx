@@ -1,6 +1,6 @@
 import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image } from "react-native";
-import { colors as themeColors, fontSize, colors } from "../../constants/token";
+import { colors as themeColors, fontSize, colors, defaultTabBarStyle } from "../../constants/token";
 import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
 import { useFileStore } from "../../store/useFileStore";
@@ -17,10 +17,10 @@ export default function TabLayout() {
     setAddMenuVisible(false);
     if (type === 'document') {  //連到編輯文件頁
       const newFile = createFile('document', '未命名文件');
-      router.push(`/(tabs)/(home)/document/${newFile.id}`);
+      router.push(`/document/${newFile.id}`);
     } else {  //連到日記頁
       const newFile = createFile('diary', '未命名日記');
-      router.push(`/(tabs)/(home)/diary/${newFile.id}`);
+      router.push(`/diary/${newFile.id}`);
     }
   };
 
@@ -30,24 +30,7 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,
-          tabBarStyle: {
-            position: 'absolute',
-            bottom: 35,  //調整這個可以逾留出下面空間嗎?
-            // left: 15,
-            // right: 15,
-            height: 80,
-            width: '95%',
-            marginLeft: 8,
-            backgroundColor: themeColors.recentSection, // 淺黃背景
-            borderRadius: 40,
-            borderTopWidth: 1, // Need border top
-            elevation: 0,
-            shadowOpacity: 0,
-            paddingBottom: 8, // Adjust label spacing
-            paddingTop: 8,
-            borderWidth: 1,
-            borderColor: themeColors.border,
-          },
+          tabBarStyle: defaultTabBarStyle,
           tabBarActiveTintColor: themeColors.text,
           tabBarInactiveTintColor: themeColors.inactiveText,
           tabBarLabelStyle: {

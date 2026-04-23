@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput, Image 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Info, Check, Plus, Trash2, Pencil } from 'lucide-react-native';
-import { borderRadius, colors } from '../../../constants/token';
-import { layoutStyles, textStyles } from '../../../styles';
-import { useTaskStore } from '../../../store/useTaskStore';
+import { borderRadius, colors } from '../constants/token';
+import { layoutStyles, textStyles } from '../styles';
+import { useTaskStore } from '../store/useTaskStore';
 
 export default function CustomTasks() {
   const { tasks, toggleTask, addTask, deleteTask, updateTask } = useTaskStore();
@@ -16,32 +16,7 @@ export default function CustomTasks() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const navigation = useNavigation();
   
-  //讓下面的tab區看不見
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: 'none' }
-    });
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          position: 'absolute',
-            bottom: 35,  //調整這個可以逾留出下面空間嗎?
-            height: 80,
-            width: '95%',
-            marginLeft: 8,
-            backgroundColor: colors.recentSection, // 淺黃背景
-            borderRadius: 40,
-            borderTopWidth: 1, // Need border top
-            elevation: 0,
-            shadowOpacity: 0,
-            paddingBottom: 8, // Adjust label spacing
-            paddingTop: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-        }
-      });
-    };
-  }, [navigation]);
+  // TabBar patch removed
 
   //新增一個自訂任務
   const handleAddTask = () => {
@@ -108,7 +83,7 @@ export default function CustomTasks() {
           </View>
         </View>
         {/* 兔子圖片 */}
-        <Image source={require('../../../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" />
+        <Image source={require('../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" />
       </View>
 
       {/* Bottom Gray Section */}

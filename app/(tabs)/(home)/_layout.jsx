@@ -6,7 +6,7 @@ export default function HomeScreenLayout() {
             headerShown: false,
         }}>
             <Stack.Screen name="index" />
-            <Stack.Screen name="file-browser" />
+            
         </Stack>
     )
 }

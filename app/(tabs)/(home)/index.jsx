@@ -26,7 +26,7 @@ import { useFileStore } from '../../../store/useFileStore';
 export default function Home() {
   //使用全域變數儲存！
   const { data: historyData, createFile, updateFile } = useFileStore();
-  //開啟手機檔案(目標是可以開啟world黨！)
+  //開啟手機檔案(目標是可以開啟word檔！)
   const handleOpenLocalFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -55,7 +55,7 @@ export default function Home() {
           updateFile(newDoc.id, { content });
         }
 
-        router.push(`/(tabs)/(home)/document/${newDoc.id}`);
+        router.push(`/document/${newDoc.id}`);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -64,16 +64,16 @@ export default function Home() {
   };
 
   //最近開啟
-  const recentHistory = historyData.slice(0, 3); // Show latest 5 -> 3
+  const recentHistory = historyData.slice(0, 3); 
   //開啟新文件
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
-    router.push(`/(tabs)/(home)/document/${newFile.id}`);
+    router.push(`/document/${newFile.id}`);
   };
   //開啟新日記
   const handleCreateDiary = () => {
     const newFile = createFile('diary', '未命名日記');
-    router.push(`/(tabs)/(home)/diary/${newFile.id}`);
+    router.push(`/diary/${newFile.id}`);
   };
 
   return (
@@ -136,9 +136,9 @@ export default function Home() {
                 style={styles.historyItem}
                 onPress={() => {
                   if (item.type === 'diary') {
-                    router.push(`/(tabs)/(home)/diary/${item.id}`);
+                    router.push(`/diary/${item.id}`);
                   } else {
-                    router.push(`/(tabs)/(home)/document/${item.id}`);
+                    router.push(`/document/${item.id}`);
                   }
                 }}
               >

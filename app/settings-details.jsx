@@ -3,40 +3,15 @@ import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Monitor, Moon, Image as ImageIcon } from 'lucide-react-native';
-import { colors } from '../../../constants/token';
-import { layoutStyles, textStyles } from '../../../styles';
-import { useSettingsStore } from '../../../store/useSettingsStore';
+import { colors } from '../constants/token';
+import { layoutStyles, textStyles } from '../styles';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 export default function SettingsDetails() {
   const { isDarkMode, setIsDarkMode } = useSettingsStore();
   const navigation = useNavigation();
   
-  //讓下面的tab區看不見
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: 'none' }
-    });
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          position: 'absolute',
-            bottom: 35,  //調整這個可以逾留出下面空間嗎?
-            height: 80,
-            width: '95%',
-            marginLeft: 8,
-            backgroundColor: colors.recentSection, // 淺黃背景
-            borderRadius: 40,
-            borderTopWidth: 1, // Need border top
-            elevation: 0,
-            shadowOpacity: 0,
-            paddingBottom: 8, // Adjust label spacing
-            paddingTop: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-        }
-      });
-    };
-  }, [navigation]);
+  // TabBar patch removed
 
   return (
     <SafeAreaView style={layoutStyles.root}>
