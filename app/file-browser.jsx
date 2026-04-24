@@ -2,12 +2,13 @@ import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
-import { ChevronLeft, FileText, Search, MoreVertical, Star, Book } from 'lucide-react-native';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { ChevronLeft, FileText, Search, MoreVertical, Star, Book, Edit } from 'lucide-react-native';
+import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
 
 export default function FileBrowser() {
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   // TabBar patch removed
 
   
@@ -30,7 +31,7 @@ export default function FileBrowser() {
   let emptyMessage = '目前沒有任何資料。';
 
   const filteredData = data.filter(item => {
-    if (activeTab === 'starred') return item.starred;
+    if (activeTab === 'starred') return item.starred && item.type !== 'diary';
     return item.type === activeTab;
   });
 
@@ -106,7 +107,7 @@ export default function FileBrowser() {
                   {/* icon和背景顏色記得要切換 */}
                   <View style={[styles.iconBox, {backgroundColor: item.type === 'diary' ? colors.secondary : colors.container,}]}>
                       {item.type === 'diary' ? (
-                        <Book size={24} color={colors.text} />
+                        <Edit size={24} color={colors.text} />
                       ) : (
                         <FileText size={24} color={colors.text} />
                       )}
@@ -114,15 +115,17 @@ export default function FileBrowser() {
 
                   <View style={styles.itemTextContainer}>
                     <Text style={[textStyles.body, { fontWeight: '700' }]}>{item.title}</Text>
-                    <Text style={[textStyles.subtitle, { marginTop: 4, color: 'rgba(101,68,69,0.5)', fontSize: 12 }]}>{item.date}</Text>
+                    <Text style={[textStyles.subtitle, { marginTop: 4, fontSize: 12 }]}>{item.date}</Text>
                   </View>
 
-                  <Pressable 
-                    style={{ padding: 4, marginRight: 8 }}
-                    onPress={() => setData(prev => prev.map(d => d.id === item.id ? { ...d, starred: !d.starred } : d))}
-                  >
-                    <Star size={20} color={colors.text} fill={item.starred ? colors.text : "transparent"} opacity={item.starred ? 1 : 0.3} />
-                  </Pressable>
+                  {item.type !== 'diary' && (
+                    <Pressable 
+                      style={{ padding: 4, marginRight: 8 }}
+                      onPress={() => setData(prev => prev.map(d => d.id === item.id ? { ...d, starred: !d.starred } : d))}
+                    >
+                      <Star size={20} color={colors.text} fill={item.starred ? colors.text : "transparent"} opacity={item.starred ? 1 : 0.3} />
+                    </Pressable>
+                  )}
 
                   {/* Dots trigger */}
                   <Pressable 
@@ -196,7 +199,7 @@ export default function FileBrowser() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

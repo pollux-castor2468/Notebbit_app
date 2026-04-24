@@ -2,15 +2,14 @@ import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
-import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight, PaintBucket, Image as ImageIcon, Check } from 'lucide-react-native';
+import { ChevronLeft, Edit2, Clock, Star, MoreVertical, ChevronDown, Bold, Italic, Underline, Baseline, X, Plus, ChevronRight, PaintBucket, Image as ImageIcon, Check, Link } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
-import { colors } from '../../constants/token';
-import { layoutStyles, textStyles } from '../../styles';
+import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 
 // Helper for the custom red floating delete button on modal cards
-const CardDeleteBadge = ({ onPress }) => (
+const CardDeleteBadge = ({ onPress, styles }) => (
   <Pressable
     style={styles.cardDeleteBadgeWrapper}
     onPress={onPress}
@@ -22,6 +21,8 @@ const CardDeleteBadge = ({ onPress }) => (
 );
 
 export default function DocumentEditor() {
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   const params = useLocalSearchParams();
   const { id } = params;
   const navigation = useNavigation();
@@ -229,7 +230,7 @@ export default function DocumentEditor() {
                 editorStyle={{
                   backgroundColor: 'transparent',
                   color: colors.text,
-                  placeholderColor: 'rgba(101, 68, 69, 0.4)',
+                  placeholderColor: colors.inactiveText,
                 }}
               />
             </View>
@@ -294,13 +295,13 @@ export default function DocumentEditor() {
 
             <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
               <View style={styles.sheetCard}>
-                <CardDeleteBadge />
+                <CardDeleteBadge styles={styles} />
                 <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
                 <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
                 <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
               </View>
               <View style={styles.sheetCard}>
-                <CardDeleteBadge />
+                <CardDeleteBadge styles={styles} />
                 <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
                 <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
                 <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
@@ -332,7 +333,7 @@ export default function DocumentEditor() {
 
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
               <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                <CardDeleteBadge />
+                <CardDeleteBadge styles={styles} />
                 <Text style={[styles.cardText, { flex: 0.8 }]}>1</Text>
                 <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
                 <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
@@ -340,7 +341,7 @@ export default function DocumentEditor() {
                 </View>
               </View>
               <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                <CardDeleteBadge />
+                <CardDeleteBadge styles={styles} />
                 <Text style={[styles.cardText, { flex: 0.8 }]}>2</Text>
                 <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
                 <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
@@ -590,10 +591,10 @@ export default function DocumentEditor() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   header: {
     paddingHorizontal: 20,
@@ -616,7 +617,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   dotsBtnActive: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
   },
   content: {
     flex: 1,
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   bottomToolbar: {
-    backgroundColor: colors.recentSection,
+    backgroundColor: colors.tertiary,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -663,7 +664,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,

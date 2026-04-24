@@ -1,6 +1,7 @@
 import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image } from "react-native";
-import { colors as themeColors, fontSize, colors, defaultTabBarStyle } from "../../constants/token";
+import { fontSize, defaultTabBarStyle as staticTabBarStyle } from "../../constants/token";
+import { useStyles } from "../../styles";
 import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
 import { useState } from "react";
 import { useFileStore } from "../../store/useFileStore";
@@ -9,7 +10,13 @@ export default function TabLayout() {
   //寫程式怎麼可以沒有註解(怒(掀桌
   //這是什麼? 喔喔一樣是下面tab的+號鍵，有觸發是true，關閉是false
   const [isAddMenuVisible, setAddMenuVisible] = useState(false);
-  //用全域變數儲存！這樣才不會不見
+  const { colors } = useStyles();
+  const styles = getStyles(colors);
+  const tabBarStyle = {
+    ...staticTabBarStyle,
+    backgroundColor: colors.recentSection,
+    borderColor: colors.border,
+  };
   const { data: historyData, createFile, updateFile } = useFileStore();
 
   // Close menu and navigate 點擊下面的tab鍵後觸發，在最下面
@@ -30,9 +37,9 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,
-          tabBarStyle: defaultTabBarStyle,
-          tabBarActiveTintColor: themeColors.text,
-          tabBarInactiveTintColor: themeColors.inactiveText,
+          tabBarStyle: tabBarStyle,
+          tabBarActiveTintColor: colors.text,
+          tabBarInactiveTintColor: colors.inactiveText,
           tabBarLabelStyle: {
             fontSize: 10,
             fontWeight: '600',
@@ -51,7 +58,7 @@ export default function TabLayout() {
                 paddingVertical: 4,
                 borderRadius: 20,
               }}>
-                <Home size={24} color={focused ? themeColors.text : themeColors.inactiveText} />
+                <Home size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
             ),
           }}
@@ -80,14 +87,14 @@ export default function TabLayout() {
                   <View style={{
                     width: 56,
                     height: 56,
-                    backgroundColor: themeColors.fab, // 黃色
+                    backgroundColor: colors.fab, // 黃色
 
                     borderRadius: 28, // 圓形
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginBottom: 10,
                   }}>
-                    <Plus size={28} color={themeColors.text} strokeWidth={3} />
+                    <Plus size={28} color={colors.text} strokeWidth={3} />
                   </View>
                 </Pressable>
               );
@@ -106,7 +113,7 @@ export default function TabLayout() {
                 paddingVertical: 4,
                 borderRadius: 20,
               }}>
-                <Settings size={24} color={focused ? themeColors.text : themeColors.inactiveText} />
+                <Settings size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
             ),
           }}
@@ -144,7 +151,7 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     // backgroundColor: 'rgba(0,0,0,0.1)', // subtle dim
@@ -163,7 +170,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: 12,
     gap: 12, // React Native 支援 gap
-    // shadowColor: themeColors.text,
+    // shadowColor: colors.text,
     // shadowOffset: { width: 0, height: 8 },
     // shadowOpacity: 0.15,
     // shadowRadius: 16,
@@ -192,7 +199,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     fontWeight: '700',
-    color: themeColors.text,
+    color: colors.text,
   },
   menuArrow: {
     width: 0,

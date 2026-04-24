@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Monitor, Moon, Image as ImageIcon } from 'lucide-react-native';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { useStyles } from '../styles';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 export default function SettingsDetails() {
   const { isDarkMode, setIsDarkMode } = useSettingsStore();
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   
   // TabBar patch removed
@@ -60,7 +61,7 @@ export default function SettingsDetails() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: `rgba(108, 94, 79, 0.1)`,
+    backgroundColor: colors.inactiveText,
     marginHorizontal: 20,
   },
 });

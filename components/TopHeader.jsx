@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { Rabbit, Search } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { colors } from '../constants/token';
-import { layoutStyles } from '../styles';
+import { useStyles } from '../styles';
 
 export default function TopHeader() {
+  const { layoutStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   return (
     <View style={styles.header}>
       <View style={[layoutStyles.rowCenter, { flex: 1 }]}>
@@ -22,7 +23,7 @@ export default function TopHeader() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',

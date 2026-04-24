@@ -6,11 +6,12 @@ import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
-import { colors } from '../../constants/token';
-import { layoutStyles, textStyles } from '../../styles';
+import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 
 export default function DiaryEditor() {
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   const params = useLocalSearchParams();
   const { id } = params;
   const navigation = useNavigation();
@@ -327,7 +328,7 @@ export default function DiaryEditor() {
                   editorStyle={{
                     backgroundColor: 'transparent',
                     color: colors.text,
-                    placeholderColor: 'rgba(101, 68, 69, 0.4)',
+                    placeholderColor: colors.inactiveText,
                   }}
                 />
               </View>
@@ -562,10 +563,10 @@ export default function DiaryEditor() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   header: {
     paddingHorizontal: 20,
@@ -588,7 +589,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   dotsBtnActive: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.recentSection,
   },
   content: {
     flex: 1,
@@ -618,7 +619,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   bottomToolbar: {
-    backgroundColor: colors.recentSection,
+    backgroundColor: colors.tertiary,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -638,7 +639,7 @@ const styles = StyleSheet.create({
   toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,

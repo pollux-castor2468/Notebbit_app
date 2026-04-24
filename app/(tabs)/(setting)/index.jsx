@@ -19,13 +19,15 @@ import {
   Rabbit,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { colors } from '../../../constants/token';
+import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useSettingsStore } from '../../../store/useSettingsStore';
 import { useFileStore } from '../../../store/useFileStore';
 
 export default function Setting() {
   const { isDarkMode, setIsDarkMode } = useSettingsStore();
+  const { colors, layoutStyles, textStyles } = useStyles();
+  const styles = getStyles(colors);
   const data = useFileStore(state => state.data);
 
   const documentCount = data.filter(d => d.type === 'document').length;
@@ -107,7 +109,7 @@ export default function Setting() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.surface,

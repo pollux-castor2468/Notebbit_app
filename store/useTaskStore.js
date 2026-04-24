@@ -25,15 +25,46 @@ export const useTaskStore = create(
     (set) => ({
       //任務內容儲存陣列
       tasks: [
-        { id: '1', title: '完成今天的日記', completed: true },
-        { id: '2', title: '完成心得報告800字', completed: true },
-        { id: '3', title: '完成app簡報', completed: false },
-        { id: '4', title: '走10000步', completed: false },
+        { id: '1', title: '完成今天的日記', completed: false },
+        { id: '2', title: '完成心得報告800字', completed: false },
       ],
+      level: 1,
+      exp: 0,
+      lastExpDate: '',
+      dailyExpCount: 0,
       //切換任務狀態
-      toggleTask: (id) => set((state) => ({
-        tasks: state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
-      })),
+      toggleTask: (id) => set((state) => {
+        const taskToToggle = state.tasks.find(t => t.id === id);
+        if (!taskToToggle || taskToToggle.completed) {
+          return state; // Lock when completed
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        let newDailyCount = state.lastExpDate !== today ? 0 : state.dailyExpCount;
+        let newExp = state.exp;
+        let newLevel = state.level;
+        let newLastExpDate = state.lastExpDate !== today ? today : state.lastExpDate;
+
+        if (newDailyCount < 5) {
+          newExp += 1;
+          newDailyCount += 1;
+          newLastExpDate = today;
+
+          let maxExpNext = 5 * Math.pow(2, newLevel - 1);
+          if (newExp >= maxExpNext) {
+            newLevel += 1;
+            newExp = 0;
+          }
+        }
+
+        return {
+          tasks: state.tasks.map(t => t.id === id ? { ...t, completed: true } : t),
+          exp: newExp,
+          level: newLevel,
+          dailyExpCount: newDailyCount,
+          lastExpDate: newLastExpDate,
+        };
+      }),
       //新增任務
       addTask: (title) => set((state) => ({
         tasks: [...state.tasks, { id: String(Date.now()), title, completed: false }]

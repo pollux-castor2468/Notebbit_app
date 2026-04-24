@@ -18,12 +18,13 @@ import {
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import { colors } from '../../../constants/token';
-import { layoutStyles, textStyles } from '../../../styles';
+import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
 
 export default function Home() {
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
   //使用全域變數儲存！
   const { data: historyData, createFile, updateFile } = useFileStore();
   //開啟手機檔案(目標是可以開啟word檔！)
@@ -164,7 +165,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     height: 165,
@@ -215,12 +216,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
     // backgroundColor: 'transparent',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#eee',
-    // borderColor: colors.border,
+    borderColor: colors.border,
   },
   historyIconBox: {
     width: 48,

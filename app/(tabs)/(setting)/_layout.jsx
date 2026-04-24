@@ -1,8 +1,9 @@
 import { Stack } from "expo-router";
 import { View } from "react-native";
-import { colors } from "../../../constants/token";
+import { useStyles } from "../../../styles";
 
 export default function SettingScreenLayout() {
+    const { colors } = useStyles();
     return (
         <View style={{ flex: 1, backgroundColor: colors.surface }}>
             <Stack screenOptions={{

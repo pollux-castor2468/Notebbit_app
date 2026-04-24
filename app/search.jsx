@@ -3,11 +3,12 @@ import { View, Text, TextInput, Pressable, StyleSheet, FlatList, Keyboard } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Search, X, FileText, Book } from 'lucide-react-native';
-import { colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
 
 export default function SearchScreen() {
+  const { colors, layoutStyles, textStyles } = useStyles();
+  const styles = getStyles(colors);
   const [searchText, setSearchText] = useState('');
   const { data } = useFileStore();
 
@@ -84,7 +85,7 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',

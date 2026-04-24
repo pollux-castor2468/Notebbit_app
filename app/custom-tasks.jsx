@@ -2,15 +2,18 @@ import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
-import { ChevronLeft, Info, Check, Plus, Trash2, Pencil } from 'lucide-react-native';
-import { borderRadius, colors } from '../constants/token';
-import { layoutStyles, textStyles } from '../styles';
+import { ChevronLeft, Info, Check, Plus, Trash2, Pencil, X } from 'lucide-react-native';
+import { borderRadius } from '../constants/token';
+import { useStyles } from '../styles';
 import { useTaskStore } from '../store/useTaskStore';
 
 export default function CustomTasks() {
-  const { tasks, toggleTask, addTask, deleteTask, updateTask } = useTaskStore();
+  const { layoutStyles, textStyles, colors } = useStyles();
+  const styles = getStyles(colors);
+  const { tasks, toggleTask, addTask, updateTask, level, exp } = useTaskStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editTaskTitle, setEditTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState(null);
@@ -42,10 +45,13 @@ export default function CustomTasks() {
     }
   };
 
-  //計算完成的任務數量?
+  //計算完成的任務數量
   const completedCount = tasks.filter(t => t.completed).length;
   //至少顯示5(??不對吧)
-  const totalCount = Math.max(5, tasks.length);
+  const totalCount = Math.max(2, tasks.length);
+
+  const maxExpNext = 5 * Math.pow(2, level - 1);
+  const expProgress = `${Math.min(100, Math.max(0, (exp / maxExpNext) * 100))}%`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,7 +61,7 @@ export default function CustomTasks() {
           <ChevronLeft size={24} color={colors.text} />
         </Pressable>
         <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>自訂任務</Text>
-        <Pressable style={{ padding: 16 }}>
+        <Pressable style={{ padding: 16 }} onPress={() => setInfoModalVisible(true)}>
           <View style={styles.infoIconWrapper}>
             <Info size={16} color="#FFF" strokeWidth={3} />
           </View>
@@ -69,17 +75,17 @@ export default function CustomTasks() {
           {/* Lv. */}
           <View style={styles.levelText}>
             <Text style={styles.topLv}>Lv.</Text>
-            <Text style={styles.topLv}>1</Text>
+            <Text style={styles.topLv}>{level}</Text>
           </View>
-          {/* 進度條(中間跑步出來qwqq) */}
+          {/* 進度條 */}
           <View style={styles.topLvBar}>
-            <View style={[styles.topLvBarInner, {width: '10%'}]}></View>
+            <View style={[styles.topLvBarInner, {width: expProgress}]}></View>
           </View>
           {/* 進度條數字 */}
           <View style={styles.levelText}>
-            <Text style={styles.experienceText}>1</Text>
+            <Text style={styles.experienceText}>{exp}</Text>
             <Text style={styles.experienceText}>/</Text>
-            <Text style={styles.experienceText}>10</Text>
+            <Text style={styles.experienceText}>{maxExpNext}</Text>
           </View>
         </View>
         {/* 兔子圖片 */}
@@ -88,7 +94,7 @@ export default function CustomTasks() {
 
       {/* Bottom Gray Section */}
       <View style={styles.bottomSection}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
           {/* Title Badge representing category and progress */}
           <View style={styles.titleBadge}>
             <Text style={styles.titleBadgeText}>
@@ -102,10 +108,15 @@ export default function CustomTasks() {
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <Pressable 
                   // style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-                  onPress={() => toggleTask(task.id)}
+                  onPress={() => {
+                    if (!task.completed) {
+                      toggleTask(task.id);
+                    }
+                  }}
+                  disabled={task.completed}
                 >
                   <View style={[styles.checkbox, task.completed && styles.checkboxActive]}>
-                    {task.completed && <Check size={14} color="#FFF" strokeWidth={4} />}
+                    {task.completed && <Check size={14} color={colors.surface} strokeWidth={4} />}
                   </View>
                 </Pressable>
                 <Text style={styles.taskTitle}>{task.title}</Text>
@@ -114,8 +125,16 @@ export default function CustomTasks() {
               {/* <Pressable onPress={() => deleteTask(task.id)} style={{ padding: 4 }}>
                 <Trash2 size={18} color={colors.inactiveText || '#999'} />
               </Pressable> */}
-              <Pressable onPress={() => handleEditPress(task)} style={{ padding: 4 }}>
-                <Pencil size={18} color={colors.inactiveText || '#999'} />
+              <Pressable 
+                onPress={() => {
+                  if (!task.completed) {
+                    handleEditPress(task);
+                  }
+                }} 
+                style={{ padding: 4, opacity: task.completed ? 0.3 : 1 }}
+                disabled={task.completed}
+              >
+                <Pencil size={18} color={colors.text} />
               </Pressable>
             </View>
           ))}
@@ -181,18 +200,10 @@ export default function CustomTasks() {
               />
 
               <View style={styles.modalActions}>
-                {/* 取消 */}
-                <Pressable
-                  style={styles.modalBtnCancel}
-                  onPress={() => setEditModalVisible(false)}
-                >
+                <Pressable style={styles.modalBtnCancel} onPress={() => setEditModalVisible(false)}>
                   <Text style={styles.modalBtnTextC}>取消</Text>
                 </Pressable>
-                {/* 確認 */}
-                <Pressable
-                  style={styles.modalBtnSubmit}
-                  onPress={handleUpdateTask}
-                >
+                <Pressable style={styles.modalBtnSubmit} onPress={handleUpdateTask}>
                   <Text style={styles.modalBtnTextS}>確認</Text>
                 </Pressable>
               </View>
@@ -200,11 +211,35 @@ export default function CustomTasks() {
           </View>
         </View>
       </Modal>
+
+      {/* Info Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={infoModalVisible}
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlayCenter} onPress={() => setInfoModalVisible(false)}>
+          <Pressable style={styles.infoModalContent} onPress={e => e.stopPropagation()}>
+            <Pressable style={styles.infoCloseBtn} onPress={() => setInfoModalVisible(false)}>
+              <X size={20} color="#FFF" />
+            </Pressable>
+            <Text style={styles.infoModalTitle}>自訂任務說明</Text>
+            
+            <View style={{ marginTop: 16 }}>
+              <Text style={styles.infoModalText}>1. 為自己設立每日指標吧，點擊新增按鍵可以增加一個新任務。</Text>
+              <Text style={styles.infoModalText}>2. 如果要更改任務目標可以點擊右邊的修改按鍵。</Text>
+              <Text style={styles.infoModalText}>3. 完成後在左邊的勾選欄位打勾就能完成任務啦！</Text>
+              <Text style={styles.infoModalText}>4. 每天完成的前五個任務可以獲得1點經驗值，快來給激動兔深升級吧！</Text>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -223,7 +258,7 @@ const styles = StyleSheet.create({
   },
   topRowSection: {
     flexDirection: 'row',
-    hight: 60,
+    height: 60,
     padding: 16,
     marginLeft: 16,
     marginRight: 16,
@@ -258,7 +293,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    heinght: 20,
+    height: '100%',
     width: '10%',
     backgroundColor: colors.container,
   },
@@ -282,12 +317,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceVariant,
     borderTopWidth: 1,
     borderColor: colors.border,
-    paddingTop: 24,
+    overflow: 'hidden',
   },
   scrollContent: {
     padding: 24,
-    paddingTop: 0,
-    paddingBottom: 40,
+    paddingBottom: 60, // 依建議增加底部邊距
   },
   titleBadge: {
     backgroundColor: colors.surface,
@@ -417,5 +451,50 @@ const styles = StyleSheet.create({
   modalBtnTextC: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalOverlayCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  infoModalContent: {
+    backgroundColor: colors.tertiary,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    padding: 24,
+    paddingTop: 32,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  infoCloseBtn: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.errow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  infoModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFF',
+    textAlign: 'center',
+  },
+  infoModalText: {
+    fontSize: 14,
+    color: '#FFF',
+    lineHeight: 22,
+    marginBottom: 8,
   },
 });
