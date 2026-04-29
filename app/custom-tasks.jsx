@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Modal, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Modal, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Info, Check, Plus, Trash2, Pencil, X } from 'lucide-react-native';
@@ -89,25 +89,28 @@ export default function CustomTasks() {
           </View>
         </View>
         {/* 兔子圖片 */}
-        <Image source={require('../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" />
+        <Image source={require('../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" pointerEvents="none" />
       </View>
 
       {/* Bottom Gray Section */}
       <View style={styles.bottomSection}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
-          {/* Title Badge representing category and progress */}
-          <View style={styles.titleBadge}>
-            <Text style={styles.titleBadgeText}>
-              自訂每日任務 (<Text style={styles.titleBadgeCountDim}>{completedCount}</Text> / {totalCount})
-            </Text>
-          </View>
-
-          {/* Tasks List */}
-          {tasks.map(task => (
-            <View key={task.id} style={styles.taskCard}>
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.titleBadge}>
+              <Text style={styles.titleBadgeText}>
+                自訂每日任務 (<Text style={styles.titleBadgeCountDim}>{completedCount}</Text> / {totalCount})
+              </Text>
+            </View>
+          }
+          renderItem={({ item: task }) => (
+            <View style={styles.taskCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Pressable 
-                  // style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                <Pressable
                   onPress={() => {
                     if (!task.completed) {
                       toggleTask(task.id);
@@ -121,32 +124,29 @@ export default function CustomTasks() {
                 </Pressable>
                 <Text style={styles.taskTitle}>{task.title}</Text>
               </View>
-              {/* 把刪除改成重新定義任務(跳出重新命名modal) */}
-              {/* <Pressable onPress={() => deleteTask(task.id)} style={{ padding: 4 }}>
-                <Trash2 size={18} color={colors.inactiveText || '#999'} />
-              </Pressable> */}
-              <Pressable 
+
+              <Pressable
                 onPress={() => {
                   if (!task.completed) {
                     handleEditPress(task);
                   }
-                }} 
+                }}
                 style={{ padding: 4, opacity: task.completed ? 0.3 : 1 }}
                 disabled={task.completed}
               >
                 <Pencil size={18} color={colors.text} />
               </Pressable>
             </View>
-          ))}
-
-          {/* Add Task Button */}
-          <View style={styles.addButtonContainer}>
-            <Pressable style={styles.addButton} onPress={() => setModalVisible(true)}>
-              <Plus size={16} color="#000" />
-              <Text style={styles.addButtonText}>新增自訂任務</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
+          )}
+          ListFooterComponent={
+            <View style={styles.addButtonContainer}>
+              <Pressable style={styles.addButton} onPress={() => setModalVisible(true)}>
+                <Plus size={16} color="#000" />
+                <Text style={styles.addButtonText}>新增自訂任務</Text>
+              </Pressable>
+            </View>
+          }
+        />
       </View>
 
       {/* Add Task Modal */}
@@ -254,7 +254,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   topEmptySpace: {
     position: 'relative',
-    height: '40%',
+    flex: 0.4,
   },
   topRowSection: {
     flexDirection: 'row',
@@ -313,7 +313,7 @@ const getStyles = (colors) => StyleSheet.create({
     left: -150,
   },
   bottomSection: {
-    flex: 1,
+    flex: 0.6,
     backgroundColor: colors.surfaceVariant,
     borderTopWidth: 1,
     borderColor: colors.border,
@@ -322,6 +322,7 @@ const getStyles = (colors) => StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingBottom: 60, // 依建議增加底部邊距
+    flexGrow: 1,
   },
   titleBadge: {
     backgroundColor: colors.surface,

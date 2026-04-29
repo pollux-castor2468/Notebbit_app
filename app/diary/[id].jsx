@@ -1,13 +1,16 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
-import { ChevronLeft, Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, Bold, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronRight, X as XIcon } from 'lucide-react-native';
+import { Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, ChevronRight, X as XIcon } from 'lucide-react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import EditorHeader from '../../components/editor/EditorHeader';
+import EditorToolbar from '../../components/editor/EditorToolbar';
+import ColorPickerModal from '../../components/editor/ColorPickerModal';
 
 export default function DiaryEditor() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -30,6 +33,7 @@ export default function DiaryEditor() {
   // Content state for Word Count
   const [content, setContent] = useState(fileData?.content || '');
   const richText = useRef(null);
+  const [activeActions, setActiveActions] = useState([]);
   const [date, setDate] = useState(fileData?.date ? new Date(fileData.date.replace(/\./g, '-')) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedWeather, setSelectedWeather] = useState(fileData?.weather || null);
@@ -39,11 +43,6 @@ export default function DiaryEditor() {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
   const [linkError, setLinkError] = useState('');
-
-  // Hex Color Input State
-  const [isHexMode, setIsHexMode] = useState(false);
-  const [hexInput, setHexInput] = useState('');
-  const [hexError, setHexError] = useState('');
 
   // Rename Modal State
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
@@ -60,6 +59,19 @@ export default function DiaryEditor() {
   }, [content, selectedWeather, selectedMood, date, id, updateFile]);
 
   React.useEffect(() => {
+    const editor = richText.current;
+    if (!editor?.registerToolbar) return;
+    const timer = setTimeout(() => {
+      try {
+        editor.registerToolbar((items) => setActiveActions(items || []));
+      } catch {
+        // ignore if editor not ready
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  React.useEffect(() => {
     if (fileData?.title) {
       setNewTitle(fileData.title);
     }
@@ -70,43 +82,6 @@ export default function DiaryEditor() {
       updateFile(id, { title: newTitle.trim() });
     }
     setRenameModalVisible(false);
-  };
-
-  const gridColors = [
-    ['#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280', '#4B5563', '#374151', '#000000'],
-    ['#0047AB', '#311432', '#4B0082', '#8B0000', '#A0522D', '#B8860B', '#556B2F'],
-    ['#00BFFF', '#4169E1', '#8A2BE2', '#C71585', '#FF4500', '#FFD700', '#9ACD32'],
-    ['#87CEFA', '#DDA0DD', '#EE82EE', '#FFB6C1', '#FFA07A', '#FFFACD', '#98FB98'],
-  ];
-  const circleColors = [
-    ['#000000', '#007AFF', '#34C759', '#FFCC00', '#FF3B30'],
-    ['#5AC8FA', '#AF52DE', '#5856D6', '#FF2D55', null], // null represents the plus button
-  ];
-
-  const handleSelectColor = (color) => {
-    if (activeModal === 'colors') {
-      richText.current?.sendAction('foreColor', 'result', color);
-    } else if (activeModal === 'bgColors') {
-      richText.current?.sendAction('hiliteColor', 'result', color);
-    }
-    setActiveModal(null);
-    setIsHexMode(false);
-    setHexInput('');
-    setHexError('');
-  };
-
-  const handleApplyHex = () => {
-    const trimmedHex = hexInput.trim();
-    if (!trimmedHex) {
-      setHexError('請輸入格式。');
-      return;
-    }
-    const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
-    if (!hexPattern.test(trimmedHex)) {
-      setHexError('格式錯誤。請輸入例如 #FF0000');
-      return;
-    }
-    handleSelectColor(trimmedHex);
   };
 
   const handlePickImage = async () => {
@@ -182,47 +157,41 @@ export default function DiaryEditor() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableWithoutFeedback onPress={handleDismissKeyboard} accessible={false}>
-        <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
           {/* Top Header */}
-          <View style={styles.header}>
-            <View style={[layoutStyles.rowCenter, { flex: 1, marginRight: 16 }]}>
-              <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
-                <ChevronLeft size={28} color={colors.text} />
-              </Pressable>
-              <TextInput
-                style={[styles.headerTitle, { flex: 1, padding: 0 }]}
-                value={fileData?.title || ''}
-                placeholder="未命名日記"
-                placeholderTextColor="#999"
-                onChangeText={(text) => {
-                  if (id) {
-                    updateFile(id, { title: text });
-                    setNewTitle(text);
-                  }
-                }}
-              />
-            </View>
-            <View style={layoutStyles.rowCenter}>
-              <Pressable style={styles.iconButton} onPress={handleSave}>
-                <Check size={24} color={colors.text} />
-              </Pressable>
-              <Pressable
-                style={[styles.iconButton, activeModal === 'more' ? styles.dotsBtnActive : null]}
-                onPress={(e) => {
+          <EditorHeader
+            title={fileData?.title || ''}
+            placeholder="未命名日記"
+            titlePreviewChars={8}
+            onBack={() => router.back()}
+            onChangeTitle={(text) => {
+              if (id) {
+                updateFile(id, { title: text });
+                setNewTitle(text);
+              }
+            }}
+            actions={[
+              {
+                key: 'save',
+                icon: <Check size={24} color={colors.text} />,
+                onPress: handleSave,
+              },
+              {
+                key: 'more',
+                icon: <MoreVertical size={24} color={colors.text} />,
+                active: activeModal === 'more',
+                onPress: (e) => {
                   setPopoverPos(e.nativeEvent.pageY);
                   setPopoverState('menu');
                   setActiveModal('more');
-                }}
-              >
-                <MoreVertical size={24} color={colors.text} />
-              </Pressable>
-            </View>
-          </View>
+                },
+              },
+            ]}
+          />
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.content}>
 
@@ -335,21 +304,17 @@ export default function DiaryEditor() {
             </View>
 
             {/* Bottom Toolbar Box */}
-            <View style={styles.bottomToolbar}>
-              <View style={styles.dragPill} />
-
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
-                <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setBold, 'result')}><Bold size={24} color={colors.text} /></Pressable>
-                <Pressable style={styles.toolIcon} onPress={() => richText.current?.sendAction(actions.setUnderline, 'result')}><Underline size={24} color={colors.text} /></Pressable>
-                <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('colors'); }}><Baseline size={24} color={colors.text} /></Pressable>
-                <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('bgColors'); }}><PaintBucket size={24} color={colors.text} /></Pressable>
-                <Pressable style={styles.toolIcon} onPress={handlePickImage}><ImageIcon size={24} color={colors.text} /></Pressable>
-                <Pressable style={styles.toolIcon} onPress={() => { setActiveModal('link'); }}><Link size={24} color={colors.text} /></Pressable>
-              </ScrollView>
-            </View>
+            <EditorToolbar
+              variant="diary"
+              richTextRef={richText}
+              activeActions={activeActions}
+              onOpenTextColors={() => setActiveModal('colors')}
+              onOpenBgColors={() => setActiveModal('bgColors')}
+              onPickImage={handlePickImage}
+              onOpenLink={() => setActiveModal('link')}
+            />
           </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+      </View>
 
       {/* Popover overlay */}
       {activeModal === 'more' && (
@@ -376,7 +341,7 @@ export default function DiaryEditor() {
             ) : (
               <View style={[styles.popoverBtn, { marginBottom: 0, justifyContent: 'center', paddingVertical: 32 }]}>
                 <Text style={[styles.popoverText, { fontSize: 18 }]}>
-                  共    <Text style={{ color: '#9CA3AF' }}>{wordCount}</Text>    字
+                  共    <Text style={{ color: colors.inactiveText }}>{wordCount}</Text>    字
                 </Text>
               </View>
             )}
@@ -384,99 +349,18 @@ export default function DiaryEditor() {
         </Pressable>
       )}
 
-      {/* Colors Modal */}
-      <Modal
+      <ColorPickerModal
         visible={activeModal === 'colors' || activeModal === 'bgColors'}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          setActiveModal(null);
-          setIsHexMode(false);
-          setHexError('');
+        title={activeModal === 'bgColors' ? '選擇背景顏色' : '選擇字體顏色'}
+        onClose={() => setActiveModal(null)}
+        onSelectColor={(color) => {
+          if (activeModal === 'colors') {
+            richText.current?.sendAction('foreColor', 'result', color);
+          } else if (activeModal === 'bgColors') {
+            richText.current?.sendAction('hiliteColor', 'result', color);
+          }
         }}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => { setActiveModal(null); setIsHexMode(false); setHexError(''); }}>
-          <Pressable style={styles.colorSheet} onPress={e => e.stopPropagation()}>
-            <View style={styles.colorHeader}>
-              <Text style={styles.colorTitle}>{isHexMode ? '輸入 Hex 色碼' : 'Colors'}</Text>
-              <Pressable style={styles.closeBtn} onPress={() => { setActiveModal(null); setIsHexMode(false); setHexError(''); }}>
-                <XIcon size={24} color="#666" />
-              </Pressable>
-            </View>
-
-            {isHexMode ? (
-              <View style={styles.hexInputContainer}>
-                <TextInput
-                  style={styles.linkInput}
-                  placeholder="#000000"
-                  placeholderTextColor="#999"
-                  value={hexInput}
-                  onChangeText={setHexInput}
-                  autoCapitalize="characters"
-                />
-                {hexError ? <Text style={styles.errorText}>{hexError}</Text> : null}
-                <View style={layoutStyles.rowCenter}>
-                  <Pressable style={styles.renameBtnConfirm} onPress={handleApplyHex}>
-                    <Text style={styles.renameBtnText}>確認</Text>
-                  </Pressable>
-                  <Pressable style={styles.renameBtnCancel} onPress={() => { setIsHexMode(false); setHexInput(''); setHexError(''); }}>
-                    <Text style={styles.renameBtnText}>返回</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <>
-                <View style={styles.colorGridWrapper}>
-                  {gridColors.map((row, rowIndex) => (
-                    <View key={rowIndex} style={styles.colorGridRow}>
-                      {row.map((color, colIndex) => {
-                        const isTopLeft = rowIndex === 0 && colIndex === 0;
-                        const isTopRight = rowIndex === 0 && colIndex === 6;
-                        const isBottomLeft = rowIndex === 3 && colIndex === 0;
-                        const isBottomRight = rowIndex === 3 && colIndex === 6;
-                        return (
-                          <TouchableOpacity
-                            key={color}
-                            style={[
-                              styles.colorGridSquare,
-                              { backgroundColor: color },
-                              isTopLeft && { borderTopLeftRadius: 16 },
-                              isTopRight && { borderTopRightRadius: 16 },
-                              isBottomLeft && { borderBottomLeftRadius: 16 },
-                              isBottomRight && { borderBottomRightRadius: 16 },
-                            ]}
-                            onPress={() => handleSelectColor(color)}
-                          />
-                        );
-                      })}
-                    </View>
-                  ))}
-                </View>
-
-                <View style={styles.circleColorsContainer}>
-                  {circleColors.map((row, rIdx) => (
-                    <View key={rIdx} style={styles.circleRow}>
-                      {row.map((color, cIdx) => (
-                        color ? (
-                          <TouchableOpacity
-                            key={color}
-                            style={[styles.circleColorBtn, { backgroundColor: color }]}
-                            onPress={() => handleSelectColor(color)}
-                          />
-                        ) : (
-                          <TouchableOpacity key="plus" style={styles.plusColorBtn} onPress={() => setIsHexMode(true)}>
-                            <Text style={styles.plusColorText}>+</Text>
-                          </TouchableOpacity>
-                        )
-                      ))}
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+      />
 
       {/* Link Modal */}
       <Modal
@@ -669,7 +553,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
