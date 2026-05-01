@@ -11,6 +11,9 @@ import { useFileStore } from '../../store/useFileStore';
 import EditorHeader from '../../components/editor/EditorHeader';
 import EditorToolbar from '../../components/editor/EditorToolbar';
 import ColorPickerModal from '../../components/editor/ColorPickerModal';
+import LinkModal from '../../components/editor/LinkModal';
+import RenameModal from '../../components/editor/RenameModal';
+import EditorPopover from '../../components/editor/EditorPopover';
 
 export default function DiaryEditor() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -28,7 +31,7 @@ export default function DiaryEditor() {
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'more' | null
   const [popoverPos, setPopoverPos] = useState(0);
-  const [popoverState, setPopoverState] = useState('menu'); // 'menu' | 'wordCount'
+
 
   // Content state for Word Count
   const [content, setContent] = useState(fileData?.content || '');
@@ -39,14 +42,7 @@ export default function DiaryEditor() {
   const [selectedWeather, setSelectedWeather] = useState(fileData?.weather || null);
   const [selectedMood, setSelectedMood] = useState(fileData?.mood || null);
 
-  // Link Modal State
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkTitle, setLinkTitle] = useState('');
-  const [linkError, setLinkError] = useState('');
-
-  // Rename Modal State
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
-  const [newTitle, setNewTitle] = useState(fileData?.title || '');
 
   const stripHtmlTags = (html) => html ? String(html).replace(/<[^>]*>?/gm, '') : '';
   const wordCount = stripHtmlTags(content).replace(/\s/g, '').length || 0;
@@ -71,15 +67,9 @@ export default function DiaryEditor() {
     return () => clearTimeout(timer);
   }, []);
 
-  React.useEffect(() => {
-    if (fileData?.title) {
-      setNewTitle(fileData.title);
-    }
-  }, [fileData?.title]);
-
-  const handleRenameConfirm = () => {
-    if (id && newTitle.trim() !== '') {
-      updateFile(id, { title: newTitle.trim() });
+  const handleRenameConfirm = (updatedTitle) => {
+    if (id && updatedTitle.trim() !== '') {
+      updateFile(id, { title: updatedTitle.trim() });
     }
     setRenameModalVisible(false);
   };
@@ -102,22 +92,8 @@ export default function DiaryEditor() {
     }
   };
 
-  const handleInsertLink = () => {
-    const trimmedUrl = linkUrl.trim();
-    if (!trimmedUrl) {
-      setLinkError('網址不能為空');
-      return;
-    }
-    const urlPattern = /^https?:\/\/.+/i;
-    if (!urlPattern.test(trimmedUrl)) {
-      setLinkError('請輸入有效的網址 (例如 https://...)');
-      return;
-    }
-
-    richText.current?.insertLink(linkTitle.trim() || trimmedUrl, trimmedUrl);
-    setLinkUrl('');
-    setLinkTitle('');
-    setLinkError('');
+  const handleInsertLink = (title, url) => {
+    richText.current?.insertLink(title, url);
     setActiveModal(null);
   };
 
@@ -182,7 +158,6 @@ export default function DiaryEditor() {
                 active: activeModal === 'more',
                 onPress: (e) => {
                   setPopoverPos(e.nativeEvent.pageY);
-                  setPopoverState('menu');
                   setActiveModal('more');
                 },
               },
@@ -317,37 +292,17 @@ export default function DiaryEditor() {
       </View>
 
       {/* Popover overlay */}
-      {activeModal === 'more' && (
-        <Pressable
-          style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 10 }]}
-          onPress={() => setActiveModal(null)}
-        >
-          <Pressable
-            style={[styles.popoverContainer, { top: popoverPos > 0 ? popoverPos + 20 : 60 }]}
-            onPress={e => e.stopPropagation()}
-          >
-            {popoverState === 'menu' ? (
-              <>
-                <Pressable style={styles.popoverBtn} onPress={() => setPopoverState('wordCount')}>
-                  <Text style={styles.popoverText}>字數統計</Text>
-                  <ChevronRight size={20} color={colors.text} />
-                </Pressable>
-                <Pressable style={styles.popoverBtn} onPress={() => {
-                  setRenameModalVisible(true);
-                }}>
-                  <Text style={styles.popoverText}>重新命名日記</Text>
-                </Pressable>
-              </>
-            ) : (
-              <View style={[styles.popoverBtn, { marginBottom: 0, justifyContent: 'center', paddingVertical: 32 }]}>
-                <Text style={[styles.popoverText, { fontSize: 18 }]}>
-                  共    <Text style={{ color: colors.inactiveText }}>{wordCount}</Text>    字
-                </Text>
-              </View>
-            )}
-          </Pressable>
-        </Pressable>
-      )}
+      <EditorPopover
+        visible={activeModal === 'more'}
+        popoverPos={popoverPos}
+        wordCount={wordCount}
+        type="diary"
+        onClose={() => setActiveModal(null)}
+        onRename={() => {
+          setActiveModal(null);
+          setRenameModalVisible(true);
+        }}
+      />
 
       <ColorPickerModal
         visible={activeModal === 'colors' || activeModal === 'bgColors'}
@@ -363,86 +318,19 @@ export default function DiaryEditor() {
       />
 
       {/* Link Modal */}
-      <Modal
+      <LinkModal
         visible={activeModal === 'link'}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => { setActiveModal(null); setLinkError(''); }}
-      >
-        <Pressable style={styles.modalBackdropCenter} onPress={() => { setActiveModal(null); setLinkError(''); }}>
-          <View style={styles.linkBigCard}>
-            <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
-              <Text style={styles.colorTitle}>插入連結</Text>
-              <TextInput
-                style={styles.linkInput}
-                placeholder="連結標題 (選填)"
-                placeholderTextColor="#999"
-                value={linkTitle}
-                onChangeText={setLinkTitle}
-              />
-              <TextInput
-                style={[styles.linkInput, linkError ? { borderColor: colors.errow } : null]}
-                placeholder="請輸入網址 https://..."
-                placeholderTextColor="#999"
-                value={linkUrl}
-                onChangeText={(text) => {
-                  setLinkUrl(text);
-                  setLinkError(''); // reset error dynamically
-                }}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-              {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
-              <View style={layoutStyles.rowCenter}>
-                <Pressable style={styles.linkBtnCancel} onPress={() => { setActiveModal(null); setLinkError(''); }}>
-                  <Text style={styles.linkBtnTextC}>取消</Text>
-                </Pressable>
-                <Pressable style={styles.linkBtnOk} onPress={handleInsertLink}>
-                  <Text style={styles.linkBtnTextS}>確定</Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+        onClose={() => setActiveModal(null)}
+        onInsert={handleInsertLink}
+      />
 
       {/* Rename Modal */}
-      <Modal
+      <RenameModal
         visible={isRenameModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setRenameModalVisible(false)}
-      >
-        <Pressable style={styles.modalBackdropCenter} onPress={() => setRenameModalVisible(false)}>
-          <View style={styles.linkBigCard}>
-            <Pressable style={styles.linkModalCard} onPress={e => e.stopPropagation()}>
-              <Text style={styles.colorTitle}>重新命名</Text>
-              <TextInput
-                style={styles.renameInput}
-                placeholder="輸入文字..."
-                placeholderTextColor="#999"
-                value={newTitle}
-                onChangeText={setNewTitle}
-                autoFocus={true}
-              />
-              <View style={layoutStyles.rowCenter}>
-                <Pressable style={styles.renameBtnConfirm} onPress={() => {
-                  handleRenameConfirm();
-                  setActiveModal(null);
-                }}>
-                  <Text style={styles.renameBtnText}>確認</Text>
-                </Pressable>
-                <Pressable style={styles.renameBtnCancel} onPress={() => {
-                  setRenameModalVisible(false);
-                  setActiveModal(null);
-                }}>
-                  <Text style={styles.renameBtnText}>取消</Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+        initialTitle={fileData?.title}
+        onClose={() => setRenameModalVisible(false)}
+        onConfirm={handleRenameConfirm}
+      />
     </SafeAreaView>
   );
 }
@@ -543,10 +431,6 @@ const getStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 8,
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 6 },
-    // shadowOpacity: 0.12,
-    // shadowRadius: 10,
     elevation: 6,
   },
   popoverBtn: {
@@ -734,9 +618,6 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-  },
-  hexInputContainer: {
-    // padding added dynamically if needed
   },
   errorText: {
     color: colors.errow,

@@ -62,15 +62,20 @@ export default function ColorPickerModal({
     <Modal
       visible={!!visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
     >
       <Pressable style={styles.modalBackdrop} onPress={handleClose}>
-        <Pressable style={styles.colorSheet} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.popoverContainer} onPress={(e) => e.stopPropagation()}>
+          
+          {/* Top Drag Pill */}
+          <View style={styles.dragPill} />
+          
+          {/* Header */}
           <View style={styles.colorHeader}>
             <Text style={styles.colorTitle}>{headerTitle}</Text>
             <Pressable style={styles.closeBtn} onPress={handleClose}>
-              <XIcon size={24} color="#666" />
+              <XIcon size={18} color={colors.text} />
             </Pressable>
           </View>
 
@@ -79,7 +84,7 @@ export default function ColorPickerModal({
               <TextInput
                 style={styles.hexInput}
                 placeholder="#000000"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.inactiveText}
                 value={hexInput}
                 onChangeText={(t) => {
                   setHexInput(t);
@@ -100,42 +105,31 @@ export default function ColorPickerModal({
                     setHexError('');
                   }}
                 >
-                  <Text style={styles.actionBtnText}>返回</Text>
+                  <Text style={[styles.actionBtnText, { color: colors.text }]}>返回</Text>
                 </Pressable>
               </View>
             </View>
           ) : (
             <>
+              {/* Grid Colors */}
               <View style={styles.colorGridWrapper}>
                 {gridColors.map((row, rowIndex) => (
                   <View key={rowIndex} style={styles.colorGridRow}>
-                    {row.map((color, colIndex) => {
-                      const isTopLeft = rowIndex === 0 && colIndex === 0;
-                      const isTopRight = rowIndex === 0 && colIndex === row.length - 1;
-                      const isBottomLeft = rowIndex === gridColors.length - 1 && colIndex === 0;
-                      const isBottomRight = rowIndex === gridColors.length - 1 && colIndex === row.length - 1;
-                      return (
-                        <TouchableOpacity
-                          key={color}
-                          style={[
-                            styles.colorGridSquare,
-                            { backgroundColor: color },
-                            isTopLeft && { borderTopLeftRadius: 16 },
-                            isTopRight && { borderTopRightRadius: 16 },
-                            isBottomLeft && { borderBottomLeftRadius: 16 },
-                            isBottomRight && { borderBottomRightRadius: 16 },
-                          ]}
-                          onPress={() => {
-                            onSelectColor?.(color);
-                            handleClose();
-                          }}
-                        />
-                      );
-                    })}
+                    {row.map((color) => (
+                      <TouchableOpacity
+                        key={color}
+                        style={[styles.colorGridSquare, { backgroundColor: color }]}
+                        onPress={() => {
+                          onSelectColor?.(color);
+                          handleClose();
+                        }}
+                      />
+                    ))}
                   </View>
                 ))}
               </View>
 
+              {/* Circle Colors */}
               <View style={styles.circleColorsContainer}>
                 {circleColors.map((row, rIdx) => (
                   <View key={rIdx} style={styles.circleRow}>
@@ -164,6 +158,9 @@ export default function ColorPickerModal({
               </View>
             </>
           )}
+
+          {/* Bottom Tooltip Arrow */}
+          <View style={styles.bottomArrow} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -174,35 +171,70 @@ const getStyles = (colors) =>
   StyleSheet.create({
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.3)',
+      backgroundColor: 'transparent',
       justifyContent: 'flex-end',
+      alignItems: 'center',
     },
-    colorSheet: {
-      backgroundColor: '#F5F5F5',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      padding: 24,
-      paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    popoverContainer: {
+      backgroundColor: colors.surface,
+      width: 280,
+      borderRadius: 24,
+      padding: 20,
+      marginBottom: 90, // Approx height of the bottom toolbar + margin
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 10,
+      borderWidth: Platform.OS === 'android' ? 1 : 0,
+      borderColor: colors.border,
+    },
+    bottomArrow: {
+      position: 'absolute',
+      bottom: -6,
+      right: 70, // Roughly aligns with the 'A' button on the toolbar
+      width: 16,
+      height: 16,
+      backgroundColor: colors.surface,
+      transform: [{ rotate: '45deg' }],
+      borderRadius: 2,
+      // Provide some border for Android if needed
+      borderBottomWidth: Platform.OS === 'android' ? 1 : 0,
+      borderRightWidth: Platform.OS === 'android' ? 1 : 0,
+      borderColor: colors.border,
+    },
+    dragPill: {
+      width: 36,
+      height: 4,
+      backgroundColor: '#E5E7EB',
+      borderRadius: 2,
+      alignSelf: 'center',
+      marginBottom: 16,
     },
     colorHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 20,
+      paddingHorizontal: 4,
     },
     colorTitle: {
-      fontSize: 22,
-      fontWeight: 'bold',
+      fontSize: 18,
+      fontWeight: '600',
       color: colors.text,
     },
     closeBtn: {
-      backgroundColor: '#E5E5E5',
-      padding: 8,
-      borderRadius: 20,
+      backgroundColor: '#F3F4F6',
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     colorGridWrapper: {
-      marginBottom: 30,
-      backgroundColor: 'transparent',
+      marginBottom: 24,
+      borderRadius: 12,
+      overflow: 'hidden', // Clips the inner grid squares to form rounded corners
     },
     colorGridRow: {
       flexDirection: 'row',
@@ -213,35 +245,34 @@ const getStyles = (colors) =>
     },
     circleColorsContainer: {
       gap: 16,
-      paddingHorizontal: 8,
-      marginBottom: 20,
+      paddingHorizontal: 4,
     },
     circleRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
     },
     circleColorBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
     },
     plusColorBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: '#E5E5E5',
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: '#F3F4F6',
       justifyContent: 'center',
       alignItems: 'center',
     },
     plusColorText: {
-      fontSize: 28,
-      fontWeight: '300',
-      color: '#000',
-      lineHeight: 32,
+      fontSize: 24,
+      fontWeight: '400',
+      color: colors.text,
+      lineHeight: 28,
     },
     hexInput: {
       borderWidth: 1,
-      borderColor: '#E5E5E5',
+      borderColor: colors.border,
       borderRadius: 8,
       padding: 12,
       marginTop: 4,
@@ -250,7 +281,7 @@ const getStyles = (colors) =>
       backgroundColor: colors.surface,
     },
     errorText: {
-      color: colors.errow,
+      color: colors.errow || '#FF3B30',
       fontSize: 14,
       marginTop: 8,
       marginLeft: 4,
@@ -263,7 +294,7 @@ const getStyles = (colors) =>
       borderRadius: 10,
       borderWidth: 1,
       borderColor: colors.border,
-      backgroundColor: '#FDF1E8',
+      backgroundColor: '#000',
       alignItems: 'center',
     },
     actionBtnSecondary: {
@@ -274,13 +305,12 @@ const getStyles = (colors) =>
       borderRadius: 10,
       borderWidth: 1,
       borderColor: colors.border,
-      backgroundColor: '#FCF8E8',
+      backgroundColor: colors.surface,
       alignItems: 'center',
     },
     actionBtnText: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: colors.text,
+      color: '#FFF',
     },
   });
-

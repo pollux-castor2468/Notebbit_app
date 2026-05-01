@@ -18,6 +18,8 @@ import {
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import mammoth from 'mammoth/mammoth.browser.js';
+import { toByteArray } from 'base64-js';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
@@ -40,15 +42,33 @@ export default function Home() {
         console.log('Selected file:', file);
 
         let content = '';
-        if (file.mimeType === 'text/plain' || file.name.endsWith('.txt')) {
-          try {
+        try {
+          if (file.mimeType === 'text/plain' || file.name.endsWith('.txt')) {
             content = await FileSystem.readAsStringAsync(file.uri);
-          } catch (e) {
-            console.error('Error reading txt file:', e);
-            Alert.alert('提示', '目前僅支援純文字檔 (TXT) 內容匯入，其他格式將以空白檔案開啟。');
+          } else if (
+            file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+            file.name.endsWith('.docx')
+          ) {
+            // Read as Base64
+            const base64Data = await FileSystem.readAsStringAsync(file.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            // Convert to ArrayBuffer
+            const uint8Array = toByteArray(base64Data);
+            const arrayBuffer = uint8Array.buffer;
+
+            // Use mammoth to convert to HTML
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            content = result.value; // The generated HTML
+            if (result.messages.length > 0) {
+              console.log('Mammoth messages:', result.messages);
+            }
+          } else {
+            Alert.alert('提示', '目前僅支援 TXT 與 DOCX 檔案匯入，其他格式將以空白檔案開啟。');
           }
-        } else {
-          Alert.alert('提示', '目前僅支援純文字檔 (TXT) 內容匯入，其他格式將以空白檔案開啟。');
+        } catch (e) {
+          console.error('Error reading file:', e);
+          Alert.alert('錯誤', '讀取檔案時發生錯誤，可能檔案格式不支援。');
         }
 
         const newDoc = createFile('document', file.name.replace(/\.[^/.]+$/, ""));  //會出現選擇的文件名稱
