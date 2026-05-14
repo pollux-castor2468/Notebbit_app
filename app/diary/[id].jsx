@@ -143,7 +143,6 @@ export default function DiaryEditor() {
             onChangeTitle={(text) => {
               if (id) {
                 updateFile(id, { title: text });
-                setNewTitle(text);
               }
             }}
             actions={[

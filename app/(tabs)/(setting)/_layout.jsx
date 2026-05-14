@@ -11,7 +11,6 @@ export default function SettingScreenLayout() {
             }}>
                 <Stack.Screen name="index" 
                 options={{ headerShown: false }}/>
-                <Stack.Screen name="file-browser" />
             </Stack>
         </View>
     )

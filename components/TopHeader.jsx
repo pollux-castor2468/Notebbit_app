@@ -4,7 +4,7 @@ import { Rabbit, Search } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 
-export default function TopHeader() {
+export default function TopHeader({ title = 'Notebbit' }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
   return (
@@ -14,7 +14,7 @@ export default function TopHeader() {
           {/* <Rabbit size={28} color={colors.text} /> */}
           <Image source={require('../assets/img/1.png')} style={styles.rabbit} resizeMode="contain" />
         </View>
-        <Text style={styles.brandText}>Notebbit</Text>
+        <Text style={styles.brandText}>{title}</Text>
       </View>
       <Pressable style={layoutStyles.iconButtonBg} onPress={() => router.push('/search')}>
         <Search size={24} color={colors.text} />

@@ -44,6 +44,8 @@ export const useFileStore = create((set, get) => ({
       date: formatDate(doc.updated_at),
       starred: doc.is_starred,
       content: doc.content || '',
+      is_deleted: doc.is_deleted || false,
+      tags: doc.tags || [],
       versionNumber: doc.version?.length || 0,
       sourceNumber: doc.source?.length || 0,
       version: (doc.version || []).map(v => ({
@@ -71,6 +73,8 @@ export const useFileStore = create((set, get) => ({
       mood: diary.mood,
       starred: false, // Diaries don't have is_starred in DB
       content: diary.content || '',
+      is_deleted: diary.is_deleted || false,
+      tags: [],
       versionNumber: 0,
       sourceNumber: 0,
       version: [],
@@ -97,6 +101,8 @@ export const useFileStore = create((set, get) => ({
       date: formatDate(now),
       starred: false,
       content: '',
+      is_deleted: false,
+      tags: [],
       versionNumber: 0,
       sourceNumber: 0,
       version: [],
@@ -113,6 +119,7 @@ export const useFileStore = create((set, get) => ({
         title,
         content: '',
         is_starred: false,
+        is_deleted: false,
       }).then(({ error }) => {
         if (error) console.error('Error inserting document:', error);
       });
@@ -123,6 +130,7 @@ export const useFileStore = create((set, get) => ({
         title,
         content: '',
         diary_date: now.toISOString().split('T')[0],
+        is_deleted: false,
       }).then(({ error }) => {
         if (error) console.error('Error inserting diary:', error);
       });
@@ -148,10 +156,12 @@ export const useFileStore = create((set, get) => ({
 
     if (file.type === 'document') {
       if (updates.starred !== undefined) dbUpdates.is_starred = updates.starred;
+      if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       supabase.from('documents').update(dbUpdates).eq('id', id).then();
     } else if (file.type === 'diary') {
       if (updates.weather !== undefined) dbUpdates.weather = updates.weather;
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
+      if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       supabase.from('diaries').update(dbUpdates).eq('id', id).then();
     }
   },
@@ -161,6 +171,15 @@ export const useFileStore = create((set, get) => ({
   })),
 
   deleteItem: (id) => {
+    // Soft delete
+    get().updateFile(id, { is_deleted: true });
+  },
+
+  restoreItem: (id) => {
+    get().updateFile(id, { is_deleted: false });
+  },
+
+  permanentlyDeleteItem: (id) => {
     const file = get().data.find(f => f.id === id);
     if (!file) return;
     

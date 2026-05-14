@@ -2,7 +2,7 @@ import { Tabs, router } from "expo-router";
 import { View, Pressable, Modal, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image } from "react-native";
 import { fontSize, defaultTabBarStyle as staticTabBarStyle } from "../../constants/token";
 import { useStyles } from "../../styles";
-import { Home, Settings, Plus, FileText, Book } from "lucide-react-native";
+import { Home, Settings, Plus, FileText, Book, Calendar, CheckSquare } from "lucide-react-native";
 import { useState } from "react";
 import { useFileStore } from "../../store/useFileStore";
 
@@ -63,6 +63,22 @@ export default function TabLayout() {
             ),
           }}
         />
+        <Tabs.Screen  //左邊的calender按鈕
+          name="(calender)"
+          options={{
+            title: 'calender',
+            tabBarIcon: ({ focused }) => (
+              <View style={{
+                backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
+                paddingHorizontal: 20,
+                paddingVertical: 4,
+                borderRadius: 20,
+              }}>
+                <Calendar size={24} color={focused ? colors.text : colors.inactiveText} />
+              </View>
+            ),
+          }}
+        />
 
         <Tabs.Screen  //中間的+號按鈕
           name="create"
@@ -101,7 +117,22 @@ export default function TabLayout() {
             },
           }}
         />
-
+        <Tabs.Screen  //task按鈕
+          name="(task)"
+          options={{
+            title: 'task',
+            tabBarIcon: ({ focused }) => (
+              <View style={{
+                backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
+                paddingHorizontal: 20,
+                paddingVertical: 4,
+                borderRadius: 20,
+              }}>
+                <CheckSquare size={24} color={focused ? colors.text : colors.inactiveText} />
+              </View>
+            ),
+          }}
+        />
         <Tabs.Screen  //右邊的設定按鈕
           name="(setting)"
           options={{
@@ -170,10 +201,6 @@ const getStyles = (colors) => StyleSheet.create({
     borderColor: colors.border,
     padding: 12,
     gap: 12, // React Native 支援 gap
-    // shadowColor: colors.text,
-    // shadowOffset: { width: 0, height: 8 },
-    // shadowOpacity: 0.15,
-    // shadowRadius: 16,
     elevation: 8,
   },
   menuItemL: {
@@ -212,7 +239,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: colors.surface,
-    marginTop: 0, // No margin, it flush bounds exactly to popover container
+    marginTop: 0,
   },
   rabbit: {
     position: 'absolute',

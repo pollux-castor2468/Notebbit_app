@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, Pressable, FlatList, Modal, TextInput, Image } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useNavigation } from 'expo-router';
 import { ChevronLeft, Info, Check, Plus, Trash2, Pencil, X } from 'lucide-react-native';
-import { borderRadius } from '../constants/token';
-import { useStyles } from '../styles';
-import { useTaskStore } from '../store/useTaskStore';
+import { borderRadius } from '../../../constants/token';
+import { useStyles } from '../../../styles';
+import { useTaskStore } from '../../../store/useTaskStore';
+import TopHeader from '../../../components/TopHeader';
 
 export default function CustomTasks() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -56,40 +57,37 @@ export default function CustomTasks() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={layoutStyles.rowBetween}>
-        <Pressable onPress={() => router.back()} style={{ padding: 16 }}>
-          <ChevronLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>自訂任務</Text>
-        <Pressable style={{ padding: 16 }} onPress={() => setInfoModalVisible(true)}>
-          <View style={styles.infoIconWrapper}>
-            <Info size={16} color="#FFF" strokeWidth={3} />
-          </View>
-        </Pressable>
-      </View>
+      <TopHeader title="自訂任務" />
 
       {/* Top empty white space area as seen in screenshot */}
       <View style={styles.topEmptySpace}>
         {/* 上面的經驗進度條 */}
-        <View style={styles.topRowSection}>
-          {/* Lv. */}
-          <View style={styles.levelText}>
-            <Text style={styles.topLv}>Lv.</Text>
-            <Text style={styles.topLv}>{level}</Text>
+        <View style={[styles.topRowSection, { alignItems: 'center', justifyContent: 'space-between' }]}>
+          <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+            {/* Lv. */}
+            <View style={styles.levelText}>
+              <Text style={styles.topLv}>Lv.</Text>
+              <Text style={styles.topLv}>{level}</Text>
+            </View>
+            {/* 進度條 */}
+            <View style={styles.topLvBar}>
+              <View style={[styles.topLvBarInner, {width: expProgress}]}></View>
+            </View>
+            {/* 進度條數字 */}
+            <View style={styles.levelText}>
+              <Text style={styles.experienceText}>{exp}</Text>
+              <Text style={styles.experienceText}>/</Text>
+              <Text style={styles.experienceText}>{maxExpNext}</Text>
+            </View>
           </View>
-          {/* 進度條 */}
-          <View style={styles.topLvBar}>
-            <View style={[styles.topLvBarInner, {width: expProgress}]}></View>
-          </View>
-          {/* 進度條數字 */}
-          <View style={styles.levelText}>
-            <Text style={styles.experienceText}>{exp}</Text>
-            <Text style={styles.experienceText}>/</Text>
-            <Text style={styles.experienceText}>{maxExpNext}</Text>
-          </View>
+          <Pressable style={{ padding: 4 }} onPress={() => setInfoModalVisible(true)}>
+            <View style={styles.infoIconWrapper}>
+              <Info size={16} color="#FFF" strokeWidth={3} />
+            </View>
+          </Pressable>
         </View>
         {/* 兔子圖片 */}
-        <Image source={require('../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" pointerEvents="none" />
+        <Image source={require('../../../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" pointerEvents="none" />
       </View>
 
       {/* Bottom Gray Section */}
@@ -269,7 +267,6 @@ const getStyles = (colors) => StyleSheet.create({
   },
   levelText: {
     flexDirection: 'row',
-    marginLeft: 16,
     alignItems: 'center',
   },
   topLv: {
@@ -279,13 +276,10 @@ const getStyles = (colors) => StyleSheet.create({
   },
   topLvBar: {
     position: 'relative',
-    width: '50%',
+    flex: 1,
     height: 20,
     backgroundColor: '#fff',
-    margin: 5,
-    // marginRight: 10,
-    marginLeft: 20,
-    // alignItems: 'center',
+    marginHorizontal: 10,
     borderWidth: 1,
     borderColor: colors.border,
   },
