@@ -53,19 +53,36 @@ export const useAuthStore = create((set, get) => ({
   register: async (name, email, password) => {
     set({ isLoading: true });
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            username: name,
+            full_name: name
+          }
+        }
+      });
       if (error) throw error;
       
       if (data.user) {
-        // Create profile
-        await supabase.from('user_profiles').upsert({
+        // Try to update first (if trigger created it), fallback to upsert
+        const { error: profileError } = await supabase.from('user_profiles').upsert({
           id: data.user.id,
           username: name,
           total_exp: 0,
           current_level: 1,
-        });
-        set({ user: data.user, session: data.session });
+        }, { onConflict: 'id' });
+        
+        if (profileError) console.error('Error saving profile:', profileError);
+        set({ user: data.user, session: data.session, profileName: name });
         await get().fetchProfile(data.user.id);
+        
+        // If fetchProfile overwrote it with null due to DB latency, force it back
+        if (get().profileName === '未命名' || !get().profileName) {
+           set({ profileName: name });
+        }
+
         const { useFileStore } = require('./useFileStore');
         await useFileStore.getState().syncLocalDataToCloud();
         await useFileStore.getState().fetchFiles();

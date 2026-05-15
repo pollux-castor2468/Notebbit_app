@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Text, Modal } from 'react-native';
-import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown } from 'lucide-react-native';
+import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown, Edit2 } from 'lucide-react-native';
 import { actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 
@@ -31,6 +31,7 @@ export default function EditorToolbar({
   onOpenTextColors,
   onOpenBgColors,
   onOpenLink,
+  onAddSource,
   activeActions = [],
 }) {
   const { colors } = useStyles();
@@ -147,6 +148,12 @@ export default function EditorToolbar({
           <Pressable style={({ pressed }) => [styles.toolIcon, pressed ? styles.toolIconPressed : null]} onPress={onOpenLink}>
             <Link size={isDocument ? 20 : 24} color={colors.text} />
           </Pressable>
+
+          {isDocument && (
+            <Pressable style={({ pressed }) => [styles.toolIcon, pressed ? styles.toolIconPressed : null]} onPress={onAddSource}>
+              <Edit2 size={20} color={colors.text} />
+            </Pressable>
+          )}
         </View>
       </ScrollView>
 

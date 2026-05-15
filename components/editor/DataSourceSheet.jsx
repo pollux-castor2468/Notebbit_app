@@ -4,7 +4,7 @@ import { Plus, X, MoreVertical } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 
-export default function DataSourceSheet({ visible, onClose, fileId }) {
+export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -24,6 +24,16 @@ export default function DataSourceSheet({ visible, onClose, fileId }) {
   const [editNoteContent, setEditNoteContent] = useState('');
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  React.useEffect(() => {
+    if (visible && autoEditSourceId && sources.length > 0) {
+      const source = sources.find(s => s.sourceId === autoEditSourceId);
+      if (source) {
+        handleOpenEdit(source);
+        if (onClearAutoEdit) onClearAutoEdit();
+      }
+    }
+  }, [visible, autoEditSourceId, sources]);
 
   if (!visible) return null;
 
@@ -85,7 +95,7 @@ export default function DataSourceSheet({ visible, onClose, fileId }) {
                 <View key={s.sourceId} style={styles.sheetCard}>
                   <Text style={[styles.cardText, { flex: 0.8 }]}>{num}</Text>
                   <Text style={[styles.cardText, { flex: 3 }]} numberOfLines={2}>
-                    {s.sourceName || s.sourceContent || `資料${num}`}
+                    {s.sourceName || (s.markedText ? `標記: ${s.markedText}` : '') || s.sourceContent || `資料${num}`}
                   </Text>
                   <Pressable
                     style={styles.moreBtn}

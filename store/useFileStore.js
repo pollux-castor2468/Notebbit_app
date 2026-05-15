@@ -295,7 +295,7 @@ export const useFileStore = create(
     supabase.from('document_versions').delete().eq('id', versionId).then();
   },
 
-  addSource: (id) => {
+  addSource: (id, markedText = '') => {
     const user = useAuthStore.getState().user;
     const file = get().data.find(f => f.id === id);
     if (!file || file.type !== 'document') return;
@@ -305,6 +305,7 @@ export const useFileStore = create(
       sourceId,
       sourceName: '',
       sourceContent: '',
+      markedText: markedText,
       isSynced: !!user,
     };
 
@@ -328,7 +329,10 @@ export const useFileStore = create(
       doc_id: id,
       source_name: '',
       note: '',
+      marked_text: markedText,
     }).then();
+    
+    return sourceId;
   },
 
   updateSource: (fileId, sourceId, content) => {

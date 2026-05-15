@@ -17,6 +17,12 @@ export default function ProfileEditScreen() {
   const [desc, setDesc] = useState(profileDesc || '');
   const [avatar, setAvatar] = useState(profileAvatar || null);
 
+  React.useEffect(() => {
+    if (profileAvatar) {
+      setAvatar(profileAvatar);
+    }
+  }, [profileAvatar]);
+
   const handleCustomAvatar = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,

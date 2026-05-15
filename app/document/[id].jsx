@@ -47,6 +47,7 @@ export default function DocumentEditor() {
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'version' | 'source' | 'more' | null
   const [popoverPos, setPopoverPos] = useState(0);
+  const [autoEditSourceId, setAutoEditSourceId] = useState(null);
 
 
   // Content state for Word Count
@@ -259,6 +260,14 @@ export default function DocumentEditor() {
                   if (message && message.type === 'SOURCE_CLICK') {
                     setActiveModal('source');
                   }
+                  if (message && message.type === 'ADD_SOURCE_SELECTION') {
+                    const text = message.text;
+                    if (text && text.trim().length > 0) {
+                      const newId = useFileStore.getState().addSource(id, text.trim());
+                      setAutoEditSourceId(newId);
+                    }
+                    setActiveModal('source');
+                  }
                 }}
                 editorStyle={{
                   backgroundColor: 'transparent',
@@ -277,6 +286,14 @@ export default function DocumentEditor() {
               onOpenBgColors={() => setActiveModal('bgColors')}
               onPickImage={handlePickImage}
               onOpenLink={() => setActiveModal('link')}
+              onAddSource={() => {
+                richText.current?.injectJavascript(`
+                  (function() {
+                     var text = window.getSelection().toString();
+                     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: text }));
+                  })();
+                `);
+              }}
             />
           </KeyboardAvoidingView>
       </View>
@@ -294,7 +311,9 @@ export default function DocumentEditor() {
       <DataSourceSheet
         visible={activeModal === 'source'}
         fileId={id}
-        onClose={() => setActiveModal(null)}
+        autoEditSourceId={autoEditSourceId}
+        onClearAutoEdit={() => setAutoEditSourceId(null)}
+        onClose={() => { setActiveModal(null); setAutoEditSourceId(null); }}
       />
 
       {/* 3. More Options Popover overlay */}
