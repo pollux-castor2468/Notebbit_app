@@ -147,11 +147,6 @@ export default function DiaryEditor() {
             }}
             actions={[
               {
-                key: 'save',
-                icon: <Check size={24} color={colors.text} />,
-                onPress: handleSave,
-              },
-              {
                 key: 'more',
                 icon: <MoreVertical size={24} color={colors.text} />,
                 active: activeModal === 'more',

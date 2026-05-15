@@ -20,8 +20,8 @@ export const useAuthStore = create((set, get) => ({
       
       if (data) {
         set({
-          profileName: data.name || '未命名',
-          profileDesc: data.description || '這個人很懶，什麼都沒留下',
+          profileName: data.username || '未命名',
+          profileDesc: data.bio || '這個人很懶，什麼都沒留下',
           profileAvatar: data.avatar_url || null,
         });
       }
@@ -38,6 +38,9 @@ export const useAuthStore = create((set, get) => ({
       set({ user: data.user, session: data.session });
       if (data.user) {
         await get().fetchProfile(data.user.id);
+        const { useFileStore } = require('./useFileStore');
+        await useFileStore.getState().syncLocalDataToCloud();
+        await useFileStore.getState().fetchFiles();
       }
       return { success: true };
     } catch (error) {
@@ -57,12 +60,15 @@ export const useAuthStore = create((set, get) => ({
         // Create profile
         await supabase.from('user_profiles').upsert({
           id: data.user.id,
-          name: name,
+          username: name,
           total_exp: 0,
           current_level: 1,
         });
         set({ user: data.user, session: data.session });
         await get().fetchProfile(data.user.id);
+        const { useFileStore } = require('./useFileStore');
+        await useFileStore.getState().syncLocalDataToCloud();
+        await useFileStore.getState().fetchFiles();
       }
       return { success: true };
     } catch (error) {
@@ -87,8 +93,8 @@ export const useAuthStore = create((set, get) => ({
     if (!user) return;
     try {
       await supabase.from('user_profiles').update({
-        name: name,
-        description: desc,
+        username: name,
+        bio: desc,
         avatar_url: avatar
       }).eq('id', user.id);
       
@@ -106,6 +112,9 @@ export const useAuthStore = create((set, get) => ({
       if (session) {
          set({ user: session.user, session });
          await get().fetchProfile(session.user.id);
+         const { useFileStore } = require('./useFileStore');
+         await useFileStore.getState().syncLocalDataToCloud();
+         await useFileStore.getState().fetchFiles();
       }
     } catch (e) {
       console.error('Auto login exception:', e);

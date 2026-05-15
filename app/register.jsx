@@ -18,11 +18,14 @@ export default function RegisterScreen() {
   const { register, isLoading } = useAuthStore();
 
   const handleRegister = async () => {
-    if (!name.trim()) {
+    const trimmedEmail = email.trim();
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
       Alert.alert('註冊失敗', '請輸入名稱');
       return;
     }
-    if (!email.includes('@gmail.com')) {
+    if (!trimmedEmail.includes('@gmail.com')) {
       Alert.alert('註冊失敗', '請輸入有效的 Gmail 帳號');
       return;
     }
@@ -35,7 +38,7 @@ export default function RegisterScreen() {
       return;
     }
 
-    const res = await register(name, email, password);
+    const res = await register(trimmedName, trimmedEmail, password);
     if (res.success) {
       router.replace('/(tabs)/(setting)');
     } else {

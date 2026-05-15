@@ -72,6 +72,10 @@ export default function Home() {
         }
 
         const newDoc = createFile('document', file.name.replace(/\.[^/.]+$/, ""));  //會出現選擇的文件名稱
+        if (!newDoc) {
+          Alert.alert('錯誤', '請先登入以開啟文件');
+          return;
+        }
         if (content) {
           updateFile(newDoc.id, { content });
         }
@@ -89,11 +93,19 @@ export default function Home() {
   //開啟新文件
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
+    if (!newFile) {
+      Alert.alert('錯誤', '請先登入以建立文件');
+      return;
+    }
     router.push(`/document/${newFile.id}`);
   };
   //開啟新日記
   const handleCreateDiary = () => {
     const newFile = createFile('diary', '未命名日記');
+    if (!newFile) {
+      Alert.alert('錯誤', '請先登入以建立日記');
+      return;
+    }
     router.push(`/diary/${newFile.id}`);
   };
 

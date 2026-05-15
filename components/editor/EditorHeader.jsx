@@ -81,20 +81,29 @@ export default function EditorHeader({
       <View style={layoutStyles.rowCenter}>
         {actions
           .filter(a => !a?.hidden)
-          .map(a => (
-            <Pressable
-              key={a.key}
-              style={[
-                styles.iconButton,
-                a.active ? styles.iconButtonActive : null,
-                a.disabled ? styles.iconButtonDisabled : null,
-              ]}
-              onPress={(e) => a.onPress?.(e)}
-              disabled={a.disabled}
-            >
-              {a.icon}
-            </Pressable>
-          ))}
+          .map(a => {
+            if (a.customComponent) {
+              return (
+                <View key={a.key} style={[styles.iconButton, { padding: 0 }]}>
+                  {a.customComponent}
+                </View>
+              );
+            }
+            return (
+              <Pressable
+                key={a.key}
+                style={[
+                  styles.iconButton,
+                  a.active ? styles.iconButtonActive : null,
+                  a.disabled ? styles.iconButtonDisabled : null,
+                ]}
+                onPress={(e) => a.onPress?.(e)}
+                disabled={a.disabled}
+              >
+                {a.icon}
+              </Pressable>
+            );
+          })}
       </View>
     </View>
   );

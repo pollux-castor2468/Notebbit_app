@@ -12,7 +12,10 @@ import EditorToolbar from '../../components/editor/EditorToolbar';
 import ColorPickerModal from '../../components/editor/ColorPickerModal';
 import LinkModal from '../../components/editor/LinkModal';
 import RenameModal from '../../components/editor/RenameModal';
+import TagModal from '../../components/editor/TagModal';
 import EditorPopover from '../../components/editor/EditorPopover';
+import VersionSheet from '../../components/editor/VersionSheet';
+import DataSourceSheet from '../../components/editor/DataSourceSheet';
 
 // Helper for the custom red floating delete button on modal cards
 const CardDeleteBadge = ({ onPress, styles }) => (
@@ -55,6 +58,8 @@ export default function DocumentEditor() {
   // const [iconColors, setIconColors] = useState({});
 
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+  const [isTagModalVisible, setTagModalVisible] = useState(false);
+  const [showReferences, setShowReferences] = useState(false);
 
   const stripHtmlTags = (html) => html ? String(html).replace(/<[^>]*>?/gm, '') : '';
   const wordCount = stripHtmlTags(content).replace(/\s/g, '').length || 0;
@@ -71,6 +76,51 @@ export default function DocumentEditor() {
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  React.useEffect(() => {
+    if (!richText.current) return;
+    const js = showReferences ? `
+      (function() {
+        document.querySelectorAll('.ref-highlight').forEach(el => {
+          const parent = el.parentNode;
+          while (el.firstChild) parent.insertBefore(el.firstChild, el);
+          parent.removeChild(el);
+        });
+        const sources = ${JSON.stringify(fileData?.source || [])};
+        sources.forEach(s => {
+          if (!s.markedText) return;
+          const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+          let n;
+          const nodes = [];
+          while(n = walk.nextNode()) {
+            if (n.nodeValue.includes(s.markedText)) nodes.push(n);
+          }
+          nodes.forEach(node => {
+            const span = document.createElement('span');
+            span.innerHTML = node.nodeValue.split(s.markedText).join('<span class="ref-highlight" style="border-bottom: 2px dotted gray;" data-source-id="'+s.sourceId+'">'+s.markedText+'</span>');
+            node.parentNode.replaceChild(span, node);
+          });
+        });
+        document.querySelectorAll('.ref-highlight').forEach(el => {
+          el.onclick = function(e) {
+            e.stopPropagation();
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SOURCE_CLICK', id: this.getAttribute('data-source-id') }));
+          };
+        });
+        true;
+      })();
+    ` : `
+      (function() {
+        document.querySelectorAll('.ref-highlight').forEach(el => {
+          const parent = el.parentNode;
+          while (el.firstChild) parent.insertBefore(el.firstChild, el);
+          parent.removeChild(el);
+        });
+        true;
+      })();
+    `;
+    richText.current?.injectJavascript?.(js);
+  }, [showReferences, fileData?.source]);
 
   const handleRenameConfirm = (updatedTitle) => {
     if (id && updatedTitle.trim() !== '') {
@@ -137,6 +187,38 @@ export default function DocumentEditor() {
             }}
             actions={[
               {
+                key: 'reference_toggle',
+                customComponent: (
+                  <Pressable 
+                    style={{
+                      width: 44,
+                      height: 24,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: showReferences ? colors.recentSection : 'transparent',
+                      justifyContent: 'center',
+                      paddingHorizontal: 2,
+                    }}
+                    onPress={() => setShowReferences(!showReferences)}
+                  >
+                    <View style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: showReferences ? colors.text : colors.surface,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: [{ translateX: showReferences ? 20 : 0 }],
+                      borderWidth: 1,
+                      borderColor: showReferences ? colors.text : colors.border,
+                    }}>
+                      {!showReferences && <X size={12} color={colors.inactiveText} />}
+                    </View>
+                  </Pressable>
+                ),
+              },
+              {
                 key: 'source',
                 icon: <Edit2 size={24} color={colors.text} />,
                 onPress: () => setActiveModal('source'),
@@ -145,12 +227,6 @@ export default function DocumentEditor() {
                 key: 'version',
                 icon: <Clock size={24} color={colors.text} />,
                 onPress: () => setActiveModal('version'),
-              },
-              {
-                key: 'star',
-                icon: <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />,
-                onPress: () => fileData && toggleStar(id),
-                disabled: !fileData,
               },
               {
                 key: 'more',
@@ -179,6 +255,11 @@ export default function DocumentEditor() {
                   setContent(html);
                   if (id) updateFile(id, { content: html });
                 }}
+                onMessage={(message) => {
+                  if (message && message.type === 'SOURCE_CLICK') {
+                    setActiveModal('source');
+                  }
+                }}
                 editorStyle={{
                   backgroundColor: 'transparent',
                   color: colors.text,
@@ -203,87 +284,18 @@ export default function DocumentEditor() {
       {/* --- OVERLAY MODALS --- */}
 
       {/* 1. Version Control Bottom Sheet */}
-      <Modal visible={activeModal === 'version'} transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
-        <View style={styles.bottomSheetOverlay}>
-          {/* Invisible dismiss layer */}
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setActiveModal(null)} />
-
-          <View style={styles.bottomSheetContainer}>
-            <View style={styles.sheetDragPill} />
-
-            <View style={styles.sheetHeaderRow}>
-              <Text style={styles.sheetTitle}>版本控制</Text>
-              <View style={layoutStyles.rowCenter}>
-                <Pressable style={styles.bluePlusBtn}><Plus size={20} color={colors.text} /></Pressable>
-                <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
-              </View>
-            </View>
-
-            <View style={styles.sheetSubheadPill}>
-              <Text style={[styles.subheadText, { flex: 1.2 }]}>編號</Text>
-              <Text style={[styles.subheadText, { flex: 2 }]}>版本名稱</Text>
-              <Text style={[styles.subheadText, { flex: 1.5, textAlign: 'right' }]}>儲存日期</Text>
-            </View>
-
-            <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-              <View style={styles.sheetCard}>
-                <CardDeleteBadge styles={styles} />
-                <Text style={[styles.cardText, { flex: 1.2 }]}>版本5</Text>
-                <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-              </View>
-              <View style={styles.sheetCard}>
-                <CardDeleteBadge styles={styles} />
-                <Text style={[styles.cardText, { flex: 1.2 }]}>版本4</Text>
-                <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>版本名稱</Text>
-                <Text style={[styles.cardText, { flex: 1.5, textAlign: 'right' }]}>2026.04.04</Text>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <VersionSheet
+        visible={activeModal === 'version'}
+        fileId={id}
+        onClose={() => setActiveModal(null)}
+      />
 
       {/* 2. Data Sources Bottom Sheet */}
-      {activeModal === 'source' && (
-        <View style={[styles.bottomSheetOverlay, { position: 'absolute', bottom: 0, width: '100%', height: '50%', backgroundColor: 'transparent', zIndex: 50 }]} pointerEvents="box-none">
-          <View style={[styles.bottomSheetContainer, { flex: 1, shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 15 }]}>
-            <View style={styles.sheetDragPill} />
-
-            <View style={styles.sheetHeaderRow}>
-              <Text style={styles.sheetTitle}>資料來源</Text>
-              <View style={layoutStyles.rowCenter}>
-                <Pressable style={styles.bluePlusBtn}><Plus size={20} color={colors.text} /></Pressable>
-                <Pressable style={styles.closeBtn} onPress={() => setActiveModal(null)}><X size={24} color={colors.text} /></Pressable>
-              </View>
-            </View>
-
-            <View style={styles.sheetSubheadPill}>
-              <Text style={[styles.subheadText, { flex: 0.8 }]}>編號</Text>
-              <Text style={[styles.subheadText, { flex: 3 }]}>資料內容</Text>
-              <Text style={[styles.subheadText, { flex: 1.5, textAlign: 'right' }]}>標記段落</Text>
-            </View>
-
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                <CardDeleteBadge styles={styles} />
-                <Text style={[styles.cardText, { flex: 0.8 }]}>1</Text>
-                <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
-                <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
-                  <Edit2 size={18} color={colors.text} />
-                </View>
-              </View>
-              <View style={[styles.sheetCard, { paddingVertical: 18 }]}>
-                <CardDeleteBadge styles={styles} />
-                <Text style={[styles.cardText, { flex: 0.8 }]}>2</Text>
-                <Text style={[styles.cardText, { flex: 3 }]}>資料內容...</Text>
-                <View style={{ flex: 1.5, alignItems: 'flex-end', paddingRight: 8 }}>
-                  <Edit2 size={18} color={colors.text} />
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      )}
+      <DataSourceSheet
+        visible={activeModal === 'source'}
+        fileId={id}
+        onClose={() => setActiveModal(null)}
+      />
 
       {/* 3. More Options Popover overlay */}
       <EditorPopover
@@ -291,10 +303,19 @@ export default function DocumentEditor() {
         popoverPos={popoverPos}
         wordCount={wordCount}
         type="document"
+        isStarred={fileData?.starred}
+        onToggleStar={() => {
+          if (fileData) toggleStar(id);
+          setActiveModal(null);
+        }}
         onClose={() => setActiveModal(null)}
         onRename={() => {
           setActiveModal(null);
           setRenameModalVisible(true);
+        }}
+        onSetTags={() => {
+          setActiveModal(null);
+          setTagModalVisible(true);
         }}
       />
 
@@ -304,6 +325,13 @@ export default function DocumentEditor() {
         initialTitle={fileData?.title}
         onClose={() => setRenameModalVisible(false)}
         onConfirm={handleRenameConfirm}
+      />
+
+      {/* 5. Tag Modal */}
+      <TagModal
+        visible={isTagModalVisible}
+        fileId={id}
+        onClose={() => setTagModalVisible(false)}
       />
 
       <ColorPickerModal

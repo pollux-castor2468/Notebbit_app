@@ -15,7 +15,9 @@ export default function LoginScreen() {
   const { login, isLoading } = useAuthStore();
 
   const handleLogin = async () => {
-    if (!email.includes('@gmail.com')) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail.includes('@gmail.com')) {
       Alert.alert('登入失敗', '請輸入有效的 Gmail 帳號');
       return;
     }
@@ -24,7 +26,7 @@ export default function LoginScreen() {
       return;
     }
 
-    const res = await login(email, password);
+    const res = await login(trimmedEmail, password);
     if (res.success) {
       router.replace('/(tabs)/(setting)');
     } else {

@@ -17,7 +17,7 @@ export default function TabLayout() {
     backgroundColor: colors.recentSection,
     borderColor: colors.border,
   };
-  const { data: historyData, createFile, updateFile } = useFileStore();
+  const { data: createFile } = useFileStore();
 
   // Close menu and navigate 點擊下面的tab鍵後觸發，在最下面
   const handleNavCreate = (type) => {
@@ -40,23 +40,21 @@ export default function TabLayout() {
           tabBarStyle: tabBarStyle,
           tabBarActiveTintColor: colors.text,
           tabBarInactiveTintColor: colors.inactiveText,
-          tabBarLabelStyle: {
-            fontSize: 10,
-            fontWeight: '600',
-            marginTop: 4,
-          },
         }}
       >
         <Tabs.Screen  //左邊的首頁按鈕
           name="(home)"
           options={{
             title: 'home',
+            tabBarShowLabel: false,
             tabBarIcon: ({ focused }) => (
               <View style={{
                 backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
-                paddingHorizontal: 20,
+                paddingHorizontal: 15,
                 paddingVertical: 4,
                 borderRadius: 20,
+                marginBottom: -15,
+                left: 5,
               }}>
                 <Home size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
@@ -67,12 +65,14 @@ export default function TabLayout() {
           name="(calender)"
           options={{
             title: 'calender',
+            tabBarShowLabel: false,
             tabBarIcon: ({ focused }) => (
               <View style={{
                 backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
-                paddingHorizontal: 20,
+                paddingHorizontal: 15,
                 paddingVertical: 4,
                 borderRadius: 20,
+                marginBottom: -15,
               }}>
                 <Calendar size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
@@ -104,11 +104,15 @@ export default function TabLayout() {
                     width: 56,
                     height: 56,
                     backgroundColor: colors.fab, // 黃色
-
                     borderRadius: 28, // 圓形
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: 10,
+                    transform: [{ translateY: -5 }], // 讓按鈕往上凸起，不影響 tabBar 高度
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 6,
+                    elevation: 5,
                   }}>
                     <Plus size={28} color={colors.text} strokeWidth={3} />
                   </View>
@@ -121,12 +125,14 @@ export default function TabLayout() {
           name="(task)"
           options={{
             title: 'task',
+            tabBarShowLabel: false,
             tabBarIcon: ({ focused }) => (
               <View style={{
                 backgroundColor: focused ? colors.recentHeader : 'transparent', // 和最近開啟頭一樣顏色啦
-                paddingHorizontal: 20,
+                paddingHorizontal: 15,
                 paddingVertical: 4,
                 borderRadius: 20,
+                marginBottom: -15,
               }}>
                 <CheckSquare size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
@@ -137,12 +143,15 @@ export default function TabLayout() {
           name="(setting)"
           options={{
             title: 'setting',
+            tabBarShowLabel: false,
             tabBarIcon: ({ focused }) => (
               <View style={{
                 backgroundColor: focused ? colors.recentHeader : 'transparent',
-                paddingHorizontal: 20,
+                paddingHorizontal: 15,
                 paddingVertical: 4,
                 borderRadius: 20,
+                marginBottom: -15,
+                right: 5,
               }}>
                 <Settings size={24} color={focused ? colors.text : colors.inactiveText} />
               </View>
@@ -185,12 +194,11 @@ export default function TabLayout() {
 const getStyles = (colors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    // backgroundColor: 'rgba(0,0,0,0.1)', // subtle dim
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   menuWrapper: {
-    marginBottom: 60, // Position right above the 80px tab bar (bottom: 24) -> 104px
+    marginBottom: 90,
     alignItems: 'center',
   },
   menuContainer: {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Star } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 
-export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', onClose, onRename }) {
+export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', isStarred, onToggleStar, onSetTags, onClose, onRename }) {
   const { colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -34,6 +34,19 @@ export default function EditorPopover({ visible, popoverPos, wordCount, type = '
               <Text style={styles.popoverText}>字數統計</Text>
               <ChevronRight size={20} color={colors.text} />
             </Pressable>
+            
+            {type === 'document' && (
+              <>
+                <Pressable style={styles.popoverBtn} onPress={onToggleStar}>
+                  <Text style={styles.popoverText}>星號</Text>
+                  <Star size={20} color={colors.text} fill={isStarred ? colors.text : 'transparent'} />
+                </Pressable>
+
+                <Pressable style={styles.popoverBtn} onPress={onSetTags}>
+                  <Text style={styles.popoverText}>設定標籤</Text>
+                </Pressable>
+              </>
+            )}
             
             <Pressable
               style={[styles.popoverBtn, { marginBottom: 0 }]}
