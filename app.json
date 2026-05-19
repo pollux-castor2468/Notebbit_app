@@ -28,7 +28,8 @@
       "favicon": "./assets/img/1.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {},

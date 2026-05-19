@@ -1,145 +1,26 @@
 import { create } from 'zustand';
-import { supabase } from '../constants/supabase';
 
-export const useAuthStore = create((set, get) => ({
+export const useAuthStore = create((set) => ({
   user: null,
   session: null,
   isLoading: false,
   
-  profileName: '激動到露眼白兔',
-  profileDesc: '據說兔子太激動的時候會露眼白',
+  profileName: '未登入',
+  profileDesc: '',
   profileAvatar: null,
 
-  fetchProfile: async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (data) {
-        set({
-          profileName: data.username || '未命名',
-          profileDesc: data.bio || '這個人很懶，什麼都沒留下',
-          profileAvatar: data.avatar_url || null,
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  },
-
-  login: async (email, password) => {
-    set({ isLoading: true });
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      set({ user: data.user, session: data.session });
-      if (data.user) {
-        await get().fetchProfile(data.user.id);
-        const { useFileStore } = require('./useFileStore');
-        await useFileStore.getState().syncLocalDataToCloud();
-        await useFileStore.getState().fetchFiles();
-      }
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  register: async (name, email, password) => {
-    set({ isLoading: true });
-    try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            username: name,
-            full_name: name
-          }
-        }
-      });
-      if (error) throw error;
-      
-      if (data.user) {
-        // Try to update first (if trigger created it), fallback to upsert
-        const { error: profileError } = await supabase.from('user_profiles').upsert({
-          id: data.user.id,
-          username: name,
-          total_exp: 0,
-          current_level: 1,
-        }, { onConflict: 'id' });
-        
-        if (profileError) console.error('Error saving profile:', profileError);
-        set({ user: data.user, session: data.session, profileName: name });
-        await get().fetchProfile(data.user.id);
-        
-        // If fetchProfile overwrote it with null due to DB latency, force it back
-        if (get().profileName === '未命名' || !get().profileName) {
-           set({ profileName: name });
-        }
-
-        const { useFileStore } = require('./useFileStore');
-        await useFileStore.getState().syncLocalDataToCloud();
-        await useFileStore.getState().fetchFiles();
-      }
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  logout: async () => {
-    set({ isLoading: true });
-    try {
-      await supabase.auth.signOut();
-      set({ user: null, session: null, profileName: '未登入', profileDesc: '', profileAvatar: null });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  updateProfile: async (name, desc, avatar) => {
-    const user = get().user;
-    if (!user) return;
-    try {
-      await supabase.from('user_profiles').update({
-        username: name,
-        bio: desc,
-        avatar_url: avatar
-      }).eq('id', user.id);
-      
-      set({ profileName: name, profileDesc: desc, profileAvatar: avatar });
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
-  },
-
-  autoLogin: async () => {
-    set({ isLoading: true });
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-         set({ user: session.user, session });
-         await get().fetchProfile(session.user.id);
-         const { useFileStore } = require('./useFileStore');
-         await useFileStore.getState().syncLocalDataToCloud();
-         await useFileStore.getState().fetchFiles();
-      }
-    } catch (e) {
-      console.error('Auto login exception:', e);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  setUser: (user) => set({ user }),
-  setSession: (session) => set({ session }),
+  setAuth: (user, session) => set({ user, session }),
+  setProfile: (name, desc, avatar) => set({ 
+    profileName: name, 
+    profileDesc: desc, 
+    profileAvatar: avatar 
+  }),
+  setLoading: (isLoading) => set({ isLoading }),
+  clearAuth: () => set({ 
+    user: null, 
+    session: null, 
+    profileName: '未登入', 
+    profileDesc: '', 
+    profileAvatar: null 
+  }),
 }));

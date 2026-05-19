@@ -5,11 +5,14 @@ import { TouchableWithoutFeedback, Keyboard, View } from "react-native";
 
 import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { useFileStore } from "../store/useFileStore";
-import { useTaskStore } from "../store/useTaskStore";
+import { useAuthActions } from "../hooks/useAuthActions";
+import { useFileActions } from "../hooks/useFileActions";
+import { useTaskActions } from "../hooks/useTaskActions";
 
 export default function RootLayout() {
-    const autoLogin = useAuthStore((state) => state.autoLogin);
+    const { autoLogin } = useAuthActions();
+    const { fetchFiles } = useFileActions();
+    const { fetchTasks } = useTaskActions();
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
@@ -18,8 +21,8 @@ export default function RootLayout() {
 
     useEffect(() => {
         if (user) {
-            useFileStore.getState().fetchFiles();
-            useTaskStore.getState().fetchTasks();
+            fetchFiles();
+            fetchTasks();
         }
     }, [user]);
     return (

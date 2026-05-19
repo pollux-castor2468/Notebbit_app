@@ -5,12 +5,14 @@ import { ChevronLeft, FileText, Edit, MoreVertical } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
+import { useFileActions } from '../hooks/useFileActions';
 
 export default function TrashScreen() {
   const { colors, textStyles } = useStyles();
   const styles = getStyles(colors);
 
-  const { data, restoreItem, permanentlyDeleteItem } = useFileStore();
+  const { data } = useFileStore();
+  const { restoreItem, permanentlyDeleteItem } = useFileActions();
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [popoverPos, setPopoverPos] = useState(0);

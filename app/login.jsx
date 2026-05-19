@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAuthActions } from '../hooks/useAuthActions';
 
 export default function LoginScreen() {
   const { colors, textStyles } = useStyles();
@@ -12,7 +13,8 @@ export default function LoginScreen() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading } = useAuthStore();
+  const isLoading = useAuthStore(state => state.isLoading);
+  const { login, loginWithGoogle } = useAuthActions();
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -31,6 +33,15 @@ export default function LoginScreen() {
       router.replace('/(tabs)/(setting)');
     } else {
       Alert.alert('登入失敗', res.error || '帳號或密碼錯誤');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const loginRes = await loginWithGoogle();
+    if (loginRes.success) {
+      router.replace('/(tabs)/(setting)');
+    } else if (loginRes.error !== '已取消登入') {
+      Alert.alert('Google 登入發生錯誤', loginRes.error);
     }
   };
 
@@ -73,6 +84,16 @@ export default function LoginScreen() {
 
         <Pressable style={styles.registerBtn} onPress={() => router.push('/register')} disabled={isLoading}>
           <Text style={styles.registerBtnText}>註冊</Text>
+        </Pressable>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>或</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <Pressable style={styles.googleBtn} onPress={handleGoogleLogin} disabled={isLoading}>
+          <Text style={styles.googleBtnText}>使用 Google 登入</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -144,5 +165,35 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.text,
+    paddingHorizontal: 16,
+    fontSize: 14,
+  },
+  googleBtn: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  googleBtnText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#757575',
   },
 });

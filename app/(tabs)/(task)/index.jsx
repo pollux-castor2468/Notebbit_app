@@ -6,12 +6,14 @@ import { ChevronLeft, Info, Check, Plus, Trash2, Pencil, X } from 'lucide-react-
 import { borderRadius } from '../../../constants/token';
 import { useStyles } from '../../../styles';
 import { useTaskStore } from '../../../store/useTaskStore';
+import { useTaskActions } from '../../../hooks/useTaskActions';
 import TopHeader from '../../../components/TopHeader';
 
 export default function CustomTasks() {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
-  const { tasks, toggleTask, addTask, updateTask, level, exp } = useTaskStore();
+  const { tasks, level, exp } = useTaskStore();
+  const { toggleTask, addTask, updateTask } = useTaskActions();
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);

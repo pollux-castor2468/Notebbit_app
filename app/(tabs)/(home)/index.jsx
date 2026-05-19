@@ -23,12 +23,14 @@ import { toByteArray } from 'base64-js';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
+import { useFileActions } from '../../../hooks/useFileActions';
 
 export default function Home() {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
   //使用全域變數儲存！
-  const { data: historyData, createFile, updateFile } = useFileStore();
+  const { data: historyData } = useFileStore();
+  const { createFile, updateFile } = useFileActions();
   //開啟手機檔案(目標是可以開啟word檔！)
   const handleOpenLocalFile = async () => {
     try {

@@ -6,16 +6,20 @@ import { router, useFocusEffect } from 'expo-router';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { useAuthActions } from '../../../hooks/useAuthActions';
 import { useFileStore } from '../../../store/useFileStore';
 import { useTaskStore } from '../../../store/useTaskStore';
+import { useTaskActions } from '../../../hooks/useTaskActions';
 
 export default function Setting() {
   const { colors, layoutStyles, textStyles } = useStyles();
   const styles = getStyles(colors);
   
-  const { user, profileName, profileDesc, profileAvatar, logout } = useAuthStore();
+  const { user, profileName, profileDesc, profileAvatar } = useAuthStore();
+  const { logout } = useAuthActions();
   const fileData = useFileStore(state => state.data);
-  const { level, fetchTasks } = useTaskStore();
+  const { level } = useTaskStore();
+  const { fetchTasks } = useTaskActions();
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 

@@ -3,15 +3,14 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Platform, TextInp
 import { Plus, X, MoreVertical } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import { useFileActions } from '../../hooks/useFileActions';
 
 export default function VersionSheet({ visible, onClose, fileId }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const saveVersion = useFileStore(state => state.saveVersion);
-  const deleteVersion = useFileStore(state => state.deleteVersion);
-  const restoreVersion = useFileStore(state => state.restoreVersion);
+  const { saveVersion, restoreVersion } = useFileActions();
 
   const versions = fileData?.version || [];
 
@@ -21,7 +20,6 @@ export default function VersionSheet({ visible, onClose, fileId }) {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const [newVersionTitle, setNewVersionTitle] = useState('');
 
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [confirmRestoreId, setConfirmRestoreId] = useState(null);
 
   if (!visible) return null;
@@ -31,13 +29,6 @@ export default function VersionSheet({ visible, onClose, fileId }) {
       saveVersion(fileId, newVersionTitle.trim());
       setNewVersionTitle('');
       setAddModalVisible(false);
-    }
-  };
-
-  const executeDelete = () => {
-    if (confirmDeleteId) {
-      deleteVersion(fileId, confirmDeleteId);
-      setConfirmDeleteId(null);
     }
   };
 
@@ -113,9 +104,6 @@ export default function VersionSheet({ visible, onClose, fileId }) {
               <Pressable style={styles.popoverItem} onPress={() => { setConfirmRestoreId(popoverId); setPopoverId(null); }}>
                 <Text style={styles.popoverText}>回退版本</Text>
               </Pressable>
-              <Pressable style={styles.popoverItemDelete} onPress={() => { setConfirmDeleteId(popoverId); setPopoverId(null); }}>
-                <Text style={styles.popoverTextRed}>刪除版本</Text>
-              </Pressable>
             </Pressable>
           </Pressable>
         </Modal>
@@ -141,25 +129,6 @@ export default function VersionSheet({ visible, onClose, fileId }) {
                 </Pressable>
                 <Pressable style={styles.confirmBtn} onPress={handleAddVersion}>
                   <Text style={styles.btnText}>確認</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Confirm Delete Modal */}
-      {confirmDeleteId && (
-        <Modal visible transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContentSmall}>
-              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>是否刪除版本</Text>
-              <View style={styles.actionRow}>
-                <Pressable style={[styles.confirmBtn, { borderColor: '#C1272D', backgroundColor: '#FFF0F0', marginRight: 6, marginLeft: 0 }]} onPress={executeDelete}>
-                  <Text style={[styles.btnText, { color: '#C1272D' }]}>刪除</Text>
-                </Pressable>
-                <Pressable style={[styles.cancelBtn, { marginLeft: 6, marginRight: 0 }]} onPress={() => setConfirmDeleteId(null)}>
-                  <Text style={styles.btnText}>取消</Text>
                 </Pressable>
               </View>
             </View>

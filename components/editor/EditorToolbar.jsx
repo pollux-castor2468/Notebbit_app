@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Text, Modal } from 'react-native';
-import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown, Edit2 } from 'lucide-react-native';
+import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown, Edit2, CheckSquare } from 'lucide-react-native';
 import { actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 
@@ -51,6 +51,7 @@ export default function EditorToolbar({
   const boldActive = hasAction(actions.setBold) || hasAction('bold');
   const italicActive = hasAction(actions.setItalic) || hasAction('italic');
   const underlineActive = hasAction(actions.setUnderline) || hasAction('underline');
+  const checkListActive = hasAction(actions.checkboxList) || hasAction('checkboxList');
 
   const fontFamilyLabel = useMemo(
     () => FONT_FAMILIES.find(f => f.value === fontFamily)?.label ?? fontFamily,
@@ -140,6 +141,19 @@ export default function EditorToolbar({
           <Pressable style={({ pressed }) => [styles.toolIcon, pressed ? styles.toolIconPressed : null]} onPress={onOpenBgColors}>
             <PaintBucket size={isDocument ? 20 : 24} color={colors.text} />
           </Pressable>
+
+          {isDocument && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.toolIcon,
+                checkListActive ? styles.toolIconActive : null,
+                pressed ? styles.toolIconPressed : null,
+              ]}
+              onPress={() => richTextRef?.current?.sendAction(actions.checkboxList, 'result')}
+            >
+              <CheckSquare size={20} color={colors.text} />
+            </Pressable>
+          )}
 
           <Pressable style={({ pressed }) => [styles.toolIcon, pressed ? styles.toolIconPressed : null]} onPress={onPickImage}>
             <ImageIcon size={isDocument ? 20 : 24} color={colors.text} />

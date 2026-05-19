@@ -6,12 +6,14 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useStyles } from '../styles';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAuthActions } from '../hooks/useAuthActions';
 
 export default function ProfileEditScreen() {
   const { colors, textStyles } = useStyles();
   const styles = getStyles(colors);
   
-  const { profileName, profileDesc, profileAvatar, updateProfile } = useAuthStore();
+  const { profileName, profileDesc, profileAvatar } = useAuthStore();
+  const { updateProfile } = useAuthActions();
   
   const [name, setName] = useState(profileName || '');
   const [desc, setDesc] = useState(profileDesc || '');

@@ -5,6 +5,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, FileText, Search, MoreVertical, Star, Edit, Tag, Filter } from 'lucide-react-native';
 import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
+import { useFileActions } from '../hooks/useFileActions';
 
 export default function FileBrowser() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -27,7 +28,8 @@ export default function FileBrowser() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [showStarredOnly, setShowStarredOnly] = useState(false);
 
-  const { data, updateFile, deleteItem } = useFileStore();
+  const { data } = useFileStore();
+  const { updateFile, deleteItem } = useFileActions();
 
   const filteredData = data.filter(item => {
     if (item.is_deleted) return false;

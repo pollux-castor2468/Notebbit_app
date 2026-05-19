@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import { useFileActions } from '../../hooks/useFileActions';
 import EditorHeader from '../../components/editor/EditorHeader';
 import EditorToolbar from '../../components/editor/EditorToolbar';
 import ColorPickerModal from '../../components/editor/ColorPickerModal';
@@ -41,8 +42,7 @@ export default function DocumentEditor() {
 
   //關於這份文件(找到文件?儲存文件、修改文件之類的都放這裡)
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
-  const updateFile = useFileStore(state => state.updateFile);
-  const toggleStar = useFileStore(state => state.toggleStar);
+  const { updateFile, toggleStar, addSource } = useFileActions();
 
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'version' | 'source' | 'more' | null
@@ -55,9 +55,7 @@ export default function DocumentEditor() {
   const richText = React.useRef(null);
   const [activeActions, setActiveActions] = useState([]);
 
-  // Focus and Selection Tracking
-  // const [iconColors, setIconColors] = useState({});
-
+  const savedSelection = React.useRef({ text: '' });
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
   const [isTagModalVisible, setTagModalVisible] = useState(false);
   const [showReferences, setShowReferences] = useState(false);
@@ -80,6 +78,16 @@ export default function DocumentEditor() {
 
   React.useEffect(() => {
     if (!richText.current) return;
+    
+    // Inject selectionchange listener
+    richText.current?.injectJavascript(`
+      document.addEventListener("selectionchange", function() {
+        var text = window.getSelection().toString();
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SELECTION_CHANGE', text: text }));
+      });
+      true;
+    `);
+
     const js = showReferences ? `
       (function() {
         document.querySelectorAll('.ref-highlight').forEach(el => {
@@ -257,13 +265,16 @@ export default function DocumentEditor() {
                   if (id) updateFile(id, { content: html });
                 }}
                 onMessage={(message) => {
+                  if (message && message.type === 'SELECTION_CHANGE') {
+                    savedSelection.current.text = message.text;
+                  }
                   if (message && message.type === 'SOURCE_CLICK') {
                     setActiveModal('source');
                   }
                   if (message && message.type === 'ADD_SOURCE_SELECTION') {
                     const text = message.text;
                     if (text && text.trim().length > 0) {
-                      const newId = useFileStore.getState().addSource(id, text.trim());
+                      const newId = addSource(id, text.trim());
                       setAutoEditSourceId(newId);
                     }
                     setActiveModal('source');
@@ -287,12 +298,16 @@ export default function DocumentEditor() {
               onPickImage={handlePickImage}
               onOpenLink={() => setActiveModal('link')}
               onAddSource={() => {
-                richText.current?.injectJavascript(`
-                  (function() {
-                     var text = window.getSelection().toString();
-                     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: text }));
-                  })();
-                `);
+                const text = savedSelection.current.text;
+                if (text && text.trim().length > 0) {
+                  const newId = addSource(id, text.trim());
+                  // 根據您的需求，透過 insertHTML 插入包覆後的 HTML
+                  const htmlTag = \`<span class="ref-highlight" data-source-id="\${newId}" style="background-color: #ffe0b2; border-bottom: 2px solid #fb8c00;">\${text}</span>\`;
+                  richText.current?.insertHTML(htmlTag);
+                  
+                  setAutoEditSourceId(newId);
+                }
+                setActiveModal('source');
               }}
             />
           </KeyboardAvoidingView>

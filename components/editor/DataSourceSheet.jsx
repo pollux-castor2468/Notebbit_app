@@ -3,15 +3,14 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Platform, TextInp
 import { Plus, X, MoreVertical } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import { useFileActions } from '../../hooks/useFileActions';
 
 export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const addSource = useFileStore(state => state.addSource);
-  const updateSource = useFileStore(state => state.updateSource);
-  const deleteSource = useFileStore(state => state.deleteSource);
+  const { addSource, updateSource, deleteSource } = useFileActions();
 
   const sources = fileData?.source || [];
 

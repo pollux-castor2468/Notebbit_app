@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, Pressable, Modal, TextInput, ScrollView } from 
 import { Check } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import { useFileActions } from '../../hooks/useFileActions';
 
 export default function TagModal({ visible, fileId, onClose }) {
   const { colors } = useStyles();
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const updateFile = useFileStore(state => state.updateFile);
+  const { updateFile } = useFileActions();
   const allData = useFileStore(state => state.data);
 
   const [selectedTags, setSelectedTags] = useState([]);

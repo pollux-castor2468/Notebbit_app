@@ -5,6 +5,7 @@ import { ChevronLeft, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAuthActions } from '../hooks/useAuthActions';
 
 // Assuming these images exist in the project
 const AVATAR_OPTIONS = [
@@ -20,7 +21,8 @@ export default function AvatarSelectScreen() {
   const { colors, textStyles } = useStyles();
   const styles = getStyles(colors);
   
-  const { profileAvatar, updateProfile, profileName, profileDesc } = useAuthStore();
+  const { profileAvatar, profileName, profileDesc } = useAuthStore();
+  const { updateProfile } = useAuthActions();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
 
   const handleSave = async () => {

@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
+import { useFileActions } from '../../hooks/useFileActions';
 import EditorHeader from '../../components/editor/EditorHeader';
 import EditorToolbar from '../../components/editor/EditorToolbar';
 import ColorPickerModal from '../../components/editor/ColorPickerModal';
@@ -25,8 +26,7 @@ export default function DiaryEditor() {
   // TabBar patch removed as the editor is now a full stack screen
 
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
-  const updateFile = useFileStore(state => state.updateFile);
-  const toggleStar = useFileStore(state => state.toggleStar);
+  const { updateFile, toggleStar } = useFileActions();
 
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'more' | null

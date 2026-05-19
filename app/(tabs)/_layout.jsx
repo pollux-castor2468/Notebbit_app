@@ -5,6 +5,7 @@ import { useStyles } from "../../styles";
 import { Home, Settings, Plus, FileText, Book, Calendar, CheckSquare } from "lucide-react-native";
 import { useState } from "react";
 import { useFileStore } from "../../store/useFileStore";
+import { useFileActions } from "../../hooks/useFileActions";
 
 export default function TabLayout() {
   //寫程式怎麼可以沒有註解(怒(掀桌
@@ -17,7 +18,7 @@ export default function TabLayout() {
     backgroundColor: colors.recentSection,
     borderColor: colors.border,
   };
-  const { data: createFile } = useFileStore();
+  const { createFile } = useFileActions();
 
   // Close menu and navigate 點擊下面的tab鍵後觸發，在最下面
   const handleNavCreate = (type) => {
