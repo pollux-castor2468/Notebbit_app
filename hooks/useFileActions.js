@@ -1,3 +1,4 @@
+import React from 'react';
 import { useFileStore } from '../store/useFileStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { FileService } from '../services/fileService';
@@ -12,7 +13,6 @@ const formatDate = (dateObj) => {
 };
 
 export const useFileActions = () => {
-  const fileStore = useFileStore();
 
   const fetchFiles = async () => {
     const user = useAuthStore.getState().user;
@@ -40,13 +40,27 @@ export const useFileActions = () => {
           versionContent: v.content_snapshot,
           isSynced: true,
         })).sort((a, b) => new Date(b.versionDate) - new Date(a.versionDate)),
-        source: (doc.source || []).map(s => ({
-          sourceId: s.id,
-          sourceName: s.source_name || '',
-          sourceContent: s.note || '',
-          markedText: s.marked_text || '',
-          isSynced: true,
-        })),
+        source: (doc.source || []).map(s => {
+          let parsedMarkedText = [];
+          try {
+            if (s.marked_text) {
+               if (s.marked_text.startsWith('[')) {
+                 parsedMarkedText = JSON.parse(s.marked_text);
+               } else {
+                 parsedMarkedText = [s.marked_text];
+               }
+            }
+          } catch(e) {
+            parsedMarkedText = [s.marked_text];
+          }
+          return {
+            sourceId: s.id,
+            sourceName: s.source_name || '',
+            sourceContent: s.note || '',
+            markedText: parsedMarkedText,
+            isSynced: true,
+          };
+        }),
         isSynced: true,
       }));
 
@@ -69,10 +83,10 @@ export const useFileActions = () => {
         isSynced: true,
       }));
 
-      const localData = fileStore.data.filter(item => item.isSynced === false);
+      const localData = useFileStore.getState().data.filter(item => item.isSynced === false);
       const allFiles = [...localData, ...mappedDocs, ...mappedDiaries].sort((a, b) => new Date(b.date) - new Date(a.date));
       
-      fileStore.setData(allFiles);
+      useFileStore.getState().setData(allFiles);
     } catch (error) {
       console.error('Error fetching files:', error);
     }
@@ -118,7 +132,7 @@ export const useFileActions = () => {
                   doc_id: file.id,
                   source_name: s.sourceName,
                   note: s.sourceContent,
-                  marked_text: s.markedText,
+                  marked_text: JSON.stringify(s.markedText || []),
                 });
               }
             }
@@ -146,7 +160,7 @@ export const useFileActions = () => {
       }
     }
 
-    fileStore.markAllAsSynced();
+    useFileStore.getState().markAllAsSynced();
   };
 
   const createFile = (type, title = '未命名文件') => {
@@ -171,7 +185,7 @@ export const useFileActions = () => {
       isSynced,
     };
     
-    fileStore.addFile(newFile);
+    useFileStore.getState().addFile(newFile);
 
     if (user) {
       if (type === 'document') {
@@ -200,7 +214,7 @@ export const useFileActions = () => {
 
   const updateFile = (id, updates) => {
     const user = useAuthStore.getState().user;
-    fileStore.updateFileLocally(id, updates, !!user);
+    useFileStore.getState().updateFileLocally(id, updates, !!user);
 
     if (!user) return;
 
@@ -235,7 +249,7 @@ export const useFileActions = () => {
     const file = data.find(f => f.id === id);
     if (!file) return;
     
-    fileStore.removeFileLocally(id);
+    useFileStore.getState().removeFileLocally(id);
 
     if (!user) return;
 
@@ -253,7 +267,7 @@ export const useFileActions = () => {
     if (!file) return;
 
     const newStarred = !file.starred;
-    fileStore.updateFileLocally(id, { starred: newStarred }, !!user);
+    useFileStore.getState().updateFileLocally(id, { starred: newStarred }, !!user);
 
     if (!user) return;
 
@@ -279,7 +293,7 @@ export const useFileActions = () => {
       isSynced: !!user,
     };
 
-    fileStore.addVersionLocally(id, newVersion, !!user);
+    useFileStore.getState().addVersionLocally(id, newVersion, !!user);
 
     if (!user) return;
 
@@ -304,7 +318,7 @@ export const useFileActions = () => {
 
   const deleteVersion = (id, versionId) => {
     const user = useAuthStore.getState().user;
-    fileStore.removeVersionLocally(id, versionId, !!user);
+    useFileStore.getState().removeVersionLocally(id, versionId, !!user);
 
     if (!user) return;
     FileService.deleteDocumentVersion(versionId).catch(e => console.error(e));
@@ -321,41 +335,71 @@ export const useFileActions = () => {
       sourceId,
       sourceName: '',
       sourceContent: '',
-      markedText,
+      markedText: markedText ? [markedText] : [],
       isSynced: !!user,
     };
 
-    fileStore.addSourceLocally(id, newSource, !!user);
+    useFileStore.getState().addSourceLocally(id, newSource, !!user);
 
-    if (!user) return;
-    FileService.insertDataSource({
-      id: sourceId,
-      doc_id: id,
-      source_name: '',
-      note: '',
-      marked_text: markedText,
-    }).catch(e => console.error(e));
+    if (user) {
+      FileService.insertDataSource({
+        id: sourceId,
+        doc_id: id,
+        source_name: '',
+        note: '',
+        marked_text: JSON.stringify(markedText ? [markedText] : []),
+      }).catch(e => console.error(e));
+    }
     
     return sourceId;
   };
 
-  const updateSource = (fileId, sourceId, content) => {
+  const appendMarkedText = (fileId, sourceId, text) => {
+    if (!text || text.trim() === '') return;
     const user = useAuthStore.getState().user;
-    fileStore.updateSourceLocally(fileId, sourceId, content, !!user);
+    
+    const data = useFileStore.getState().data;
+    const file = data.find(f => f.id === fileId);
+    if (!file) return;
+    
+    const source = (file.source || []).find(s => s.sourceId === sourceId);
+    if (!source) return;
+
+    useFileStore.getState().appendMarkedTextLocally(fileId, sourceId, text, !!user);
 
     if (!user) return;
-    FileService.updateDataSource(sourceId, { note: content }).catch(e => console.error(e));
+    
+    const currentMarkedText = Array.isArray(source.markedText) ? source.markedText : (source.markedText ? [source.markedText] : []);
+    if (!currentMarkedText.includes(text)) {
+      const newArray = [...currentMarkedText, text];
+      FileService.updateDataSource(sourceId, { marked_text: JSON.stringify(newArray) }).catch(e => console.error(e));
+    }
+  };
+
+  const updateSource = (fileId, sourceId, updates) => {
+    const user = useAuthStore.getState().user;
+    useFileStore.getState().updateSourceLocally(fileId, sourceId, updates, !!user);
+
+    if (!user) return;
+    
+    const dbUpdates = {};
+    if (updates.sourceName !== undefined) dbUpdates.source_name = updates.sourceName;
+    if (updates.sourceContent !== undefined) dbUpdates.note = updates.sourceContent;
+    
+    if (Object.keys(dbUpdates).length > 0) {
+      FileService.updateDataSource(sourceId, dbUpdates).catch(e => console.error(e));
+    }
   };
 
   const deleteSource = (fileId, sourceId) => {
     const user = useAuthStore.getState().user;
-    fileStore.removeSourceLocally(fileId, sourceId, !!user);
+    useFileStore.getState().removeSourceLocally(fileId, sourceId, !!user);
 
     if (!user) return;
     FileService.deleteDataSource(sourceId).catch(e => console.error(e));
   };
 
-  return {
+  return React.useMemo(() => ({
     fetchFiles,
     syncLocalDataToCloud,
     createFile,
@@ -368,7 +412,8 @@ export const useFileActions = () => {
     restoreVersion,
     deleteVersion,
     addSource,
+    appendMarkedText,
     updateSource,
     deleteSource,
-  };
+  }), []);
 };

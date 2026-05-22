@@ -44,10 +44,11 @@ export default function DocumentEditor() {
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
   const { updateFile, toggleStar, addSource } = useFileActions();
 
-  // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'version' | 'source' | 'more' | null
   const [popoverPos, setPopoverPos] = useState(0);
   const [autoEditSourceId, setAutoEditSourceId] = useState(null);
+  const [sourceSheetMode, setSourceSheetMode] = useState('view'); // 'view' | 'select'
+  const [pendingMarkedText, setPendingMarkedText] = useState(null);
 
 
   // Content state for Word Count
@@ -98,16 +99,20 @@ export default function DocumentEditor() {
         const sources = ${JSON.stringify(fileData?.source || [])};
         sources.forEach(s => {
           if (!s.markedText) return;
-          const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-          let n;
-          const nodes = [];
-          while(n = walk.nextNode()) {
-            if (n.nodeValue.includes(s.markedText)) nodes.push(n);
-          }
-          nodes.forEach(node => {
-            const span = document.createElement('span');
-            span.innerHTML = node.nodeValue.split(s.markedText).join('<span class="ref-highlight" style="border-bottom: 2px dotted gray;" data-source-id="'+s.sourceId+'">'+s.markedText+'</span>');
-            node.parentNode.replaceChild(span, node);
+          const texts = Array.isArray(s.markedText) ? s.markedText : [s.markedText];
+          texts.forEach(t => {
+            if (!t) return;
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            let n;
+            const nodes = [];
+            while(n = walk.nextNode()) {
+              if (n.nodeValue.includes(t)) nodes.push(n);
+            }
+            nodes.forEach(node => {
+              const span = document.createElement('span');
+              span.innerHTML = node.nodeValue.split(t).join('<span class="ref-highlight" style="border-bottom: 2px dotted gray;" data-source-id="'+s.sourceId+'">'+t+'</span>');
+              node.parentNode.replaceChild(span, node);
+            });
           });
         });
         document.querySelectorAll('.ref-highlight').forEach(el => {
@@ -230,7 +235,11 @@ export default function DocumentEditor() {
               {
                 key: 'source',
                 icon: <Edit2 size={24} color={colors.text} />,
-                onPress: () => setActiveModal('source'),
+                onPress: () => {
+                  setSourceSheetMode('view');
+                  setPendingMarkedText(null);
+                  setActiveModal('source');
+                },
               },
               {
                 key: 'version',
@@ -274,8 +283,10 @@ export default function DocumentEditor() {
                   if (message && message.type === 'ADD_SOURCE_SELECTION') {
                     const text = message.text;
                     if (text && text.trim().length > 0) {
-                      const newId = addSource(id, text.trim());
-                      setAutoEditSourceId(newId);
+                      setPendingMarkedText(text.trim());
+                      setSourceSheetMode('select');
+                    } else {
+                      setSourceSheetMode('view');
                     }
                     setActiveModal('source');
                   }
@@ -300,12 +311,11 @@ export default function DocumentEditor() {
               onAddSource={() => {
                 const text = savedSelection.current.text;
                 if (text && text.trim().length > 0) {
-                  const newId = addSource(id, text.trim());
-                  // 根據您的需求，透過 insertHTML 插入包覆後的 HTML
-                  const htmlTag = `\<span class="ref-highlight" data-source-id="\${newId}" style="background-color: #ffe0b2; border-bottom: 2px solid #fb8c00;">\${text}</span>`;
-                  richText.current?.insertHTML(htmlTag);
-                  
-                  setAutoEditSourceId(newId);
+                  setPendingMarkedText(text.trim());
+                  setSourceSheetMode('select');
+                } else {
+                  setSourceSheetMode('view');
+                  setPendingMarkedText(null);
                 }
                 setActiveModal('source');
               }}
@@ -325,10 +335,12 @@ export default function DocumentEditor() {
       {/* 2. Data Sources Bottom Sheet */}
       <DataSourceSheet
         visible={activeModal === 'source'}
+        mode={sourceSheetMode}
+        pendingMarkedText={pendingMarkedText}
         fileId={id}
         autoEditSourceId={autoEditSourceId}
         onClearAutoEdit={() => setAutoEditSourceId(null)}
-        onClose={() => { setActiveModal(null); setAutoEditSourceId(null); }}
+        onClose={() => { setActiveModal(null); setAutoEditSourceId(null); setPendingMarkedText(null); setSourceSheetMode('view'); }}
       />
 
       {/* 3. More Options Popover overlay */}

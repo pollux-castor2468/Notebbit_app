@@ -5,12 +5,12 @@ import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 import { useFileActions } from '../../hooks/useFileActions';
 
-export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit }) {
+export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit, mode = 'view', pendingMarkedText }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const { addSource, updateSource, deleteSource } = useFileActions();
+  const { addSource, updateSource, deleteSource, appendMarkedText } = useFileActions();
 
   const sources = fileData?.source || [];
 
@@ -37,7 +37,11 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
   if (!visible) return null;
 
   const handleAddSource = () => {
-    addSource(fileId);
+    const newId = addSource(fileId, pendingMarkedText || '');
+    setEditSourceId(newId);
+    setEditAIContent('');
+    setEditNoteContent('');
+    setEditModalVisible(true);
   };
 
   const handleOpenEdit = (source) => {
@@ -49,8 +53,11 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
 
   const handleSaveEdit = () => {
     if (editSourceId) {
-      updateSource(fileId, editSourceId, editNoteContent);
+      updateSource(fileId, editSourceId, { sourceName: editAIContent, sourceContent: editNoteContent });
       setEditModalVisible(false);
+      if (mode === 'select') {
+        onClose();
+      }
     }
   };
 
@@ -70,7 +77,16 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
           <View style={styles.sheetDragPill} />
 
           <View style={styles.sheetHeaderRow}>
-            <Text style={styles.sheetTitle}>資料來源</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sheetTitle}>
+                {mode === 'select' ? '請選擇或新增資料來源' : '資料來源'}
+              </Text>
+              {mode === 'select' && pendingMarkedText && (
+                <Text style={{ fontSize: 14, color: '#fb8c00', marginTop: 6 }} numberOfLines={1}>
+                  正在綁定：「{pendingMarkedText}」
+                </Text>
+              )}
+            </View>
             <View style={layoutStyles.rowCenter}>
               <Pressable style={styles.bluePlusBtn} onPress={handleAddSource}>
                 <Plus size={20} color={colors.text} />
@@ -91,10 +107,15 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
             {sources.map((s, index) => {
               const num = sources.length - index;
               return (
-                <View key={s.sourceId} style={styles.sheetCard}>
+                <Pressable key={s.sourceId} style={({ pressed }) => [styles.sheetCard, mode === 'select' && { borderColor: '#fb8c00', borderWidth: 1 }, pressed && { opacity: 0.6 }]} onPress={() => {
+                  if (mode === 'select' && pendingMarkedText) {
+                    appendMarkedText(fileId, s.sourceId, pendingMarkedText);
+                    onClose();
+                  }
+                }}>
                   <Text style={[styles.cardText, { flex: 0.8 }]}>{num}</Text>
                   <Text style={[styles.cardText, { flex: 3 }]} numberOfLines={2}>
-                    {s.sourceName || (s.markedText ? `標記: ${s.markedText}` : '') || s.sourceContent || `資料${num}`}
+                    {s.sourceName || (Array.isArray(s.markedText) && s.markedText.length > 0 ? `標記: ${s.markedText[0]}` : s.markedText && !Array.isArray(s.markedText) ? `標記: ${s.markedText}` : '') || s.sourceContent || `資料${num}`}
                   </Text>
                   <Pressable
                     style={styles.moreBtn}
@@ -107,7 +128,7 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
                   >
                     <MoreVertical size={20} color={colors.text} />
                   </Pressable>
-                </View>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -162,7 +183,10 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
               />
               
               <View style={styles.actionRow}>
-                <Pressable style={[styles.cancelBtn, { marginRight: 6 }]} onPress={() => setEditModalVisible(false)}>
+                <Pressable style={[styles.cancelBtn, { marginRight: 6 }]} onPress={() => {
+                  setEditModalVisible(false);
+                  if (mode === 'select') onClose();
+                }}>
                   <Text style={styles.btnText}>取消</Text>
                 </Pressable>
                 <Pressable style={[styles.confirmBtn, { marginLeft: 6 }]} onPress={handleSaveEdit}>

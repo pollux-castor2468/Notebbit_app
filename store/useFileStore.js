@@ -64,14 +64,43 @@ export const useFileStore = create(
         })
       })),
 
-      updateSourceLocally: (fileId, sourceId, content, isSynced) => set((state) => ({
+      appendMarkedTextLocally: (fileId, sourceId, text, isSynced) => set((state) => ({
         data: state.data.map(item => {
           if (item.id === fileId) {
             return {
               ...item,
-              source: (item.source || []).map(s =>
-                s.sourceId === sourceId ? { ...s, sourceContent: content, isSynced } : s
-              ),
+              source: (item.source || []).map(s => {
+                if (s.sourceId === sourceId) {
+                  const currentMarkedText = Array.isArray(s.markedText) ? s.markedText : (s.markedText ? [s.markedText] : []);
+                  if (!currentMarkedText.includes(text)) {
+                    return { ...s, markedText: [...currentMarkedText, text], isSynced };
+                  }
+                }
+                return s;
+              }),
+              isSynced,
+            };
+          }
+          return item;
+        })
+      })),
+
+      updateSourceLocally: (fileId, sourceId, updates, isSynced) => set((state) => ({
+        data: state.data.map(item => {
+          if (item.id === fileId) {
+            return {
+              ...item,
+              source: (item.source || []).map(s => {
+                if (s.sourceId === sourceId) {
+                  return {
+                    ...s,
+                    ...(updates.sourceName !== undefined ? { sourceName: updates.sourceName } : {}),
+                    ...(updates.sourceContent !== undefined ? { sourceContent: updates.sourceContent } : {}),
+                    isSynced
+                  };
+                }
+                return s;
+              }),
               isSynced,
             };
           }
