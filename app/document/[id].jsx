@@ -302,7 +302,7 @@ export default function DocumentEditor() {
                 if (text && text.trim().length > 0) {
                   const newId = addSource(id, text.trim());
                   // 根據您的需求，透過 insertHTML 插入包覆後的 HTML
-                  const htmlTag = \`<span class="ref-highlight" data-source-id="\${newId}" style="background-color: #ffe0b2; border-bottom: 2px solid #fb8c00;">\${text}</span>\`;
+                  const htmlTag = `\<span class="ref-highlight" data-source-id="\${newId}" style="background-color: #ffe0b2; border-bottom: 2px solid #fb8c00;">\${text}</span>`;
                   richText.current?.insertHTML(htmlTag);
                   
                   setAutoEditSourceId(newId);
