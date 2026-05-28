@@ -2,6 +2,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { TaskService } from '../services/taskService';
 import * as Crypto from 'expo-crypto';
+import { checkLevelUp } from '../utils/leveling';
 
 export const useTaskActions = () => {
   const store = useTaskStore();
@@ -71,10 +72,10 @@ export const useTaskActions = () => {
       newLastExpDate = today;
       gainedExp = true;
 
-      let maxExpNext = 5 * Math.pow(2, newLevel - 1);
-      if (newExp >= maxExpNext) {
-        newLevel += 1;
-        newExp = 0;
+      const levelUpResult = checkLevelUp(newLevel, newExp);
+      if (levelUpResult.isLevelUp) {
+        newLevel = levelUpResult.nextLevel;
+        newExp = levelUpResult.remainingExp;
       }
     }
 

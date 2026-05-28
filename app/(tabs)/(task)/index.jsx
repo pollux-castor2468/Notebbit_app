@@ -8,6 +8,7 @@ import { useStyles } from '../../../styles';
 import { useTaskStore } from '../../../store/useTaskStore';
 import { useTaskActions } from '../../../hooks/useTaskActions';
 import TopHeader from '../../../components/TopHeader';
+import { getRequiredExp } from '../../../utils/leveling';
 
 export default function CustomTasks() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -53,7 +54,7 @@ export default function CustomTasks() {
   //至少顯示5(??不對吧)
   const totalCount = Math.max(2, tasks.length);
 
-  const maxExpNext = 5 * Math.pow(2, level - 1);
+  const maxExpNext = getRequiredExp(level);
   const expProgress = `${Math.min(100, Math.max(0, (exp / maxExpNext) * 100))}%`;
 
   return (
