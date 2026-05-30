@@ -46,6 +46,13 @@ export const TaskService = {
     if (error) throw error;
   },
 
+  upsertTask: async (taskData) => {
+    const { error } = await supabase
+      .from('tasks')
+      .upsert(taskData);
+    if (error) throw error;
+  },
+
   updateTask: async (taskId, updates) => {
     const { error } = await supabase
       .from('tasks')

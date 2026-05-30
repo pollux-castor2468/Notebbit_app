@@ -5,7 +5,7 @@ import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 import { useFileActions } from '../../hooks/useFileActions';
 
-export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit, mode = 'view', pendingMarkedText }) {
+export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit, mode = 'view', pendingMarkedText, onSourceBound }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -56,6 +56,7 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
       updateSource(fileId, editSourceId, { sourceName: editAIContent, sourceContent: editNoteContent });
       setEditModalVisible(false);
       if (mode === 'select') {
+        if (onSourceBound) onSourceBound(editSourceId);
         onClose();
       }
     }
@@ -110,6 +111,7 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
                 <Pressable key={s.sourceId} style={({ pressed }) => [styles.sheetCard, mode === 'select' && { borderColor: '#fb8c00', borderWidth: 1 }, pressed && { opacity: 0.6 }]} onPress={() => {
                   if (mode === 'select' && pendingMarkedText) {
                     appendMarkedText(fileId, s.sourceId, pendingMarkedText);
+                    if (onSourceBound) onSourceBound(s.sourceId);
                     onClose();
                   }
                 }}>

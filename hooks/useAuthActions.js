@@ -1,18 +1,23 @@
 import { useAuthStore } from '../store/useAuthStore';
 import { AuthService } from '../services/authService';
 import { useFileActions } from './useFileActions';
+import { useTaskActions } from './useTaskActions';
 import * as WebBrowser from 'expo-web-browser';
 
 export const useAuthActions = () => {
   const { setAuth, setProfile, setLoading, clearAuth } = useAuthStore();
   const { syncLocalDataToCloud, fetchFiles } = useFileActions();
+  const { syncLocalTasksToCloud, fetchTasks } = useTaskActions();
 
-  const syncFilesOnLogin = async () => {
+  const syncDataOnLogin = async () => {
     try {
       await syncLocalDataToCloud();
       await fetchFiles();
+      
+      await syncLocalTasksToCloud();
+      await fetchTasks();
     } catch (e) {
-      console.error('File sync failed after login', e);
+      console.error('Data sync failed after login', e);
     }
   };
 
@@ -42,7 +47,7 @@ export const useAuthActions = () => {
       
       if (data.user) {
         await loadProfile(data.user.id);
-        await syncFilesOnLogin();
+        await syncDataOnLogin();
       }
       return { success: true };
     } catch (error) {
@@ -70,7 +75,7 @@ export const useAuthActions = () => {
         }
         
         await loadProfile(data.user.id, name);
-        await syncFilesOnLogin();
+        await syncDataOnLogin();
       }
       return { success: true };
     } catch (error) {
@@ -115,7 +120,7 @@ export const useAuthActions = () => {
       if (session) {
         setAuth(session.user, session);
         await loadProfile(session.user.id);
-        await syncFilesOnLogin();
+        await syncDataOnLogin();
       }
     } catch (e) {
       console.error('Auto login exception:', e);
@@ -154,7 +159,7 @@ export const useAuthActions = () => {
           }
           
           await loadProfile(data.user.id, name);
-          await syncFilesOnLogin();
+          await syncDataOnLogin();
         }
         return { success: true };
       } else {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, FlatList, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, FileText, Book, CheckSquare, Star, MoreVertical } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, FileText, Book, CheckSquare, Star, MoreVertical, X, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
@@ -16,11 +16,15 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('document'); // 'document', 'diary', 'task'
 
-  const { data: fileData } = useFileStore();
-  const { tasks } = useTaskStore();
-
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+
+  const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
+  const [tempPickerYear, setTempPickerYear] = useState(year);
+  const [tempPickerMonth, setTempPickerMonth] = useState(month);
+
+  const { data: fileData } = useFileStore();
+  const { tasks } = useTaskStore();
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -41,9 +45,26 @@ export default function CalendarScreen() {
     days.push(i);
   }
 
-  const filteredDocuments = fileData.filter(f => f.type === 'document'); 
-  const filteredDiaries = fileData.filter(f => f.type === 'diary');
-  const completedTasksCount = tasks.filter(t => t.completed).length;
+  const selectedDateStrDots = `${selectedDate.getFullYear()}.${String(selectedDate.getMonth() + 1).padStart(2, '0')}.${String(selectedDate.getDate()).padStart(2, '0')}`;
+  const selectedDateStrDashes = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+  const todayStrDashes = new Date().toISOString().split('T')[0];
+
+  const filteredDocuments = fileData.filter(f => {
+    if (f.type !== 'document') return false;
+    const isEditedOnDate = f.edited_dates && f.edited_dates.includes(selectedDateStrDashes);
+    const isCreatedOnDate = f.date && f.date.startsWith(selectedDateStrDots);
+    return isEditedOnDate || isCreatedOnDate;
+  });
+  const filteredDiaries = fileData.filter(f => f.type === 'diary' && (f.diary_date === selectedDateStrDashes || (f.date && f.date.startsWith(selectedDateStrDots))));
+  
+  const filteredTasks = tasks.filter(t => {
+    const isCompletedOnDate = t.completed && t.completed_at && t.completed_at.startsWith(selectedDateStrDashes);
+    const isCreatedOnDate = t.created_at && t.created_at.startsWith(selectedDateStrDashes);
+    const isOfflineCreatedToday = !t.created_at && selectedDateStrDashes === todayStrDashes;
+    return isCompletedOnDate || isCreatedOnDate || isOfflineCreatedToday;
+  });
+
+  const completedTasksCount = filteredTasks.filter(t => t.completed).length;
   
   const showEncouragement = () => {
     const encouragements = ["做得很棒！", "繼續保持！", "太厲害了！", "努力有回報！"];
@@ -87,7 +108,13 @@ export default function CalendarScreen() {
           <Pressable onPress={handlePrevMonth} style={{ padding: 8 }}>
             <ChevronLeft size={32} color={colors.text} />
           </Pressable>
-          <Text style={[textStyles.h2, { textAlign: 'center' }]}>{year} 年 {month + 1} 月</Text>
+          <Pressable onPress={() => {
+            setTempPickerYear(year);
+            setTempPickerMonth(month);
+            setIsMonthPickerVisible(true);
+          }}>
+            <Text style={[textStyles.h2, { textAlign: 'center' }]}>{year} 年 {month + 1} 月</Text>
+          </Pressable>
           <Pressable onPress={handleNextMonth} style={{ padding: 8 }}>
             <ChevronRight size={32} color={colors.text} />
           </Pressable>
@@ -120,7 +147,7 @@ export default function CalendarScreen() {
                 <CheckSquare size={18} color={colors.text} />
                 <Text style={styles.statLabel}>任務</Text>
               </View>
-              <Text style={styles.statValue}>{completedTasksCount}/{Math.max(2, tasks.length)}</Text>
+                <Text style={styles.statValue}>{completedTasksCount}/{Math.max(2, filteredTasks.length)}</Text>
             </Pressable>
           </View>
 
@@ -163,7 +190,7 @@ export default function CalendarScreen() {
                 <MoreVertical size={20} color={colors.text} />
               </View>
             ))}
-            {activeTab === 'task' && tasks.map(task => (
+            {activeTab === 'task' && filteredTasks.map(task => (
               <View key={task.id} style={styles.listItem}>
                 <View style={[styles.taskCheckbox, task.completed && styles.taskCheckboxActive]}>
                   {task.completed && <CheckSquare size={14} color={colors.surface} strokeWidth={4} />}
@@ -175,6 +202,54 @@ export default function CalendarScreen() {
         </View>
 
       </ScrollView>
+
+      {/* Month Picker Modal */}
+      <Modal visible={isMonthPickerVisible} transparent animationType="fade" onRequestClose={() => setIsMonthPickerVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Pressable onPress={() => setIsMonthPickerVisible(false)} style={{ padding: 4 }}>
+                <X size={24} color={colors.text} />
+              </Pressable>
+              <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選月份</Text>
+              <Pressable onPress={() => {
+                setCurrentDate(new Date(tempPickerYear, tempPickerMonth, 1));
+                setIsMonthPickerVisible(false);
+              }} style={{ padding: 4 }}>
+                <Check size={24} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <View style={styles.yearSelectorRow}>
+              <Pressable onPress={() => setTempPickerYear(y => y - 1)} style={{ padding: 8 }}>
+                <ChevronLeft size={24} color={colors.text} />
+              </Pressable>
+              <Text style={[textStyles.h3, { width: 80, textAlign: 'center' }]}>{tempPickerYear}</Text>
+              <Pressable onPress={() => setTempPickerYear(y => y + 1)} style={{ padding: 8 }}>
+                <ChevronRight size={24} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <View style={styles.monthsGrid}>
+              {[...Array(12).keys()].map((m) => (
+                <Pressable
+                  key={m}
+                  style={[
+                    styles.monthBtn,
+                    tempPickerMonth === m && styles.monthBtnActive
+                  ]}
+                  onPress={() => setTempPickerMonth(m)}
+                >
+                  <Text style={[
+                    styles.monthBtnText,
+                    tempPickerMonth === m && styles.monthBtnTextActive
+                  ]}>{m + 1}月</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -332,5 +407,58 @@ const getStyles = (colors) => StyleSheet.create({
   taskCheckboxActive: {
     backgroundColor: colors.fab,
     borderColor: colors.fab,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    width: '85%',
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  yearSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 16,
+  },
+  monthsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  monthBtn: {
+    width: '30%',
+    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  monthBtnActive: {
+    backgroundColor: '#FFF4E0',
+    borderColor: '#E8A317',
+  },
+  monthBtnText: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  monthBtnTextActive: {
+    fontWeight: 'bold',
   }
 });

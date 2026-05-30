@@ -54,7 +54,16 @@ export default function DocumentEditor() {
   // Content state for Word Count
   const [content, setContent] = useState(fileData?.content || '');
   const richText = React.useRef(null);
+  const lastUpdatedContent = React.useRef(fileData?.content || '');
   const [activeActions, setActiveActions] = useState([]);
+
+  React.useEffect(() => {
+    if (fileData?.content !== undefined && fileData.content !== lastUpdatedContent.current) {
+      lastUpdatedContent.current = fileData.content;
+      setContent(fileData.content);
+      richText.current?.setContentHTML(fileData.content);
+    }
+  }, [fileData?.content]);
 
   const savedSelection = React.useRef({ text: '' });
   const [isRenameModalVisible, setRenameModalVisible] = useState(false);
@@ -77,21 +86,45 @@ export default function DocumentEditor() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleEditorInitialized = () => {
+    richText.current?.injectJavascript(`
+      (function() {
+        setInterval(function() {
+          var sel = window.getSelection();
+          if (sel && sel.toString().trim().length > 0) {
+            window.absoluteLastText = sel.toString();
+            if (sel.rangeCount > 0) {
+              window.absoluteLastRange = sel.getRangeAt(0).cloneRange();
+            }
+          }
+        }, 200);
+      })();
+      true;
+    `);
+  };
+
   React.useEffect(() => {
     if (!richText.current) return;
     
-    // Inject selectionchange listener
     richText.current?.injectJavascript(`
-      document.addEventListener("selectionchange", function() {
-        var text = window.getSelection().toString();
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SELECTION_CHANGE', text: text }));
-      });
-      true;
+      (function() {
+        var style = document.getElementById('ref-highlight-style');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'ref-highlight-style';
+          document.head.appendChild(style);
+        }
+        style.innerHTML = '${showReferences ? 
+          '.ref-highlight { border-bottom: 2px dotted orange !important; background-color: rgba(251, 140, 0, 0.15) !important; cursor: pointer !important; color: inherit; text-decoration: none; }' : 
+          '.ref-highlight { border-bottom: none !important; background-color: transparent !important; cursor: inherit !important; color: inherit; text-decoration: none; pointer-events: none !important; }'
+        }';
+        true;
+      })();
     `);
 
     const js = showReferences ? `
       (function() {
-        document.querySelectorAll('.ref-highlight').forEach(el => {
+        document.querySelectorAll('.ref-highlight[data-dynamic="true"]').forEach(el => {
           const parent = el.parentNode;
           while (el.firstChild) parent.insertBefore(el.firstChild, el);
           parent.removeChild(el);
@@ -106,26 +139,30 @@ export default function DocumentEditor() {
             let n;
             const nodes = [];
             while(n = walk.nextNode()) {
-              if (n.nodeValue.includes(t)) nodes.push(n);
+              if (n.nodeValue.includes(t)) {
+                let parent = n.parentNode;
+                let insideRef = false;
+                while (parent && parent !== document.body) {
+                  if (parent.classList && parent.classList.contains('ref-highlight')) {
+                    insideRef = true; break;
+                  }
+                  parent = parent.parentNode;
+                }
+                if (!insideRef) nodes.push(n);
+              }
             }
             nodes.forEach(node => {
               const span = document.createElement('span');
-              span.innerHTML = node.nodeValue.split(t).join('<span class="ref-highlight" style="border-bottom: 2px dotted gray;" data-source-id="'+s.sourceId+'">'+t+'</span>');
+              span.innerHTML = node.nodeValue.split(t).join('<a href="source://' + s.sourceId + '" data-source-id="' + s.sourceId + '" data-dynamic="true" class="ref-highlight">' + t + '</a>');
               node.parentNode.replaceChild(span, node);
             });
           });
-        });
-        document.querySelectorAll('.ref-highlight').forEach(el => {
-          el.onclick = function(e) {
-            e.stopPropagation();
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SOURCE_CLICK', id: this.getAttribute('data-source-id') }));
-          };
         });
         true;
       })();
     ` : `
       (function() {
-        document.querySelectorAll('.ref-highlight').forEach(el => {
+        document.querySelectorAll('.ref-highlight[data-dynamic="true"]').forEach(el => {
           const parent = el.parentNode;
           while (el.firstChild) parent.insertBefore(el.firstChild, el);
           parent.removeChild(el);
@@ -163,12 +200,15 @@ export default function DocumentEditor() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
-        quality: 1,
+        quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = result.assets[0].uri;
-        richText.current?.insertImage(uri, 'width: 100%; max-width: 300px; border-radius: 8px;');
+        const asset = result.assets[0];
+        const mimeType = asset.mimeType || 'image/jpeg';
+        const base64Img = `data:${mimeType};base64,${asset.base64}`;
+        richText.current?.insertImage(base64Img, 'width: 100%; max-width: 300px; border-radius: 8px;');
       }
     } catch (err) {
       alert('選取圖片時發生錯誤');
@@ -236,9 +276,15 @@ export default function DocumentEditor() {
                 key: 'source',
                 icon: <Edit2 size={24} color={colors.text} />,
                 onPress: () => {
-                  setSourceSheetMode('view');
-                  setPendingMarkedText(null);
-                  setActiveModal('source');
+                  richText.current?.injectJavascript(`
+                    var msg = JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: window.absoluteLastText || '' });
+                    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                      window.ReactNativeWebView.postMessage(msg);
+                    } else if (window.postMessage) {
+                      window.postMessage(msg, '*');
+                    }
+                    true;
+                  `);
                 },
               },
               {
@@ -269,7 +315,31 @@ export default function DocumentEditor() {
                 style={{ flex: 1 }}
                 placeholder="輸入內容..."
                 initialContentHTML={content}
+                editorInitializedCallback={handleEditorInitialized}
+                onShouldStartLoadWithRequest={(request) => {
+                  if (request.url.startsWith('source://')) {
+                    const sourceId = request.url.replace('source://', '');
+                    setAutoEditSourceId(sourceId);
+                    setSourceSheetMode('view');
+                    setActiveModal('source');
+                    return false;
+                  }
+                  return true;
+                }}
+                webviewProps={{
+                  onShouldStartLoadWithRequest: (request) => {
+                    if (request.url.startsWith('source://')) {
+                      const sourceId = request.url.replace('source://', '');
+                      setAutoEditSourceId(sourceId);
+                      setSourceSheetMode('view');
+                      setActiveModal('source');
+                      return false;
+                    }
+                    return true;
+                  }
+                }}
                 onChange={(html) => {
+                  lastUpdatedContent.current = html;
                   setContent(html);
                   if (id) updateFile(id, { content: html });
                 }}
@@ -278,6 +348,7 @@ export default function DocumentEditor() {
                     savedSelection.current.text = message.text;
                   }
                   if (message && message.type === 'SOURCE_CLICK') {
+                    setAutoEditSourceId(message.id);
                     setActiveModal('source');
                   }
                   if (message && message.type === 'ADD_SOURCE_SELECTION') {
@@ -309,15 +380,15 @@ export default function DocumentEditor() {
               onPickImage={handlePickImage}
               onOpenLink={() => setActiveModal('link')}
               onAddSource={() => {
-                const text = savedSelection.current.text;
-                if (text && text.trim().length > 0) {
-                  setPendingMarkedText(text.trim());
-                  setSourceSheetMode('select');
-                } else {
-                  setSourceSheetMode('view');
-                  setPendingMarkedText(null);
-                }
-                setActiveModal('source');
+                richText.current?.injectJavascript(`
+                  var msg = JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: window.absoluteLastText || '' });
+                  if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                    window.ReactNativeWebView.postMessage(msg);
+                  } else if (window.postMessage) {
+                    window.postMessage(msg, '*');
+                  }
+                  true;
+                `);
               }}
             />
           </KeyboardAvoidingView>
@@ -339,6 +410,25 @@ export default function DocumentEditor() {
         pendingMarkedText={pendingMarkedText}
         fileId={id}
         autoEditSourceId={autoEditSourceId}
+        onSourceBound={(sourceId) => {
+            richText.current?.injectJavascript(`
+              (function() {
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                if (window.absoluteLastRange) {
+                  sel.addRange(window.absoluteLastRange);
+                  var text = window.absoluteLastRange.toString();
+                  var html = '<a href="source://' + sourceId + '" data-source-id="' + sourceId + '" class="ref-highlight">' + text + '</a>';
+                  document.execCommand('insertHTML', false, html);
+                  var editorContent = document.querySelector('.pell-content');
+                  if (editorContent) {
+                    editorContent.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                }
+              })();
+              true;
+            `);
+        }}
         onClearAutoEdit={() => setAutoEditSourceId(null)}
         onClose={() => { setActiveModal(null); setAutoEditSourceId(null); setPendingMarkedText(null); setSourceSheetMode('view'); }}
       />

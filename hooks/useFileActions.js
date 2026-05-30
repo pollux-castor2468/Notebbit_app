@@ -29,6 +29,7 @@ export const useFileActions = () => {
         date: formatDate(doc.updated_at),
         starred: doc.is_starred,
         content: doc.content || '',
+        edited_dates: doc.edited_dates || [],
         is_deleted: doc.is_deleted || false,
         tags: doc.tags || [],
         versionNumber: doc.version?.length || 0,
@@ -108,6 +109,7 @@ export const useFileActions = () => {
             user_id: user.id,
             title: file.title,
             content: file.content,
+            edited_dates: file.edited_dates || [],
             is_starred: file.starred,
             is_deleted: file.is_deleted,
           });
@@ -118,6 +120,7 @@ export const useFileActions = () => {
                 await FileService.upsertDocumentVersion({
                   id: v.versionId,
                   doc_id: file.id,
+                  user_id: user.id,
                   version_name: v.versionTitle,
                   content_snapshot: v.versionContent,
                 });
@@ -130,6 +133,7 @@ export const useFileActions = () => {
                 await FileService.upsertDataSource({
                   id: s.sourceId,
                   doc_id: file.id,
+                  user_id: user.id,
                   source_name: s.sourceName,
                   note: s.sourceContent,
                   marked_text: JSON.stringify(s.markedText || []),
@@ -176,6 +180,7 @@ export const useFileActions = () => {
       date: formatDate(now),
       starred: false,
       content: '',
+      edited_dates: [now.toISOString().split('T')[0]],
       is_deleted: false,
       tags: [],
       versionNumber: 0,
@@ -194,6 +199,7 @@ export const useFileActions = () => {
           user_id: user.id,
           title,
           content: '',
+          edited_dates: [now.toISOString().split('T')[0]],
           is_starred: false,
           is_deleted: false,
         }).catch(e => console.error('Error inserting document:', e));
@@ -213,26 +219,38 @@ export const useFileActions = () => {
   };
 
   const updateFile = (id, updates) => {
+    const data = useFileStore.getState().data;
+    const file = data.find(f => f.id === id);
+    if (!file) return;
+
+    if (file.type === 'document' && (updates.content !== undefined || updates.title !== undefined)) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const currentEditedDates = file.edited_dates || [];
+      if (!currentEditedDates.includes(todayStr)) {
+        updates.edited_dates = [...currentEditedDates, todayStr];
+      }
+    }
+
     const user = useAuthStore.getState().user;
     useFileStore.getState().updateFileLocally(id, updates, !!user);
 
     if (!user) return;
 
-    const data = useFileStore.getState().data;
-    const file = data.find(f => f.id === id);
-    if (!file) return;
+    const updatedFile = useFileStore.getState().data.find(f => f.id === id);
+    if (!updatedFile) return;
 
     const dbUpdates = {
-      title: updates.title !== undefined ? updates.title : file.title,
-      content: updates.content !== undefined ? updates.content : file.content,
+      title: updates.title !== undefined ? updates.title : updatedFile.title,
+      content: updates.content !== undefined ? updates.content : updatedFile.content,
       updated_at: new Date().toISOString(),
     };
 
-    if (file.type === 'document') {
+    if (updatedFile.type === 'document') {
       if (updates.starred !== undefined) dbUpdates.is_starred = updates.starred;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
+      if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
       FileService.updateDocument(id, dbUpdates).catch(e => console.error(e));
-    } else if (file.type === 'diary') {
+    } else if (updatedFile.type === 'diary') {
       if (updates.weather !== undefined) dbUpdates.weather = updates.weather;
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
@@ -300,6 +318,7 @@ export const useFileActions = () => {
     FileService.insertDocumentVersion({
       id: versionId,
       doc_id: id,
+      user_id: user.id,
       version_name: versionTitle,
       content_snapshot: file.content,
     }).catch(e => console.error(e));
@@ -345,6 +364,7 @@ export const useFileActions = () => {
       FileService.insertDataSource({
         id: sourceId,
         doc_id: id,
+        user_id: user.id,
         source_name: '',
         note: '',
         marked_text: JSON.stringify(markedText ? [markedText] : []),
