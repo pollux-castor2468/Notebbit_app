@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, Moon, Calendar, KeyRound } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Moon, Calendar, Type, Keyboard, X, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -9,7 +9,16 @@ import { useSettingsStore } from '../store/useSettingsStore';
 export default function SettingsDetailsScreen() {
   const { colors, textStyles, isDarkMode } = useStyles();
   const styles = getStyles(colors);
-  const { toggleDarkMode } = useSettingsStore();
+  const { toggleDarkMode, firstDayOfWeek, setFirstDayOfWeek, defaultFontSize, setDefaultFontSize } = useSettingsStore();
+
+  const [modalType, setModalType] = useState(null); // 'day', 'fontSize', null
+
+  const daysOptions = [
+    { label: '周日', value: 'sunday' },
+    { label: '周一', value: 'monday' },
+  ];
+
+  const fontOptions = ['16', '18', '24', '32', '48'];
 
   return (
     <SafeAreaView style={styles.root}>
@@ -24,46 +33,86 @@ export default function SettingsDetailsScreen() {
         <View style={styles.card}>
           
           {/* Dark Mode Toggle */}
-          <View style={styles.rowItem}>
+          <Pressable style={styles.rowItem} onPress={toggleDarkMode}>
             <View style={styles.rowLeft}>
               <Moon size={24} color={colors.text} />
               <Text style={styles.rowLabel}>深色模式</Text>
             </View>
-            <Switch
-              value={isDarkMode}
-              onValueChange={toggleDarkMode}
-              trackColor={{ false: colors.border, true: colors.secondary }}
-              thumbColor={colors.surface}
-            />
-          </View>
-
-          <View style={styles.divider} />
+            <View style={[styles.customSwitch, isDarkMode && styles.customSwitchActive]}>
+              <View style={[styles.switchThumb, isDarkMode && styles.switchThumbActive]}>
+                {isDarkMode ? (
+                  <Check size={14} color="#FFF" />
+                ) : (
+                  <X size={14} color="#FFF" />
+                )}
+              </View>
+            </View>
+          </Pressable>
 
           {/* First day of week */}
-          <Pressable style={styles.rowItem}>
+          <Pressable style={styles.rowItem} onPress={() => setModalType('day')}>
             <View style={styles.rowLeft}>
               <Calendar size={24} color={colors.text} />
               <Text style={styles.rowLabel}>每週第一天</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.rowValue}>周日</Text>
-              <ChevronRight size={20} color={colors.inactiveText} />
+            <View style={styles.valuePill}>
+              <Text style={styles.rowValue}>{firstDayOfWeek === 'sunday' ? '周日' : '周一'}</Text>
+              <ChevronRight size={16} color={colors.text} />
             </View>
           </Pressable>
 
-          <View style={styles.divider} />
+          {/* Default Font Size */}
+          <Pressable style={styles.rowItem} onPress={() => setModalType('fontSize')}>
+            <View style={styles.rowLeft}>
+              <Type size={24} color={colors.text} />
+              <Text style={styles.rowLabel}>預設字體大小</Text>
+            </View>
+            <View style={styles.valuePill}>
+              <Text style={styles.rowValue}>{defaultFontSize}</Text>
+              <ChevronRight size={16} color={colors.text} />
+            </View>
+          </Pressable>
 
           {/* Reset Password */}
-          <Pressable style={styles.rowItem}>
+          <Pressable style={[styles.rowItem, { marginBottom: 0 }]} onPress={() => router.push('/reset-password')}>
             <View style={styles.rowLeft}>
-              <KeyRound size={24} color={colors.text} />
+              <Keyboard size={24} color={colors.text} />
               <Text style={styles.rowLabel}>重新設定密碼</Text>
             </View>
-            <ChevronRight size={20} color={colors.inactiveText} />
+            <ChevronRight size={20} color={colors.text} />
           </Pressable>
 
         </View>
       </View>
+
+      {/* Picker Modal */}
+      <Modal visible={!!modalType} transparent animationType="fade" onRequestClose={() => setModalType(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setModalType(null)}>
+          <View style={styles.modalContent}>
+            {modalType === 'day' && daysOptions.map((opt, idx) => (
+              <Pressable 
+                key={opt.value} 
+                style={[styles.modalOption, idx === daysOptions.length - 1 && { borderBottomWidth: 0 }]} 
+                onPress={() => { setFirstDayOfWeek(opt.value); setModalType(null); }}
+              >
+                <Text style={styles.modalOptionText}>{opt.label}</Text>
+                {firstDayOfWeek === opt.value && <Check size={20} color={colors.text} />}
+              </Pressable>
+            ))}
+            {modalType === 'fontSize' && fontOptions.map((opt, idx) => (
+              <Pressable 
+                key={opt} 
+                style={[styles.modalOption, idx === fontOptions.length - 1 && { borderBottomWidth: 0 }]} 
+                onPress={() => { setDefaultFontSize(opt); setModalType(null); }}
+              >
+                <Text style={styles.modalOptionText}>{opt}</Text>
+                {defaultFontSize === opt && <Check size={20} color={colors.text} />}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -88,17 +137,23 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.container, 
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
+    borderColor: '#6b6058',
+    padding: 16,
   },
   rowItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#6b6058',
+    marginBottom: 16,
   },
   rowLeft: {
     flexDirection: 'row',
@@ -108,15 +163,71 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginLeft: 12,
+    marginLeft: 16,
+  },
+  valuePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EAE6DF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   rowValue: {
     fontSize: 14,
-    color: colors.inactiveText,
+    fontWeight: 'bold',
+    color: '#6b6058',
     marginRight: 4,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
+  customSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#EBE5F0',
+    borderWidth: 1,
+    borderColor: '#6b6058',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  customSwitchActive: {
+    backgroundColor: '#6b6058',
+  },
+  switchThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#9F95AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchThumbActive: {
+    backgroundColor: colors.surface,
+    transform: [{ translateX: 22 }],
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    width: '80%',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalOptionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
   },
 });

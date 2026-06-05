@@ -24,13 +24,23 @@ import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
 import { useFileActions } from '../../../hooks/useFileActions';
+import { useTaskStore } from '../../../store/useTaskStore';
+import FileItem from '../../../components/FileItem';
+import { useFileActionModals, FileActionModals } from '../../../components/FileActionModals';
 
 export default function Home() {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
   //使用全域變數儲存！
   const { data: historyData } = useFileStore();
-  const { createFile, updateFile } = useFileActions();
+  const { createFile, updateFile, toggleStar, deleteItem } = useFileActions();
+  
+  const { tasks } = useTaskStore();
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = Math.max(2, tasks.length);
+
+  const { openPopover, closePopover, modalProps } = useFileActionModals();
+
   //開啟手機檔案(目標是可以開啟word檔！)
   const handleOpenLocalFile = async () => {
     try {
@@ -155,6 +165,24 @@ export default function Home() {
           </View>
         </View>
 
+        {/* Today's Tasks Banner */}
+        <Pressable 
+          style={styles.taskBanner}
+          onPress={() => router.push('/task')}
+        >
+          <View style={styles.taskBannerContent}>
+            <Image 
+              source={require('../../../assets/img/task_rabbit.png')} 
+              style={styles.taskBannerImg} 
+              resizeMode="contain" 
+            />
+            <View style={styles.taskBannerTextContainer}>
+              <Text style={[textStyles.h3, { marginBottom: 8 }]}>今日任務</Text>
+              <Text style={textStyles.h3}>{completedCount}/{totalCount}</Text>
+            </View>
+          </View>
+        </Pressable>
+
         {/* History Area */}
         <View style={styles.historySection}>
           {/* 最近開啟頭 */}
@@ -166,35 +194,13 @@ export default function Home() {
           {/* 最近開啟區 */}
           <View style={styles.historyBody}>
             {recentHistory.map(item => (
-              <Pressable
-                key={item.id}
-                style={styles.historyItem}
-                onPress={() => {
-                  if (item.type === 'diary') {
-                    router.push(`/diary/${item.id}`);
-                  } else {
-                    router.push(`/document/${item.id}`);
-                  }
-                }}
-              >
-                {/* icon和背景顏色記得要切換 */}
-                <View style={[styles.historyIconBox, 
-                    {backgroundColor: item.type === 'diary' ? colors.secondary : colors.container,}]}>
-                  {item.type === 'diary' ? (
-                    <Book size={20} color={colors.text} />
-                  ) : (
-                    <FileText size={20} color={colors.text} />
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[textStyles.body, { fontWeight: '700', marginBottom: 4 }]}>{item.title}</Text>
-                  <Text style={[textStyles.subtitle, { fontSize: 12 }]}>{item.date || item.time} 編輯</Text>
-                </View>
-              </Pressable>
+              <FileItem key={item.id} item={item} onOpenPopover={openPopover} />
             ))}
           </View>
         </View>
       </ScrollView>
+
+      <FileActionModals {...modalProps} />
     </SafeAreaView>
   );
 }
@@ -225,6 +231,31 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  taskBanner: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  taskBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    minHeight: 100,
+  },
+  taskBannerImg: {
+    width: 100,
+    height: 90,
+    marginRight: 40,
+  },
+  taskBannerTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   historySection: {
     backgroundColor: colors.recentSection,

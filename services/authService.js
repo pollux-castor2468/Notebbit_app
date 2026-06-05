@@ -88,5 +88,11 @@ export const AuthService = {
       avatar_url: avatar
     }).eq('id', userId);
     if (error) throw error;
+  },
+
+  async updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return data;
   }
 };

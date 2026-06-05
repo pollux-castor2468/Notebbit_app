@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Platform, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, ScrollView, Platform, TextInput, Switch } from 'react-native';
 import { Plus, X, MoreVertical } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
 import { useFileActions } from '../../hooks/useFileActions';
 
-export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit, mode = 'view', pendingMarkedText, onSourceBound }) {
+export default function DataSourceSheet({ visible, onClose, fileId, autoEditSourceId, onClearAutoEdit, mode = 'view', pendingMarkedText, onSourceBound, showReferences, setShowReferences }) {
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -96,6 +96,16 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
                 <X size={24} color={colors.text} />
               </Pressable>
             </View>
+          </View>
+
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleText}>顯示底線開關</Text>
+            <Switch
+              value={showReferences}
+              onValueChange={setShowReferences}
+              trackColor={{ false: colors.border, true: colors.text }}
+              thumbColor={showReferences ? colors.surface : colors.inactiveText}
+            />
           </View>
 
           <View style={styles.sheetSubheadPill}>
@@ -269,6 +279,18 @@ const getStyles = (colors) => StyleSheet.create({
   },
   closeBtn: {
     padding: 4,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  toggleText: {
+    fontSize: 15,
+    color: colors.inactiveText,
+    fontWeight: '600',
   },
   sheetSubheadPill: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, Keyboard, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
-import { Edit2, Clock, Star, MoreVertical, X, Plus, ChevronRight } from 'lucide-react-native';
+import { Edit2, Clock, Star, MoreVertical, X, Plus, ChevronRight, Paperclip } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
@@ -42,7 +42,38 @@ export default function DocumentEditor() {
 
   //關於這份文件(找到文件?儲存文件、修改文件之類的都放這裡)
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
-  const { updateFile, toggleStar, addSource } = useFileActions();
+  const { updateFile, toggleStar, addSource, permanentlyDeleteItem, saveVersion } = useFileActions();
+
+  const fileDataRef = React.useRef(fileData);
+  const initialContentRef = React.useRef(fileData?.content || '');
+  const initialTitleRef = React.useRef(fileData?.title || '未命名文件');
+  
+  React.useEffect(() => {
+    fileDataRef.current = fileData;
+  }, [fileData]);
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      const currentData = fileDataRef.current;
+      if (currentData) {
+        const isUntouched = 
+          currentData.title === '未命名文件' &&
+          (!currentData.content || currentData.content === '' || currentData.content === '<p><br></p>' || currentData.content === '<div><br></div>' || currentData.content === '<br>') &&
+          (!currentData.source || currentData.source.length === 0);
+          
+        if (isUntouched) {
+          permanentlyDeleteItem(id);
+        } else {
+          const contentChanged = currentData.content !== initialContentRef.current;
+          const titleChanged = currentData.title !== initialTitleRef.current;
+          if (contentChanged || titleChanged) {
+            saveVersion(id, '自動儲存');
+          }
+        }
+      }
+    });
+    return unsubscribe;
+  }, [navigation, id, permanentlyDeleteItem, saveVersion]);
 
   const [activeModal, setActiveModal] = useState(null); // 'version' | 'source' | 'more' | null
   const [popoverPos, setPopoverPos] = useState(0);
@@ -241,56 +272,18 @@ export default function DocumentEditor() {
             }}
             actions={[
               {
-                key: 'reference_toggle',
-                customComponent: (
-                  <Pressable 
-                    style={{
-                      width: 44,
-                      height: 24,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      backgroundColor: showReferences ? colors.recentSection : 'transparent',
-                      justifyContent: 'center',
-                      paddingHorizontal: 2,
-                    }}
-                    onPress={() => setShowReferences(!showReferences)}
-                  >
-                    <View style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      backgroundColor: showReferences ? colors.text : colors.surface,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transform: [{ translateX: showReferences ? 20 : 0 }],
-                      borderWidth: 1,
-                      borderColor: showReferences ? colors.text : colors.border,
-                    }}>
-                      {!showReferences && <X size={12} color={colors.inactiveText} />}
-                    </View>
-                  </Pressable>
-                ),
-              },
-              {
-                key: 'source',
-                icon: <Edit2 size={24} color={colors.text} />,
+                key: 'star',
+                icon: <Star size={24} color={colors.text} fill={fileData?.starred ? colors.text : 'transparent'} />,
                 onPress: () => {
-                  richText.current?.injectJavascript(`
-                    var msg = JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: window.absoluteLastText || '' });
-                    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-                      window.ReactNativeWebView.postMessage(msg);
-                    } else if (window.postMessage) {
-                      window.postMessage(msg, '*');
-                    }
-                    true;
-                  `);
+                  if (fileData) toggleStar(id);
                 },
               },
               {
-                key: 'version',
-                icon: <Clock size={24} color={colors.text} />,
-                onPress: () => setActiveModal('version'),
+                key: 'tag',
+                icon: <Paperclip size={24} color={colors.text} />,
+                onPress: () => {
+                  setTagModalVisible(true);
+                },
               },
               {
                 key: 'more',
@@ -439,6 +432,8 @@ export default function DocumentEditor() {
         }}
         onClearAutoEdit={() => setAutoEditSourceId(null)}
         onClose={() => { setActiveModal(null); setAutoEditSourceId(null); setPendingMarkedText(null); setSourceSheetMode('view'); }}
+        showReferences={showReferences}
+        setShowReferences={setShowReferences}
       />
 
       {/* 3. More Options Popover overlay */}
@@ -447,19 +442,22 @@ export default function DocumentEditor() {
         popoverPos={popoverPos}
         wordCount={wordCount}
         type="document"
-        isStarred={fileData?.starred}
-        onToggleStar={() => {
-          if (fileData) toggleStar(id);
-          setActiveModal(null);
+        onOpenSource={() => {
+          richText.current?.injectJavascript(`
+            var msg = JSON.stringify({ type: 'ADD_SOURCE_SELECTION', text: window.absoluteLastText || '' });
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(msg);
+            } else if (window.postMessage) {
+              window.postMessage(msg, '*');
+            }
+            true;
+          `);
         }}
+        onOpenVersion={() => setActiveModal('version')}
         onClose={() => setActiveModal(null)}
         onRename={() => {
           setActiveModal(null);
           setRenameModalVisible(true);
-        }}
-        onSetTags={() => {
-          setActiveModal(null);
-          setTagModalVisible(true);
         }}
       />
 

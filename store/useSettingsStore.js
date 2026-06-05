@@ -24,6 +24,10 @@ export const useSettingsStore = create(
       isDarkMode: false,
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       setIsDarkMode: (value) => set({ isDarkMode: value }),
+      firstDayOfWeek: 'sunday',
+      setFirstDayOfWeek: (day) => set({ firstDayOfWeek: day }),
+      defaultFontSize: '16',
+      setDefaultFontSize: (size) => set({ defaultFontSize: size }),
     }),
     {
       name: 'settings-storage',

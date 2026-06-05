@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, FlatList, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, FlatList, Alert, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, FileText, Book, CheckSquare, Star, MoreVertical, X, Check } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, FileText, Book, CheckSquare, Star, MoreVertical, X, Check, Calendar, Clock, Edit } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
 import { useTaskStore } from '../../../store/useTaskStore';
+import FileItem from '../../../components/FileItem';
+import { useFileActionModals, FileActionModals } from '../../../components/FileActionModals';
 
 export default function CalendarScreen() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -15,6 +17,8 @@ export default function CalendarScreen() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState('document'); // 'document', 'diary', 'task'
+  const [viewMode, setViewMode] = useState('monthly'); // 'monthly', 'timeline'
+  const [statModal, setStatModal] = useState({ visible: false, type: null });
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -25,6 +29,8 @@ export default function CalendarScreen() {
 
   const { data: fileData } = useFileStore();
   const { tasks, taskCompletions } = useTaskStore();
+
+  const { openPopover, closePopover, modalProps } = useFileActionModals();
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -88,6 +94,89 @@ export default function CalendarScreen() {
     Alert.alert("激勵時刻", random);
   };
 
+  const timelineData = useMemo(() => {
+    const dataByDate = {};
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    const todayDashes = new Date().toISOString().split('T')[0];
+
+    const daysInM = new Date(y, m + 1, 0).getDate();
+    for (let d = daysInM; d >= 1; d--) {
+      const dateStrDots = `${y}.${String(m + 1).padStart(2, '0')}.${String(d).padStart(2, '0')}`;
+      const dateStrDashes = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const displayDate = `${y} 年 ${String(m + 1).padStart(2, '0')} 月 ${String(d).padStart(2, '0')}日`;
+      
+      const dayItems = [];
+      fileData.forEach(f => {
+        if (f.type === 'document' || f.type === 'diary') {
+          if ((f.edited_dates && f.edited_dates.includes(dateStrDashes)) || 
+              (f.diary_date === dateStrDashes) || 
+              (f.date && f.date.startsWith(dateStrDots))) {
+            dayItems.push({ ...f, matchedDate: dateStrDashes });
+          }
+        }
+      });
+      
+      if (dateStrDashes === todayDashes) {
+        tasks.forEach(t => {
+          const isCompletedToday = t.completed && t.completed_at && t.completed_at.startsWith(dateStrDashes);
+          const isCreatedToday = t.created_at && t.created_at.startsWith(dateStrDashes);
+          const isOfflineCreatedToday = !t.created_at;
+          if (isCompletedToday || isCreatedToday || isOfflineCreatedToday) {
+            dayItems.push({ ...t, type: 'task' });
+          }
+        });
+      } else {
+        (taskCompletions || []).forEach(c => {
+           if (c.completedDate === dateStrDashes) {
+             dayItems.push({ id: c.id, title: c.taskName, type: 'task', completed: true });
+           }
+        });
+      }
+      
+      if (dayItems.length > 0) {
+         dataByDate[displayDate] = dayItems;
+      }
+    }
+    return Object.keys(dataByDate).sort((a,b) => b.localeCompare(a)).map(k => ({ title: k, data: dataByDate[k] }));
+  }, [fileData, tasks, taskCompletions, currentDate]);
+
+  const getDayStatus = (day) => {
+    if (!day) return { doc: false, diary: false, task: false };
+    
+    const dateStrDots = `${year}.${String(month + 1).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
+    const dateStrDashes = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const todayStrDashes = new Date().toISOString().split('T')[0];
+    
+    const hasDoc = fileData.some(f => {
+      if (f.type !== 'document') return false;
+      const isEdited = f.edited_dates && f.edited_dates.includes(dateStrDashes);
+      const isCreated = f.date && f.date.startsWith(dateStrDots);
+      return isEdited || isCreated;
+    });
+    
+    const hasDiary = fileData.some(f => {
+      if (f.type !== 'diary') return false;
+      const isEdited = f.edited_dates && f.edited_dates.includes(dateStrDashes);
+      const isCreated = f.diary_date === dateStrDashes || (f.date && f.date.startsWith(dateStrDots));
+      return isEdited || isCreated;
+    });
+    
+    let hasTask = false;
+    if (dateStrDashes === todayStrDashes) {
+      hasTask = tasks.some(t => {
+        const isCompletedToday = t.completed && t.completed_at && t.completed_at.startsWith(dateStrDashes);
+        const isCreatedToday = t.created_at && t.created_at.startsWith(dateStrDashes);
+        const isOfflineCreatedToday = !t.created_at;
+        return isCompletedToday || isCreatedToday || isOfflineCreatedToday;
+      });
+    } else {
+      hasTask = (taskCompletions || []).some(c => c.completedDate === dateStrDashes);
+    }
+    
+    return { doc: hasDoc, diary: hasDiary, task: hasTask };
+  };
+
   const renderCalendarDays = () => {
     const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
     return (
@@ -100,13 +189,25 @@ export default function CalendarScreen() {
         <View style={styles.daysGrid}>
           {days.map((day, idx) => {
             const isSelected = day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
+            const status = getDayStatus(day);
             return (
               <Pressable 
                 key={idx} 
                 style={[styles.dayCell, isSelected && styles.selectedDayCell]}
                 onPress={() => day && setSelectedDate(new Date(year, month, day))}
               >
-                {day ? <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>{day}</Text> : null}
+                {day ? (
+                  <>
+                    <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>{day}</Text>
+                    {!!(status.doc || status.diary || status.task) && (
+                      <View style={styles.dotsContainer}>
+                        {status.doc && <View style={[styles.dot, styles.dotDoc, isSelected && styles.dotBorderSelected]} />}
+                        {status.diary && <View style={[styles.dot, styles.dotDiary, isSelected && styles.dotBorderSelected]} />}
+                        {status.task && <View style={[styles.dot, styles.dotTask, isSelected && styles.dotBorderSelected]} />}
+                      </View>
+                    )}
+                  </>
+                ) : null}
               </Pressable>
             )
           })}
@@ -115,10 +216,145 @@ export default function CalendarScreen() {
     )
   }
 
+  const renderTimelineGroupTitle = (title) => (
+    <View style={styles.timelineTitleContainer}>
+      <View style={styles.timelineTitleLineContainer}>
+        <View style={styles.timelineLineTitle} />
+        <View style={styles.timelineTitleDot} />
+      </View>
+      <View style={styles.timelineBubble}>
+        <View style={styles.timelineBubbleTail} />
+        <Text style={styles.timelineTitleText}>{title}</Text>
+      </View>
+    </View>
+  );
+  const renderCalendarItem = (item) => {
+    const isTask = item.type === 'task';
+    const isDoc = item.type === 'document';
+    const isDiary = item.type === 'diary';
+
+    let iconBg = '#F3F4F6';
+    let iconComp = null;
+    if (isDoc) {
+      iconBg = '#F9D9D9'; // Soft pink
+      iconComp = <FileText size={22} color={colors.text} />;
+    } else if (isDiary) {
+      iconBg = '#FFF2CC'; // Soft yellow/beige
+      iconComp = <Book size={22} color={colors.text} />;
+    } else if (isTask) {
+      iconBg = '#D1E8E2'; // Soft green
+      iconComp = <CheckSquare size={22} color={colors.text} />;
+    }
+
+    const stripHtmlTags = (html) => html ? String(html).replace(/<[^>]*>?/gm, '') : '';
+    
+    let previewText = isTask ? '' : stripHtmlTags(item.content).substring(0, 30);
+    
+    // Try to extract snippet for the specific date
+    const targetDate = item.matchedDate || selectedDateStrDashes;
+    if (!isTask && item.daily_snippets && item.daily_snippets[targetDate]) {
+      previewText = item.daily_snippets[targetDate];
+    }
+
+    return (
+      <Pressable 
+        key={item.id} 
+        style={styles.calendarItemCard}
+        onPress={() => {
+           if (isDoc) router.push(`/document/${item.id}`);
+           else if (isDiary) router.push(`/diary/${item.id}`);
+        }}
+      >
+        <View style={[styles.calendarItemHeader, !previewText && { marginBottom: 0 }]}>
+          <View style={[styles.calendarItemIconBox, { backgroundColor: iconBg }]}>
+             {iconComp}
+          </View>
+          <View style={styles.calendarItemTitleRow}>
+            <Text style={styles.calendarItemTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.calendarItemDate}>{item.date || '2026.04.04 11:46'}</Text>
+          </View>
+          {item.starred && <Star size={24} color="#4B5563" fill="#4B5563" />}
+        </View>
+        {!!previewText && <Text style={styles.calendarItemPreview} numberOfLines={1}>{previewText}...</Text>}
+      </Pressable>
+    );
+  };
+
+  const renderTimelineItem = (item, isVeryLast) => {
+    return (
+      <View style={styles.timelineItemContainer} key={item.id}>
+        <View style={styles.timelineLineContainer}>
+          <View style={[styles.timelineLineItem, isVeryLast && { bottom: '50%' }]} />
+          <View style={styles.timelineDot} />
+        </View>
+        <View style={{ flex: 1, marginBottom: 16, marginLeft: 16 }}>
+          {renderCalendarItem(item)}
+        </View>
+      </View>
+    );
+  };
+
+  const renderStatModalContent = () => {
+    switch (statModal.type) {
+      case 'document':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你在這天編輯了</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalNumber}>{filteredDocuments.length}</Text>
+              <Text style={styles.statModalUnit}> 篇文件</Text>
+            </View>
+            <Image source={require('../../../assets/img/good_rabbit1.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      case 'diary':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你在這天編輯了</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalNumber}>{filteredDiaries.length}</Text>
+              <Text style={styles.statModalUnit}> 篇日記</Text>
+            </View>
+            <Image source={require('../../../assets/img/good_rabbit2.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      case 'task':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你在這天完成了</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalNumber}>{completedTasksCount}</Text>
+              <Text style={styles.statModalUnit}> 次任務</Text>
+            </View>
+            <Image source={require('../../../assets/img/good_rabbit3.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <SafeAreaView style={layoutStyles.root}>
       <ScrollView contentContainerStyle={layoutStyles.scrollContent} showsVerticalScrollIndicator={false}>
         <TopHeader title="行事曆" />
+
+        <View style={styles.topToggleContainer}>
+          <Pressable 
+            style={[styles.topToggleBtn, viewMode === 'monthly' && styles.topToggleBtnActive]}
+            onPress={() => setViewMode('monthly')}
+          >
+            <Calendar size={16} color={viewMode === 'monthly' ? colors.text : colors.inactiveText} style={{marginRight: 8}} />
+            <Text style={viewMode === 'monthly' ? styles.topToggleTextActive : styles.topToggleText}>月曆</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.topToggleBtn, viewMode === 'timeline' && styles.topToggleBtnActive]}
+            onPress={() => setViewMode('timeline')}
+          >
+            <Clock size={16} color={viewMode === 'timeline' ? colors.text : colors.inactiveText} style={{marginRight: 8}} />
+            <Text style={viewMode === 'timeline' ? styles.topToggleTextActive : styles.topToggleText}>時間軸</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.monthSelector}>
           <Pressable onPress={handlePrevMonth} style={{ padding: 8 }}>
@@ -136,86 +372,72 @@ export default function CalendarScreen() {
           </Pressable>
         </View>
 
-        {renderCalendarDays()}
+        {viewMode === 'monthly' ? (
+          <>
+            {renderCalendarDays()}
 
-        <View style={styles.selectedDateSection}>
-          <Text style={[textStyles.h3, { marginBottom: 16 }]}>
-            {selectedDate.getFullYear()} 年 {selectedDate.getMonth() + 1} 月 {selectedDate.getDate()} 日
-          </Text>
+            <View style={styles.selectedDateSection}>
+              <Text style={[textStyles.h3, { marginBottom: 16, marginLeft: 8 }]}>
+                {selectedDate.getFullYear()} 年 {selectedDate.getMonth() + 1} 月 {selectedDate.getDate()} 日
+              </Text>
 
-          <View style={styles.statsRow}>
-            <Pressable style={styles.statCard} onPress={showEncouragement}>
-              <View style={layoutStyles.rowCenter}>
-                <FileText size={18} color={colors.text} />
-                <Text style={styles.statLabel}>文件</Text>
+              <View style={styles.statsRow}>
+                <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'document' })}>
+                  <View style={layoutStyles.rowCenter}>
+                    <FileText size={18} color={colors.text} />
+                    <Text style={styles.statLabel}>文件</Text>
+                  </View>
+                  <Text style={styles.statValue}>{filteredDocuments.length}</Text>
+                </Pressable>
+                <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'diary' })}>
+                  <View style={layoutStyles.rowCenter}>
+                    <Edit size={18} color={colors.text} />
+                    <Text style={styles.statLabel}>日記</Text>
+                  </View>
+                  <Text style={styles.statValue}>{filteredDiaries.length}</Text>
+                </Pressable>
+                <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'task' })}>
+                  <View style={layoutStyles.rowCenter}>
+                    <CheckSquare size={18} color={colors.text} />
+                    <Text style={styles.statLabel}>任務</Text>
+                  </View>
+                  <Text style={styles.statValue}>{completedTasksCount}/{Math.max(5, filteredTasks.length)}</Text>
+                </Pressable>
               </View>
-              <Text style={styles.statValue}>{filteredDocuments.length}</Text>
-            </Pressable>
-            <Pressable style={styles.statCard} onPress={showEncouragement}>
-              <View style={layoutStyles.rowCenter}>
-                <Book size={18} color={colors.text} />
-                <Text style={styles.statLabel}>日記</Text>
+
+              <View style={styles.tabContainerCustom}>
+                <Pressable style={[styles.tabBtnCustom, { borderTopLeftRadius: 16 }, activeTab === 'document' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('document')}>
+                  <Text style={styles.tabTextCustom}>文件</Text>
+                </Pressable>
+                <Pressable style={[styles.tabBtnCustom, activeTab === 'diary' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive, { borderLeftWidth: 0 }]} onPress={() => setActiveTab('diary')}>
+                  <Text style={styles.tabTextCustom}>日記</Text>
+                </Pressable>
+                <Pressable style={[styles.tabBtnCustom, { borderTopRightRadius: 16, borderLeftWidth: 0 }, activeTab === 'task' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('task')}>
+                  <Text style={styles.tabTextCustom}>任務</Text>
+                </Pressable>
               </View>
-              <Text style={styles.statValue}>{filteredDiaries.length}</Text>
-            </Pressable>
-            <Pressable style={styles.statCard} onPress={showEncouragement}>
-              <View style={layoutStyles.rowCenter}>
-                <CheckSquare size={18} color={colors.text} />
-                <Text style={styles.statLabel}>任務</Text>
+
+              <View style={styles.listContainerCustom}>
+                {activeTab === 'document' && filteredDocuments.map(doc => renderCalendarItem(doc))}
+                {activeTab === 'diary' && filteredDiaries.map(diary => renderCalendarItem(diary))}
+                {activeTab === 'task' && filteredTasks.map(task => renderCalendarItem(task))}
               </View>
-                <Text style={styles.statValue}>{completedTasksCount}/{Math.max(2, filteredTasks.length)}</Text>
-            </Pressable>
+            </View>
+          </>
+        ) : (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            {timelineData.length === 0 ? (
+              <Text style={{ textAlign: 'center', marginTop: 40, color: colors.inactiveText, fontSize: 16 }}>目前月份沒有任何紀錄。</Text>
+            ) : (
+              timelineData.map((group, groupIndex) => (
+                <View key={group.title} style={styles.timelineGroup}>
+                  {renderTimelineGroupTitle(group.title)}
+                  {group.data.map((item, index) => renderTimelineItem(item, index === group.data.length - 1 && groupIndex === timelineData.length - 1))}
+                </View>
+              ))
+            )}
           </View>
-
-          <View style={styles.tabContainer}>
-            <Pressable style={[styles.tabBtn, activeTab === 'document' && styles.tabBtnActive]} onPress={() => setActiveTab('document')}>
-              <Text style={activeTab === 'document' ? styles.tabTextActive : styles.tabText}>文件</Text>
-            </Pressable>
-            <Pressable style={[styles.tabBtn, activeTab === 'diary' && styles.tabBtnActive]} onPress={() => setActiveTab('diary')}>
-              <Text style={activeTab === 'diary' ? styles.tabTextActive : styles.tabText}>日記</Text>
-            </Pressable>
-            <Pressable style={[styles.tabBtn, activeTab === 'task' && styles.tabBtnActive]} onPress={() => setActiveTab('task')}>
-              <Text style={activeTab === 'task' ? styles.tabTextActive : styles.tabText}>任務</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.listContainer}>
-            {activeTab === 'document' && filteredDocuments.map(doc => (
-              <View key={doc.id} style={styles.listItem}>
-                <View style={[styles.listIconBox, { backgroundColor: colors.container }]}>
-                  <FileText size={20} color={colors.text} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[textStyles.body, { fontWeight: '700' }]}>{doc.title}</Text>
-                  <Text style={[textStyles.subtitle, { fontSize: 12 }]}>{doc.date || doc.time}</Text>
-                </View>
-                <Star size={20} color={colors.text} style={{ marginRight: 12 }} />
-                <MoreVertical size={20} color={colors.text} />
-              </View>
-            ))}
-            {activeTab === 'diary' && filteredDiaries.map(diary => (
-              <View key={diary.id} style={styles.listItem}>
-                <View style={[styles.listIconBox, { backgroundColor: colors.secondary }]}>
-                  <Book size={20} color={colors.text} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[textStyles.body, { fontWeight: '700' }]}>{diary.title}</Text>
-                  <Text style={[textStyles.subtitle, { fontSize: 12 }]}>{diary.date || diary.time}</Text>
-                </View>
-                <Star size={20} color={colors.text} style={{ marginRight: 12 }} />
-                <MoreVertical size={20} color={colors.text} />
-              </View>
-            ))}
-            {activeTab === 'task' && filteredTasks.map(task => (
-              <View key={task.id} style={styles.listItem}>
-                <View style={[styles.taskCheckbox, task.completed && styles.taskCheckboxActive]}>
-                  {task.completed && <CheckSquare size={14} color={colors.surface} strokeWidth={4} />}
-                </View>
-                <Text style={[textStyles.body, { flex: 1 }]}>{task.title}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        )}
 
       </ScrollView>
 
@@ -266,11 +488,56 @@ export default function CalendarScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Stat Detail Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={statModal.visible}
+        onRequestClose={() => setStatModal({ visible: false, type: null })}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.statModalContainer}>
+            <Pressable 
+              style={styles.statModalCloseBtn} 
+              onPress={() => setStatModal({ visible: false, type: null })}
+            >
+              <X size={24} color={colors.text} />
+            </Pressable>
+            {renderStatModalContent()}
+          </View>
+        </View>
+      </Modal>
+
+      <FileActionModals {...modalProps} />
     </SafeAreaView>
   );
 }
 
 const getStyles = (colors) => StyleSheet.create({
+  topToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 4,
+  },
+  topToggleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  topToggleBtnActive: {
+    backgroundColor: colors.recentHeader,
+  },
+  topToggleText: { fontSize: 14, color: colors.inactiveText, fontWeight: 'bold' },
+  topToggleTextActive: { fontSize: 14, color: colors.text, fontWeight: 'bold' },
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -285,6 +552,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: colors.border,
+    marginHorizontal: 16,
   },
   weekHeader: {
     flexDirection: 'row',
@@ -322,8 +590,109 @@ const getStyles = (colors) => StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
   },
+  dotsContainer: {
+    flexDirection: 'row',
+    marginTop: 2,
+    gap: 3,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#6b6058',
+    backgroundColor: 'transparent',
+  },
+  dotBorderSelected: {
+    borderColor: '#FFF',
+  },
+  dotDoc: { backgroundColor: colors.container },
+  dotDiary: { backgroundColor: colors.secondary },
+  dotTask: { backgroundColor: colors.fab },
   selectedDateSection: {
     marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  tabContainerCustom: {
+    flexDirection: 'row',
+    zIndex: 2,
+  },
+  tabBtnCustom: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tabBtnCustomActive: {
+    backgroundColor: '#FFFDF5',
+    borderBottomColor: '#FFFDF5',
+    borderBottomWidth: 1,
+  },
+  tabBtnCustomInactive: {
+    backgroundColor: '#FAD57B',
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+  },
+  tabTextCustom: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: 'bold',
+  },
+  listContainerCustom: {
+    backgroundColor: '#FFFDF5',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    padding: 16,
+    minHeight: 200,
+    marginTop: -1,
+    zIndex: 1,
+  },
+  calendarItemCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  calendarItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  calendarItemIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  calendarItemTitleRow: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  calendarItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  calendarItemDate: {
+    fontSize: 14,
+    color: '#D1D5DB',
+    fontWeight: '500',
+  },
+  calendarItemPreview: {
+    fontSize: 14,
+    color: '#6B7280',
   },
   statsRow: {
     flexDirection: 'row',
@@ -424,6 +793,18 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.fab,
     borderColor: colors.fab,
   },
+  timelineGroup: { marginBottom: 0 },
+  timelineTitleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  timelineTitleLineContainer: { width: 30, alignItems: 'center' },
+  timelineLineTitle: { width: 2, backgroundColor: colors.border, position: 'absolute', top: '50%', bottom: -16 },
+  timelineTitleDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: '#6b6058', backgroundColor: colors.surface, zIndex: 2 },
+  timelineBubble: { backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, marginLeft: 16, position: 'relative', justifyContent: 'center' },
+  timelineBubbleTail: { position: 'absolute', left: -6, top: '50%', marginTop: -6, width: 12, height: 12, backgroundColor: colors.surface, borderLeftWidth: 1, borderBottomWidth: 1, borderColor: colors.border, transform: [{ rotate: '45deg' }] },
+  timelineTitleText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+  timelineItemContainer: { flexDirection: 'row' },
+  timelineLineContainer: { width: 30, alignItems: 'center' },
+  timelineDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#6b6058', marginTop: 35, zIndex: 2 },
+  timelineLineItem: { width: 2, backgroundColor: colors.border, position: 'absolute', top: 0, bottom: -16 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -476,5 +857,51 @@ const getStyles = (colors) => StyleSheet.create({
   },
   monthBtnTextActive: {
     fontWeight: 'bold',
-  }
+  },
+  statModalContainer: {
+    width: '75%',
+    backgroundColor: '#FFFDF5',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#EFE2C2',
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  statModalCloseBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  statModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  statModalCountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 20,
+  },
+  statModalNumber: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statModalUnit: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginLeft: 8,
+  },
+  statModalImage: {
+    width: 200,
+    height: 120,
+  },
 });

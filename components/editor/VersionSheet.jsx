@@ -10,7 +10,7 @@ export default function VersionSheet({ visible, onClose, fileId }) {
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const { saveVersion, restoreVersion } = useFileActions();
+  const { saveVersion, restoreVersion, deleteVersion } = useFileActions();
 
   const versions = fileData?.version || [];
 
@@ -21,6 +21,7 @@ export default function VersionSheet({ visible, onClose, fileId }) {
   const [newVersionTitle, setNewVersionTitle] = useState('');
 
   const [confirmRestoreId, setConfirmRestoreId] = useState(null);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'manual'
 
   if (!visible) return null;
 
@@ -40,6 +41,17 @@ export default function VersionSheet({ visible, onClose, fileId }) {
     }
   };
 
+  const executeDelete = (vId) => {
+    deleteVersion(fileId, vId);
+    setPopoverId(null);
+  };
+
+  // 過濾版本
+  const filteredVersions = versions.filter(v => {
+    if (activeTab === 'all') return true;
+    return v.versionTitle !== '自動儲存';
+  });
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.bottomSheetOverlay}>
@@ -49,7 +61,7 @@ export default function VersionSheet({ visible, onClose, fileId }) {
           <View style={styles.sheetDragPill} />
 
           <View style={styles.sheetHeaderRow}>
-            <Text style={styles.sheetTitle}>版本控制</Text>
+            <Text style={styles.sheetTitle}>版本歷史</Text>
             <View style={layoutStyles.rowCenter}>
               <Pressable style={styles.bluePlusBtn} onPress={() => setAddModalVisible(true)}>
                 <Plus size={20} color={colors.text} />
@@ -60,6 +72,22 @@ export default function VersionSheet({ visible, onClose, fileId }) {
             </View>
           </View>
 
+          {/* Tab Switcher */}
+          <View style={styles.tabContainer}>
+            <Pressable 
+              style={[styles.tabButton, activeTab === 'all' && styles.tabButtonActive, { borderRightWidth: 1, borderColor: colors.border }]} 
+              onPress={() => setActiveTab('all')}
+            >
+              <Text style={styles.tabText}>所有版本</Text>
+            </Pressable>
+            <Pressable 
+              style={[styles.tabButton, activeTab === 'manual' && styles.tabButtonActive]} 
+              onPress={() => setActiveTab('manual')}
+            >
+              <Text style={styles.tabText}>手動儲存版本</Text>
+            </Pressable>
+          </View>
+
           <View style={styles.sheetSubheadPill}>
             <Text style={[styles.subheadText, { flex: 1.2 }]}>編號</Text>
             <Text style={[styles.subheadText, { flex: 2 }]}>版本名稱</Text>
@@ -68,13 +96,13 @@ export default function VersionSheet({ visible, onClose, fileId }) {
           </View>
 
           <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-            {versions.map((v, index) => {
-              const versionNum = versions.length - index; // just for display
+            {filteredVersions.map((v, index) => {
+              const versionNum = filteredVersions.length - index; // just for display within filtered
               return (
                 <View key={v.versionId} style={styles.sheetCard}>
-                  <Text style={[styles.cardText, { flex: 1.2 }]}>版本{versionNum}</Text>
-                  <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]}>{v.versionTitle}</Text>
-                  <Text style={[styles.cardText, { flex: 1.5, textAlign: 'center' }]}>{v.versionDate?.split(' ')[0]}</Text>
+                  <Text style={[styles.cardText, { flex: 1.2 }]} numberOfLines={1}>版本{versionNum}</Text>
+                  <Text style={[styles.cardText, { flex: 2, fontWeight: '700' }]} numberOfLines={1}>{v.versionTitle}</Text>
+                  <Text style={[styles.cardText, { flex: 1.5, textAlign: 'center', fontSize: 13 }]} numberOfLines={1}>{v.versionDate?.split(' ')[0]}</Text>
                   <Pressable
                     style={styles.moreBtn}
                     onPress={(e) => {
@@ -103,6 +131,9 @@ export default function VersionSheet({ visible, onClose, fileId }) {
             >
               <Pressable style={styles.popoverItem} onPress={() => { setConfirmRestoreId(popoverId); setPopoverId(null); }}>
                 <Text style={styles.popoverText}>回退版本</Text>
+              </Pressable>
+              <Pressable style={styles.popoverItemDelete} onPress={() => executeDelete(popoverId)}>
+                <Text style={styles.popoverTextRed}>刪除版本</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -206,6 +237,28 @@ const getStyles = (colors) => StyleSheet.create({
   },
   closeBtn: {
     padding: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#FDF8E8', // Slightly darker beige for inactive
+  },
+  tabButtonActive: {
+    backgroundColor: colors.surface, // Active is solid surface
+  },
+  tabText: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '600',
   },
   sheetSubheadPill: {
     flexDirection: 'row',

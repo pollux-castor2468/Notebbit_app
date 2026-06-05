@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, FileText, Search, MoreVertical, Star, Edit, 
 import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
 import { useFileActions } from '../hooks/useFileActions';
+import FileItem from '../components/FileItem';
+import { useFileActionModals, FileActionModals } from '../components/FileActionModals';
 
 export default function FileBrowser() {
   const { layoutStyles, textStyles, colors } = useStyles();
@@ -18,12 +20,7 @@ export default function FileBrowser() {
     initialType === 'diary' ? 'diary' : 'document'
   );
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [popoverPos, setPopoverPos] = useState(0);
-
-  const [renameModalVisible, setRenameModalVisible] = useState(false);
-  const [itemToRename, setItemToRename] = useState(null);
-  const [newTitle, setNewTitle] = useState('');
+  const { openPopover, closePopover, modalProps } = useFileActionModals();
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [appliedStarStatus, setAppliedStarStatus] = useState(null); // 'starred', 'unstarred', null
@@ -78,28 +75,6 @@ export default function FileBrowser() {
     return true;
   });
 
-  const handleDelete = () => {
-    if (selectedItem) {
-      deleteItem(selectedItem.id);
-      setSelectedItem(null);
-    }
-  };
-
-  const handleRenameClick = () => {
-    setItemToRename(selectedItem);
-    setNewTitle(selectedItem.title);
-    setRenameModalVisible(true);
-    setSelectedItem(null);
-  };
-
-  const submitRename = () => {
-    if (newTitle.trim() && itemToRename) {
-      updateFile(itemToRename.id, { title: newTitle.trim() });
-    }
-    setRenameModalVisible(false);
-    setItemToRename(null);
-  };
-
   // Group Diaries for Timeline
   const groupDiaries = () => {
     const groups = {};
@@ -145,27 +120,7 @@ export default function FileBrowser() {
         <View style={[styles.timelineLineItem, isVeryLast && { bottom: '50%' }]} />
         <View style={styles.timelineDot} />
       </View>
-      <Pressable 
-        style={[styles.listItem, { flex: 1, marginBottom: 16, marginLeft: 16 }]}
-        onPress={() => router.push(`/diary/${item.id}`)}
-      >
-        <View style={[styles.iconBox, {backgroundColor: colors.secondary}]}>
-            <Edit size={24} color={colors.text} />
-        </View>
-        <View style={styles.itemTextContainer}>
-          <Text style={[textStyles.body, { fontWeight: '700' }]}>{item.title}</Text>
-          <Text style={[textStyles.subtitle, { marginTop: 4, fontSize: 12 }]}>{item.date || item.time}</Text>
-        </View>
-        <Pressable 
-          style={styles.dotsBtn}
-          onPress={(e) => {
-            setPopoverPos(e.nativeEvent.pageY);
-            setSelectedItem(item);
-          }}
-        >
-          <MoreVertical size={20} color={colors.text} opacity={0.5} />
-        </Pressable>
-      </Pressable>
+      <FileItem item={item} onOpenPopover={openPopover} style={{ flex: 1, marginBottom: 16, marginLeft: 16 }} />
     </View>
   );
 
@@ -238,38 +193,9 @@ export default function FileBrowser() {
             contentContainerStyle={styles.listContent}
             keyExtractor={item => item.id}
             ListEmptyComponent={<Text style={styles.emptyText}>目前沒有任何資料。</Text>}
-            renderItem={({ item }) => {
-              const isMenuOpen = selectedItem?.id === item.id;
-              return (
-                <Pressable 
-                  style={[styles.listItem, isMenuOpen && { borderColor: 'rgba(0,0,0,0.1)' }]}
-                  onPress={() => router.push(`/document/${item.id}`)}
-                >
-                  <View style={[styles.iconBox, {backgroundColor: colors.container}]}>
-                      <FileText size={24} color={colors.text} />
-                  </View>
-                  <View style={styles.itemTextContainer}>
-                    <Text style={[textStyles.body, { fontWeight: '700' }]}>{item.title}</Text>
-                    <Text style={[textStyles.subtitle, { marginTop: 4, fontSize: 12 }]}>{item.date}</Text>
-                  </View>
-                  <Pressable 
-                    style={{ padding: 4, marginRight: 8 }}
-                    onPress={() => updateFile(item.id, { starred: !item.starred })}
-                  >
-                    <Star size={20} color={colors.text} fill={item.starred ? colors.text : "transparent"} opacity={item.starred ? 1 : 0.3} />
-                  </Pressable>
-                  <Pressable 
-                    style={[styles.dotsBtn, isMenuOpen && styles.dotsBtnActive]}
-                    onPress={(e) => {
-                      setPopoverPos(e.nativeEvent.pageY);
-                      setSelectedItem(item);
-                    }}
-                  >
-                    <MoreVertical size={20} color={colors.text} opacity={isMenuOpen ? 1 : 0.5} />
-                  </Pressable>
-                </Pressable>
-              );
-            }}
+            renderItem={({ item }) => (
+              <FileItem item={item} onOpenPopover={openPopover} />
+            )}
           />
         )}
       </View>
@@ -400,43 +326,7 @@ export default function FileBrowser() {
         </View>
       </Modal>
 
-      {/* Popover and Rename Modals are same as before */}
-      <Modal transparent visible={!!selectedItem} animationType="fade" onRequestClose={() => setSelectedItem(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setSelectedItem(null)}>
-          <Pressable 
-            style={[styles.modalInnerContainer, { top: popoverPos > 0 ? popoverPos + 10 : '50%' }]} 
-            onPress={e => e.stopPropagation()}
-          >
-            <Pressable style={styles.modalBtn} onPress={handleRenameClick}>
-              <Text style={styles.modalBtnText}>重新命名</Text>
-            </Pressable>
-            
-            <Pressable style={[styles.modalBtn, { marginBottom: 0 }]} onPress={handleDelete}>
-              <Text style={[styles.modalBtnText, { color: colors.errow }]}>移至暫存</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Rename Dialog Modal */}
-      <Modal animationType="fade" transparent={true} visible={renameModalVisible} onRequestClose={() => setRenameModalVisible(false)}>
-        <View style={styles.renameOverlay}>
-          <View style={styles.modalBigContent}>
-            <View style={styles.renameContent}>
-              <Text style={textStyles.h3}>重新命名</Text>
-              <TextInput style={styles.renameInput} value={newTitle} onChangeText={setNewTitle} autoFocus />
-              <View style={styles.renameActions}>
-                <Pressable style={styles.renameBtnCancel} onPress={() => setRenameModalVisible(false)}>
-                  <Text style={styles.modalBtnTextC}>取消</Text>
-                </Pressable>
-                <Pressable style={styles.renameBtnSubmit} onPress={submitRename}>
-                  <Text style={styles.modalBtnTextS}>確認</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <FileActionModals {...modalProps} />
     </SafeAreaView>
   );
 }

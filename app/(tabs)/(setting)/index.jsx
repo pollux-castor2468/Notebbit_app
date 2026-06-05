@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, View, Text, Pressable, StyleSheet, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FileText, Edit, Settings as SettingsIcon, LogOut, CheckSquare, Trash2, PenBox } from 'lucide-react-native';
+import { FileText, Edit, Settings as SettingsIcon, LogOut, CheckSquare, Trash2, PenBox, X } from 'lucide-react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
@@ -22,6 +22,7 @@ export default function Setting() {
   const { fetchTasks } = useTaskActions();
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [statModal, setStatModal] = useState({ visible: false, type: null });
 
   // Auto-refresh tasks/level when screen comes into focus
   useFocusEffect(
@@ -78,6 +79,46 @@ export default function Setting() {
     );
   };
 
+  const renderStatModalContent = () => {
+    switch (statModal.type) {
+      case 'document':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你總共建立了</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalNumber}>{documentCount}</Text>
+              <Text style={styles.statModalUnit}> 篇文件</Text>
+            </View>
+            <Image source={require('../../../assets/img/count_rabbit1.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      case 'diary':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你總共建立了</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalNumber}>{diaryCount}</Text>
+              <Text style={styles.statModalUnit}> 篇日記</Text>
+            </View>
+            <Image source={require('../../../assets/img/count_rabbit2.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      case 'task':
+        return (
+          <>
+            <Text style={styles.statModalTitle}>你目前的任務等級</Text>
+            <View style={styles.statModalCountRow}>
+              <Text style={styles.statModalUnit}>Lv. </Text>
+              <Text style={styles.statModalNumber}>{level}</Text>
+            </View>
+            <Image source={require('../../../assets/img/count_rabbit3.png')} style={styles.statModalImage} resizeMode="contain" />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -86,21 +127,21 @@ export default function Setting() {
         {renderProfileCard()}
 
         <View style={styles.statsRow}>
-          <Pressable style={styles.statCard}>
+          <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'document' })}>
             <View style={layoutStyles.rowCenter}>
               <FileText size={18} color={colors.text} />
               <Text style={styles.statLabel}>文件</Text>
             </View>
             <Text style={styles.statValue}>{documentCount}</Text>
           </Pressable>
-          <Pressable style={styles.statCard}>
+          <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'diary' })}>
             <View style={layoutStyles.rowCenter}>
               <Edit size={18} color={colors.text} />
               <Text style={styles.statLabel}>日記</Text>
             </View>
             <Text style={styles.statValue}>{diaryCount}</Text>
           </Pressable>
-          <Pressable style={styles.statCard}>
+          <Pressable style={styles.statCard} onPress={() => setStatModal({ visible: true, type: 'task' })}>
             <View style={layoutStyles.rowCenter}>
               <CheckSquare size={18} color={colors.text} />
               <Text style={styles.statLabel}>任務</Text>
@@ -169,6 +210,26 @@ export default function Setting() {
                 <Text style={styles.modalCancelText}>取消</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Stat Detail Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={statModal.visible}
+        onRequestClose={() => setStatModal({ visible: false, type: null })}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.statModalContainer}>
+            <Pressable 
+              style={styles.statModalCloseBtn} 
+              onPress={() => setStatModal({ visible: false, type: null })}
+            >
+              <X size={24} color={colors.text} />
+            </Pressable>
+            {renderStatModalContent()}
           </View>
         </View>
       </Modal>
@@ -379,5 +440,51 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
+  },
+  statModalContainer: {
+    width: '75%',
+    backgroundColor: '#FFFDF5',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#EFE2C2',
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  statModalCloseBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  statModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  statModalCountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 20,
+  },
+  statModalNumber: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statModalUnit: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginLeft: 8,
+  },
+  statModalImage: {
+    width: 150,
+    height: 120,
   },
 });

@@ -12,6 +12,19 @@ const formatDate = (dateObj) => {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+const stripHtmlTags = (html) => html ? String(html).replace(/<[^>]*>?/gm, '') : '';
+
+const getDiffSnippet = (oldText, newText) => {
+  if (!oldText) return newText.substring(0, 30).trim();
+  if (!newText) return '';
+  let i = 0;
+  while (i < oldText.length && i < newText.length && oldText[i] === newText[i]) {
+    i++;
+  }
+  return newText.substring(i, i + 30).trim() || newText.substring(Math.max(0, i - 15), i + 15).trim();
+};
+
+
 export const useFileActions = () => {
 
   const fetchFiles = async () => {
@@ -39,6 +52,7 @@ export const useFileActions = () => {
         starred: doc.is_starred,
         content: doc.content || '',
         edited_dates: doc.edited_dates || [],
+        daily_snippets: doc.daily_snippets || {},
         is_deleted: doc.is_deleted || false,
         tags: (doc.tags || []).map(t => t.tag?.name).filter(Boolean),
         versionNumber: doc.version?.length || 0,
@@ -85,6 +99,7 @@ export const useFileActions = () => {
         starred: false,
         content: diary.content || '',
         edited_dates: diary.edited_dates || [],
+        daily_snippets: diary.daily_snippets || {},
         is_deleted: diary.is_deleted || false,
         tags: [],
         versionNumber: 0,
@@ -120,6 +135,7 @@ export const useFileActions = () => {
             title: file.title,
             content: file.content,
             edited_dates: file.edited_dates || [],
+            daily_snippets: file.daily_snippets || {},
             is_starred: file.starred,
             is_deleted: file.is_deleted,
           });
@@ -175,6 +191,7 @@ export const useFileActions = () => {
             mood: file.mood || null,
             diary_date: dDate,
             edited_dates: file.edited_dates || [],
+            daily_snippets: file.daily_snippets || {},
             is_deleted: file.is_deleted,
           });
         } catch (e) { console.error('Sync diary error', e); }
@@ -198,6 +215,7 @@ export const useFileActions = () => {
       starred: false,
       content: '',
       edited_dates: [now.toISOString().split('T')[0]],
+      daily_snippets: {},
       is_deleted: false,
       tags: [],
       versionNumber: 0,
@@ -217,6 +235,7 @@ export const useFileActions = () => {
           title,
           content: '',
           edited_dates: [now.toISOString().split('T')[0]],
+          daily_snippets: {},
           is_starred: false,
           is_deleted: false,
         }).catch(e => console.error('Error inserting document:', e));
@@ -227,6 +246,7 @@ export const useFileActions = () => {
           title,
           content: '',
           edited_dates: [now.toISOString().split('T')[0]],
+          daily_snippets: {},
           diary_date: now.toISOString().split('T')[0],
           is_deleted: false,
         }).catch(e => console.error('Error inserting diary:', e));
@@ -241,11 +261,32 @@ export const useFileActions = () => {
     const file = data.find(f => f.id === id);
     if (!file) return;
 
-    if ((file.type === 'document' || file.type === 'diary') && (updates.content !== undefined || updates.title !== undefined)) {
+    let isContentChanged = false;
+    let isTitleChanged = false;
+
+    if (updates.content !== undefined && updates.content !== file.content) isContentChanged = true;
+    if (updates.title !== undefined && updates.title !== file.title) isTitleChanged = true;
+
+    if ((file.type === 'document' || file.type === 'diary') && (isContentChanged || isTitleChanged)) {
       const todayStr = new Date().toISOString().split('T')[0];
       const currentEditedDates = file.edited_dates || [];
+      const currentSnippets = file.daily_snippets || {};
+      
+      let snippet = '';
+      if (isContentChanged) {
+        const oldText = stripHtmlTags(file.content);
+        const newText = stripHtmlTags(updates.content);
+        if (oldText !== newText) {
+          snippet = getDiffSnippet(oldText, newText);
+        }
+      }
+
       if (!currentEditedDates.includes(todayStr)) {
         updates.edited_dates = [...currentEditedDates, todayStr];
+      }
+      
+      if (snippet) {
+        updates.daily_snippets = { ...currentSnippets, [todayStr]: snippet };
       }
     }
 
@@ -267,6 +308,7 @@ export const useFileActions = () => {
       if (updates.starred !== undefined) dbUpdates.is_starred = updates.starred;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
+      if (updates.daily_snippets !== undefined) dbUpdates.daily_snippets = updates.daily_snippets;
       FileService.updateDocument(id, dbUpdates).catch(e => console.error(e));
 
       if (updates.tags !== undefined) {
@@ -282,6 +324,7 @@ export const useFileActions = () => {
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
+      if (updates.daily_snippets !== undefined) dbUpdates.daily_snippets = updates.daily_snippets;
       FileService.updateDiary(id, dbUpdates).catch(e => console.error(e));
     }
   };

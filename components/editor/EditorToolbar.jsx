@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, Text, Modal } from 'react-native';
-import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown, Edit2, CheckSquare } from 'lucide-react-native';
+import { Bold, Italic, Underline, Baseline, PaintBucket, Image as ImageIcon, Link, ChevronDown, Edit2, CheckSquare, AlignLeft, AlignCenter, AlignRight } from 'lucide-react-native';
 import { actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 
@@ -15,13 +15,17 @@ const FONT_FAMILIES = [
 // HTML execCommand('fontSize') usually supports 1-7.
 // Common mapping (browser-dependent): 1=10px,2=13px,3=16px,4=18px,5=24px,6=32px,7=48px
 const FONT_SIZES = [
-  { label: '10', value: '1' },
-  { label: '13', value: '2' },
   { label: '16', value: '3' },
   { label: '18', value: '4' },
   { label: '24', value: '5' },
   { label: '32', value: '6' },
   { label: '48', value: '7' },
+];
+
+const ALIGN_OPTIONS = [
+  { label: '靠左對齊', value: 'justifyLeft', Icon: AlignLeft },
+  { label: '置中對齊', value: 'justifyCenter', Icon: AlignCenter },
+  { label: '靠右對齊', value: 'justifyRight', Icon: AlignRight },
 ];
 
 export default function EditorToolbar({
@@ -53,6 +57,13 @@ export default function EditorToolbar({
   const underlineActive = hasAction(actions.setUnderline) || hasAction('underline');
   const checkListActive = hasAction(actions.checkboxList) || hasAction('checkboxList');
 
+  const alignCenterActive = hasAction(actions.alignCenter) || hasAction('justifyCenter');
+  const alignRightActive = hasAction(actions.alignRight) || hasAction('justifyRight');
+
+  let CurrentAlignIcon = AlignLeft;
+  if (alignCenterActive) CurrentAlignIcon = AlignCenter;
+  else if (alignRightActive) CurrentAlignIcon = AlignRight;
+
   const fontFamilyLabel = useMemo(
     () => FONT_FAMILIES.find(f => f.value === fontFamily)?.label ?? fontFamily,
     [fontFamily]
@@ -65,13 +76,136 @@ export default function EditorToolbar({
   const applyFontFamily = (family) => {
     setFontFamily(family);
     setFontModal(null);
-    richTextRef?.current?.sendAction(actions.setFontName, 'result', family);
+    richTextRef?.current?.injectJavascript(`
+      (function() {
+        var editor = document.getElementById('editor') || document.querySelector('[contenteditable="true"]');
+        if (!editor) return;
+        
+        editor.style.fontFamily = '${family}';
+        
+        var sel = window.getSelection();
+        var originalRanges = [];
+        for (var i = 0; i < sel.rangeCount; i++) {
+          originalRanges.push(sel.getRangeAt(i));
+        }
+        
+        if (originalRanges.length === 0) {
+          var range = document.createRange();
+          range.selectNodeContents(editor);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          document.execCommand('selectAll', false, null);
+        }
+        
+        document.execCommand('fontName', false, '${family}');
+        
+        sel.removeAllRanges();
+        if (originalRanges.length > 0) {
+          for (var i = 0; i < originalRanges.length; i++) {
+            sel.addRange(originalRanges[i]);
+          }
+        } else {
+          var endRange = document.createRange();
+          endRange.selectNodeContents(editor);
+          endRange.collapse(false);
+          sel.addRange(endRange);
+        }
+        
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+      })();
+      true;
+    `);
   };
 
   const applyFontSize = (size) => {
     setFontSize(size);
     setFontModal(null);
-    richTextRef?.current?.sendAction(actions.setFontSize, 'result', size);
+    richTextRef?.current?.injectJavascript(`
+      (function() {
+        var editor = document.getElementById('editor') || document.querySelector('[contenteditable="true"]');
+        if (!editor) return;
+        
+        var sizeMap = { '3': '16px', '4': '18px', '5': '24px', '6': '32px', '7': '48px' };
+        if (sizeMap['${size}']) {
+          editor.style.fontSize = sizeMap['${size}'];
+        }
+        
+        var sel = window.getSelection();
+        var originalRanges = [];
+        for (var i = 0; i < sel.rangeCount; i++) {
+          originalRanges.push(sel.getRangeAt(i));
+        }
+        
+        if (originalRanges.length === 0) {
+          var range = document.createRange();
+          range.selectNodeContents(editor);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          document.execCommand('selectAll', false, null);
+        }
+        
+        document.execCommand('fontSize', false, '${size}');
+        
+        sel.removeAllRanges();
+        if (originalRanges.length > 0) {
+          for (var i = 0; i < originalRanges.length; i++) {
+            sel.addRange(originalRanges[i]);
+          }
+        } else {
+          var endRange = document.createRange();
+          endRange.selectNodeContents(editor);
+          endRange.collapse(false);
+          sel.addRange(endRange);
+        }
+        
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+      })();
+      true;
+    `);
+  };
+
+  const applyAlignment = (command) => {
+    setFontModal(null);
+    richTextRef?.current?.injectJavascript(`
+      (function() {
+        var editor = document.getElementById('editor') || document.querySelector('[contenteditable="true"]');
+        if (!editor) return;
+        
+        var sel = window.getSelection();
+        var originalRanges = [];
+        for (var i = 0; i < sel.rangeCount; i++) {
+          originalRanges.push(sel.getRangeAt(i));
+        }
+        
+        if (originalRanges.length === 0) {
+          var range = document.createRange();
+          range.selectNodeContents(editor);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          document.execCommand('selectAll', false, null);
+        }
+        
+        document.execCommand('${command}', false, null);
+        
+        sel.removeAllRanges();
+        if (originalRanges.length > 0) {
+          for (var i = 0; i < originalRanges.length; i++) {
+            sel.addRange(originalRanges[i]);
+          }
+        } else {
+          var endRange = document.createRange();
+          endRange.selectNodeContents(editor);
+          endRange.collapse(false);
+          sel.addRange(endRange);
+        }
+        
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+      })();
+      true;
+    `);
   };
 
   return (
@@ -94,6 +228,13 @@ export default function EditorToolbar({
             >
               <Text style={styles.dropdownText}>{fontSizeLabel}</Text>
               <ChevronDown size={16} color={colors.text} style={{ marginLeft: 8 }} />
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.dropdownContainer, pressed ? styles.dropdownPressed : null]}
+              onPress={() => setFontModal('align')}
+            >
+              <CurrentAlignIcon size={16} color={colors.text} />
+              <ChevronDown size={16} color={colors.text} style={{ marginLeft: 4 }} />
             </Pressable>
           </View>
         )}
@@ -180,13 +321,24 @@ export default function EditorToolbar({
         >
           <Pressable style={styles.modalBackdrop} onPress={() => setFontModal(null)}>
             <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-              {(fontModal === 'family' ? FONT_FAMILIES : FONT_SIZES).map((opt) => (
+              {(fontModal === 'family' ? FONT_FAMILIES : fontModal === 'size' ? FONT_SIZES : ALIGN_OPTIONS).map((opt) => (
                 <Pressable
                   key={`${fontModal}-${opt.value}`}
                   style={({ pressed }) => [styles.modalRow, pressed ? styles.modalRowPressed : null]}
-                  onPress={() => (fontModal === 'family' ? applyFontFamily(opt.value) : applyFontSize(opt.value))}
+                  onPress={() => {
+                    if (fontModal === 'family') applyFontFamily(opt.value);
+                    else if (fontModal === 'size') applyFontSize(opt.value);
+                    else if (fontModal === 'align') applyAlignment(opt.value);
+                  }}
                 >
-                  <Text style={styles.modalRowText}>{opt.label}</Text>
+                  {fontModal === 'align' && opt.Icon ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <opt.Icon size={20} color={colors.text} style={{ marginRight: 12 }} />
+                      <Text style={styles.modalRowText}>{opt.label}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.modalRowText}>{opt.label}</Text>
+                  )}
                 </Pressable>
               ))}
             </Pressable>

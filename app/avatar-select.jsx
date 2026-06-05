@@ -9,12 +9,16 @@ import { useAuthActions } from '../hooks/useAuthActions';
 
 // Assuming these images exist in the project
 const AVATAR_OPTIONS = [
-  require('../assets/img/1.png'),
-  require('../assets/img/2.png'),
-  require('../assets/img/3.png'),
-  require('../assets/img/4.png'),
-  require('../assets/img/5.png'),
-  require('../assets/img/6.png'),
+  require('../assets/img/head1.png'),
+  require('../assets/img/head2.png'),
+  require('../assets/img/head3.png'),
+  require('../assets/img/head4.png'),
+  require('../assets/img/head5.png'),
+  require('../assets/img/head6.png'),
+  require('../assets/img/head7.png'),
+  require('../assets/img/head8.png'),
+  require('../assets/img/head9.png'),
+  require('../assets/img/head10.png'),
 ];
 
 export default function AvatarSelectScreen() {
@@ -47,20 +51,25 @@ export default function AvatarSelectScreen() {
       </View>
 
       <View style={styles.content}>
-        <FlatList
-          data={AVATAR_OPTIONS}
-          numColumns={2}
-          keyExtractor={(_, index) => index.toString()}
-          columnWrapperStyle={styles.row}
-          renderItem={({ item, index }) => (
-            <Pressable 
-              style={[styles.avatarWrapper, selectedAvatar === index && styles.selectedWrapper]}
-              onPress={() => setSelectedAvatar(index)}
-            >
-              <Image source={item} style={styles.avatarImage} resizeMode="contain" />
-            </Pressable>
-          )}
-        />
+        <View style={styles.listContainer}>
+          <FlatList
+            data={AVATAR_OPTIONS}
+            numColumns={3}
+            keyExtractor={(_, index) => index.toString()}
+            columnWrapperStyle={styles.row}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <Pressable 
+                style={[styles.avatarWrapper, selectedAvatar === index && styles.selectedWrapper]}
+                onPress={() => setSelectedAvatar(index)}
+              >
+                <View style={styles.imageContainer}>
+                  <Image source={item} style={styles.avatarImage} resizeMode="contain" />
+                </View>
+              </Pressable>
+            )}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -84,27 +93,45 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  listContainer: {
+    flex: 1,
+    backgroundColor: '#FFFDF5',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#6b6058',
+    paddingTop: 32,
+    paddingHorizontal: 16,
+  },
   row: {
-    justifyContent: 'space-around',
-    marginBottom: 20,
+    justifyContent: 'flex-start',
+    marginBottom: 32,
+    gap: 16, // using gap for React Native >= 0.71
   },
   avatarWrapper: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.tertiary,
-    borderWidth: 2,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 4,
     borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedWrapper: {
+    borderColor: '#6b6058',
+  },
+  imageContainer: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 1,
+    borderColor: '#000',
+    backgroundColor: '#FFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  selectedWrapper: {
-    borderColor: colors.text,
-    borderWidth: 4,
-  },
   avatarImage: {
-    width: 100,
-    height: 100,
+    width: 60,
+    height: 60,
   },
 });

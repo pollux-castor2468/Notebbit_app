@@ -10,6 +10,53 @@ import { useTaskActions } from '../../../hooks/useTaskActions';
 import TopHeader from '../../../components/TopHeader';
 import { getRequiredExp } from '../../../utils/leveling';
 
+const RABBIT_IMAGES = {
+  static: {
+    1: require('../../../assets/img/static1.gif'),
+    2: require('../../../assets/img/static2.gif'),
+    3: require('../../../assets/img/static3.gif'),
+    4: require('../../../assets/img/static4.gif'),
+    5: require('../../../assets/img/static5.gif'),
+    6: require('../../../assets/img/static6.gif'),
+    7: require('../../../assets/img/static7.gif'),
+    8: require('../../../assets/img/static8.gif'),
+    9: require('../../../assets/img/static9.gif'),
+    10: require('../../../assets/img/static10.gif'),
+    11: require('../../../assets/img/static11.gif'),
+    12: require('../../../assets/img/static12.gif'),
+    13: require('../../../assets/img/static13.gif'),
+    14: require('../../../assets/img/static14.gif'),
+    15: require('../../../assets/img/static15.gif'),
+    16: require('../../../assets/img/static16.gif'),
+    17: require('../../../assets/img/static17.gif'),
+    18: require('../../../assets/img/static18.gif'),
+    19: require('../../../assets/img/static19.gif'),
+    20: require('../../../assets/img/static20.gif'),
+  },
+  bounce: {
+    1: require('../../../assets/img/bounce1.gif'),
+    2: require('../../../assets/img/bounce2.gif'),
+    3: require('../../../assets/img/bounce3.gif'),
+    4: require('../../../assets/img/bounce4.gif'),
+    5: require('../../../assets/img/bounce5.gif'),
+    6: require('../../../assets/img/bounce6.gif'),
+    7: require('../../../assets/img/bounce7.gif'),
+    8: require('../../../assets/img/bounce8.gif'),
+    9: require('../../../assets/img/bounce9.gif'),
+    10: require('../../../assets/img/bounce10.gif'),
+    11: require('../../../assets/img/bounce11.gif'),
+    12: require('../../../assets/img/bounce12.gif'),
+    13: require('../../../assets/img/bounce13.gif'),
+    14: require('../../../assets/img/bounce14.gif'),
+    15: require('../../../assets/img/bounce15.gif'),
+    16: require('../../../assets/img/bounce16.gif'),
+    17: require('../../../assets/img/bounce17.gif'),
+    18: require('../../../assets/img/bounce18.gif'),
+    19: require('../../../assets/img/bounce19.gif'),
+    20: require('../../../assets/img/bounce20.gif'),
+  }
+};
+
 export default function CustomTasks() {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
@@ -21,6 +68,7 @@ export default function CustomTasks() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editTaskTitle, setEditTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState(null);
+  const [rabbitState, setRabbitState] = useState('static');
   const navigation = useNavigation();
   
   useLayoutEffect(() => {
@@ -29,6 +77,14 @@ export default function CustomTasks() {
     });
     return unsubscribe;
   }, [navigation]);
+
+  const handleRabbitPress = () => {
+    if (rabbitState === 'bounce') return;
+    setRabbitState('bounce');
+    setTimeout(() => {
+      setRabbitState('static');
+    }, 1000);
+  };
 
   //新增一個自訂任務
   const handleAddTask = () => {
@@ -61,6 +117,8 @@ export default function CustomTasks() {
 
   const maxExpNext = getRequiredExp(level);
   const expProgress = `${Math.min(100, Math.max(0, (exp / maxExpNext) * 100))}%`;
+
+  const safeLevel = Math.min(20, Math.max(1, level));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,7 +153,13 @@ export default function CustomTasks() {
           </Pressable>
         </View>
         {/* 兔子圖片 */}
-        <Image source={require('../../../assets/img/4.png')} style={styles.rabbit} resizeMode="contain" pointerEvents="none" />
+        <Pressable style={styles.rabbit} onPress={handleRabbitPress}>
+          <Image 
+            source={RABBIT_IMAGES[rabbitState][safeLevel]} 
+            style={{ width: 250, height: 180 }} 
+            resizeMode="contain" 
+          />
+        </Pressable>
       </View>
 
       {/* Bottom Gray Section */}
@@ -309,10 +373,12 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.text,
   },
   rabbit: {
-    height: 180,
     position: 'absolute',
     bottom: 20,
-    left: -150,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomSection: {
     flex: 0.6,

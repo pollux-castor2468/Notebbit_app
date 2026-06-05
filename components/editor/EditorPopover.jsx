@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ChevronRight, Star } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 
-export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', isStarred, onToggleStar, onSetTags, onClose, onRename }) {
+export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', onOpenSource, onOpenVersion, onClose, onRename }) {
   const { colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -37,19 +37,20 @@ export default function EditorPopover({ visible, popoverPos, wordCount, type = '
             
             {type === 'document' && (
               <>
-                <Pressable style={styles.popoverBtn} onPress={onToggleStar}>
-                  <Text style={styles.popoverText}>星號</Text>
-                  <Star size={20} color={colors.text} fill={isStarred ? colors.text : 'transparent'} />
+                <Pressable style={styles.popoverBtn} onPress={() => { onClose(); onOpenSource && onOpenSource(); }}>
+                  <Text style={styles.popoverText}>資料來源</Text>
+                  <ChevronRight size={20} color={colors.text} />
                 </Pressable>
 
-                <Pressable style={styles.popoverBtn} onPress={onSetTags}>
-                  <Text style={styles.popoverText}>設定標籤</Text>
+                <Pressable style={styles.popoverBtn} onPress={() => { onClose(); onOpenVersion && onOpenVersion(); }}>
+                  <Text style={styles.popoverText}>版本歷史</Text>
+                  <ChevronRight size={20} color={colors.text} />
                 </Pressable>
               </>
             )}
             
             <Pressable
-              style={[styles.popoverBtn, { marginBottom: 0 }]}
+              style={styles.popoverBtn}
               onPress={() => {
                 onClose();
                 onRename();
@@ -57,6 +58,18 @@ export default function EditorPopover({ visible, popoverPos, wordCount, type = '
             >
               <Text style={styles.popoverText}>{renameText}</Text>
             </Pressable>
+
+            {type === 'document' && (
+              <Pressable
+                style={[styles.popoverBtn, { marginBottom: 0 }]}
+                onPress={() => {
+                  onClose();
+                  alert('匯出文件功能開發中');
+                }}
+              >
+                <Text style={styles.popoverText}>匯出文件</Text>
+              </Pressable>
+            )}
           </>
         ) : (
           <View style={[styles.popoverBtn, { marginBottom: 0, justifyContent: 'center', paddingVertical: 32 }]}>

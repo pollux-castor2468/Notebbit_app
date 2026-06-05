@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableOpacity, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
 import { Check, MoreVertical, Sun, Cloud, CloudLightning, CloudRain, Wind, Smile, Meh, Frown, ChevronRight, X as XIcon } from 'lucide-react-native';
@@ -26,7 +26,30 @@ export default function DiaryEditor() {
   // TabBar patch removed as the editor is now a full stack screen
 
   const fileData = useFileStore(state => state.data.find(d => d.id === id));
-  const { updateFile, toggleStar } = useFileActions();
+  const { updateFile, toggleStar, permanentlyDeleteItem } = useFileActions();
+
+  const fileDataRef = useRef(fileData);
+  React.useEffect(() => {
+    fileDataRef.current = fileData;
+  }, [fileData]);
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      const currentData = fileDataRef.current;
+      if (currentData) {
+        const isUntouched = 
+          currentData.title === '未命名日記' &&
+          (!currentData.content || currentData.content === '' || currentData.content === '<p><br></p>' || currentData.content === '<div><br></div>' || currentData.content === '<br>') &&
+          !currentData.weather &&
+          !currentData.mood;
+          
+        if (isUntouched) {
+          permanentlyDeleteItem(id);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [navigation, id, permanentlyDeleteItem]);
 
   // Modals state
   const [activeModal, setActiveModal] = useState(null); // 'more' | null
@@ -217,20 +240,20 @@ export default function DiaryEditor() {
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>天氣：</Text>
                 <View style={layoutStyles.rowCenter}>
-                  <TouchableOpacity onPress={() => setSelectedWeather('sun')} style={{ opacity: selectedWeather === 'sun' || !selectedWeather ? 1 : 0.3 }}>
-                    <Sun size={24} color="#FACC15" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedWeather('sun')}>
+                    <Image source={selectedWeather === 'sun' ? require('../../assets/img/weather1.png') : require('../../assets/img/gray_weather1.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedWeather('cloud')} style={{ opacity: selectedWeather === 'cloud' || !selectedWeather ? 1 : 0.3 }}>
-                    <Cloud size={24} color="#9CA3AF" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedWeather('cloud')}>
+                    <Image source={selectedWeather === 'cloud' ? require('../../assets/img/weather2.png') : require('../../assets/img/gray_weather2.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedWeather('lightning')} style={{ opacity: selectedWeather === 'lightning' || !selectedWeather ? 1 : 0.3 }}>
-                    <CloudLightning size={24} color="#D1D5DB" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedWeather('lightning')}>
+                    <Image source={selectedWeather === 'lightning' ? require('../../assets/img/weather3.png') : require('../../assets/img/gray_weather3.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedWeather('rain')} style={{ opacity: selectedWeather === 'rain' || !selectedWeather ? 1 : 0.3 }}>
-                    <CloudRain size={24} color="#3B82F6" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedWeather('wind')}>
+                    <Image source={selectedWeather === 'wind' ? require('../../assets/img/weather4.png') : require('../../assets/img/gray_weather4.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedWeather('wind')} style={{ opacity: selectedWeather === 'wind' || !selectedWeather ? 1 : 0.3 }}>
-                    <Wind size={24} color="#14B8A6" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedWeather('rain')}>
+                    <Image source={selectedWeather === 'rain' ? require('../../assets/img/weather5.png') : require('../../assets/img/gray_weather5.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -238,20 +261,20 @@ export default function DiaryEditor() {
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>心情：</Text>
                 <View style={layoutStyles.rowCenter}>
-                  <TouchableOpacity onPress={() => setSelectedMood('great')} style={{ opacity: selectedMood === 'great' || !selectedMood ? 1 : 0.3 }}>
-                    <Smile size={24} color="#22C55E" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedMood('great')}>
+                    <Image source={selectedMood === 'great' ? require('../../assets/img/mood1.png') : require('../../assets/img/gray_mood1.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedMood('good')} style={{ opacity: selectedMood === 'good' || !selectedMood ? 1 : 0.3 }}>
-                    <Smile size={24} color="#84CC16" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedMood('good')}>
+                    <Image source={selectedMood === 'good' ? require('../../assets/img/mood2.png') : require('../../assets/img/gray_mood2.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedMood('normal')} style={{ opacity: selectedMood === 'normal' || !selectedMood ? 1 : 0.3 }}>
-                    <Meh size={24} color="#EAB308" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedMood('normal')}>
+                    <Image source={selectedMood === 'normal' ? require('../../assets/img/mood3.png') : require('../../assets/img/gray_mood3.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedMood('bad')} style={{ opacity: selectedMood === 'bad' || !selectedMood ? 1 : 0.3 }}>
-                    <Frown size={24} color="#F97316" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedMood('bad')}>
+                    <Image source={selectedMood === 'bad' ? require('../../assets/img/mood4.png') : require('../../assets/img/gray_mood4.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setSelectedMood('awful')} style={{ opacity: selectedMood === 'awful' || !selectedMood ? 1 : 0.3 }}>
-                    <Frown size={24} color="#EF4444" style={styles.metaIcon} />
+                  <TouchableOpacity onPress={() => setSelectedMood('awful')}>
+                    <Image source={selectedMood === 'awful' ? require('../../assets/img/mood5.png') : require('../../assets/img/gray_mood5.png')} style={styles.metaImage} resizeMode="contain" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -378,6 +401,11 @@ const getStyles = (colors) => StyleSheet.create({
   },
   metaIcon: {
     marginRight: 16,
+  },
+  metaImage: {
+    width: 36,
+    height: 36,
+    marginRight: 10,
   },
   bodyInput: {
     flex: 1,
