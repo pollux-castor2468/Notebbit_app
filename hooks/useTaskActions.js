@@ -21,7 +21,6 @@ export const useTaskActions = () => {
           ...t,
           completed: false,
           completed_at: null,
-          isSynced: false, // Mark as unsynced so it will sync to server when online
         };
       }
       return t;
@@ -53,40 +52,25 @@ export const useTaskActions = () => {
         taskId: c.task_id,
         completedDate: c.completed_date,
         taskName: c.tasks?.task_name || '已刪除的任務',
+        createdAt: c.created_at,
         isSynced: true,
       }));
       store.setTaskCompletions(mappedCompletions);
 
-      // 2. Map and reset server tasks if completed on a previous day
-      const mappedTasks = [];
-      for (const t of (tasksData || [])) {
-        const isCompletedToday = t.is_completed && t.completed_at && t.completed_at.startsWith(today);
-        if (t.is_completed && !isCompletedToday) {
-          // Reset this completed task on the server in background
-          TaskService.updateTask(t.id, {
-            is_completed: false,
-            completed_at: null
-          }).catch(e => console.error('Error resetting task on server:', e));
-
-          mappedTasks.push({
-            id: t.id,
-            title: t.task_name,
-            completed: false,
-            completed_at: null,
-            created_at: t.created_at,
-            isSynced: true,
-          });
-        } else {
-          mappedTasks.push({
-            id: t.id,
-            title: t.task_name,
-            completed: t.is_completed,
-            completed_at: t.completed_at,
-            created_at: t.created_at,
-            isSynced: true,
-          });
-        }
-      }
+      // 2. Map tasks, determining today's completion state based on completionsData
+      const mappedTasks = (tasksData || []).map(t => {
+        const todayCompletion = mappedCompletions.find(
+          c => c.taskId === t.id && c.completedDate === today
+        );
+        return {
+          id: t.id,
+          title: t.task_name,
+          completed: !!todayCompletion,
+          completed_at: todayCompletion ? todayCompletion.createdAt : null,
+          created_at: t.created_at,
+          isSynced: true,
+        };
+      });
 
       const todayCompleted = mappedTasks.filter(t => 
         t.completed && t.completed_at && t.completed_at.startsWith(today)
@@ -142,8 +126,6 @@ export const useTaskActions = () => {
             id: t.id,
             user_id: user.id,
             task_name: t.title,
-            is_completed: t.completed,
-            completed_at: t.completed_at || null,
             created_at: new Date().toISOString().split('T')[0] // fallback
           });
         } catch (e) {
@@ -233,11 +215,6 @@ export const useTaskActions = () => {
 
     // Sync task
     try {
-      await TaskService.updateTask(id, {
-        is_completed: true,
-        completed_at: now
-      });
-
       // Insert completion record to Supabase
       await TaskService.insertTaskCompletion({
         id: newCompletionId,
@@ -285,7 +262,6 @@ export const useTaskActions = () => {
         id: newId,
         user_id: user.id,
         task_name: title,
-        is_completed: false,
         created_at: today,
       });
     } catch (error) {

@@ -4,7 +4,7 @@ export const FileService = {
   async fetchDocuments(userId) {
     const { data, error } = await supabase
       .from('documents')
-      .select('*, version:document_versions(*), source:data_sources(*)')
+      .select('*, version:document_versions(*), source:data_sources(*), tags:document_tags(tag:tags(id, name))')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
     if (error) throw error;
@@ -31,7 +31,8 @@ export const FileService = {
   },
 
   async insertDocument(doc) {
-    const { error } = await supabase.from('documents').insert(doc);
+    const { tags, ...rest } = doc;
+    const { error } = await supabase.from('documents').insert(rest);
     if (error) throw error;
   },
 
@@ -41,7 +42,8 @@ export const FileService = {
   },
 
   async updateDocument(id, updates) {
-    const { error } = await supabase.from('documents').update(updates).eq('id', id);
+    const { tags, ...rest } = updates;
+    const { error } = await supabase.from('documents').update(rest).eq('id', id);
     if (error) throw error;
   },
 
@@ -86,7 +88,8 @@ export const FileService = {
   },
 
   async upsertDocument(doc) {
-    const { error } = await supabase.from('documents').upsert(doc);
+    const { tags, ...rest } = doc;
+    const { error } = await supabase.from('documents').upsert(rest);
     if (error) throw error;
   },
 
@@ -118,5 +121,24 @@ export const FileService = {
   async deleteTagRecord(id) {
     const { error } = await supabase.from('tags').delete().eq('id', id);
     if (error) throw error;
+  },
+
+  async updateDocumentTags(docId, tagIds) {
+    const { error: deleteError } = await supabase
+      .from('document_tags')
+      .delete()
+      .eq('document_id', docId);
+    if (deleteError) throw deleteError;
+
+    if (!tagIds || tagIds.length === 0) return;
+
+    const relations = tagIds.map(tagId => ({
+      document_id: docId,
+      tag_id: tagId
+    }));
+    const { error: insertError } = await supabase
+      .from('document_tags')
+      .insert(relations);
+    if (insertError) throw insertError;
   }
 };

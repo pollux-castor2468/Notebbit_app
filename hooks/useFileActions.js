@@ -40,7 +40,7 @@ export const useFileActions = () => {
         content: doc.content || '',
         edited_dates: doc.edited_dates || [],
         is_deleted: doc.is_deleted || false,
-        tags: doc.tags || [],
+        tags: (doc.tags || []).map(t => t.tag?.name).filter(Boolean),
         versionNumber: doc.version?.length || 0,
         sourceNumber: doc.source?.length || 0,
         version: (doc.version || []).map(v => ({
@@ -122,8 +122,14 @@ export const useFileActions = () => {
             edited_dates: file.edited_dates || [],
             is_starred: file.starred,
             is_deleted: file.is_deleted,
-            tags: file.tags || [],
           });
+
+          const globalTags = useFileStore.getState().globalTags || [];
+          const tagIds = (file.tags || []).map(tagName => {
+            const found = globalTags.find(t => t.name === tagName);
+            return found ? found.id : null;
+          }).filter(Boolean);
+          await FileService.updateDocumentTags(file.id, tagIds);
 
           if (file.version && file.version.length > 0) {
             for (const v of file.version) {
@@ -261,8 +267,16 @@ export const useFileActions = () => {
       if (updates.starred !== undefined) dbUpdates.is_starred = updates.starred;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
-      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       FileService.updateDocument(id, dbUpdates).catch(e => console.error(e));
+
+      if (updates.tags !== undefined) {
+        const globalTags = useFileStore.getState().globalTags || [];
+        const tagIds = updates.tags.map(tagName => {
+          const found = globalTags.find(t => t.name === tagName);
+          return found ? found.id : null;
+        }).filter(Boolean);
+        FileService.updateDocumentTags(id, tagIds).catch(e => console.error('Error updating doc tags:', e));
+      }
     } else if (updatedFile.type === 'diary') {
       if (updates.weather !== undefined) dbUpdates.weather = updates.weather;
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
@@ -293,11 +307,11 @@ export const useFileActions = () => {
     const updatedGlobalTags = globalTags.map(t => t.id === tag.id ? { ...t, name: uniqueName } : t);
     useFileStore.getState().setGlobalTags(updatedGlobalTags);
 
-    // Update documents tags list
+    // Update documents tags list in store (only local update, database relies on tags table update)
     data.forEach(file => {
       if (file.type === 'document' && file.tags && file.tags.includes(oldName)) {
         const newTags = file.tags.map(t => t === oldName ? uniqueName : t);
-        updateFile(file.id, { tags: newTags });
+        useFileStore.getState().updateFileLocally(file.id, { tags: newTags }, file.isSynced);
       }
     });
 
@@ -309,14 +323,11 @@ export const useFileActions = () => {
 
   const deleteTag = (tagName) => {
     const data = useFileStore.getState().data;
-    const globalTags = useFileStore.getState().globalTags || [];
-    // We already removed it from local globalTags, so finding it by name won't work if done after.
-    // We assume the caller handles local state, but we should do the DB call.
-    // Wait, let's just let the caller pass the ID for deletion.
+    // Update documents tags list in store (only local update, database relies on Cascade Delete on tags table)
     data.forEach(file => {
       if (file.type === 'document' && file.tags && file.tags.includes(tagName)) {
         const newTags = file.tags.filter(t => t !== tagName);
-        updateFile(file.id, { tags: newTags });
+        useFileStore.getState().updateFileLocally(file.id, { tags: newTags }, file.isSynced);
       }
     });
   };
