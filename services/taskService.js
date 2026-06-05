@@ -67,5 +67,31 @@ export const TaskService = {
       .delete()
       .eq('id', taskId);
     if (error) throw error;
+  },
+
+  fetchTaskCompletions: async (userId) => {
+    const { data, error } = await supabase
+      .from('task_completions')
+      .select('*, tasks(task_name)')
+      .eq('user_id', userId)
+      .order('completed_date', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  insertTaskCompletion: async (completionData) => {
+    const { error } = await supabase
+      .from('task_completions')
+      .insert(completionData);
+    if (error) throw error;
+  },
+
+  deleteTaskCompletion: async (taskId, date) => {
+    const { error } = await supabase
+      .from('task_completions')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('completed_date', date);
+    if (error) throw error;
   }
 };

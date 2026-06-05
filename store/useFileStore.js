@@ -6,6 +6,9 @@ export const useFileStore = create(
   persist(
     (set) => ({
       data: [],
+      globalTags: [{ id: '1', name: '工作' }, { id: '2', name: '生活' }, { id: '3', name: '靈感' }],
+
+      setGlobalTags: (tags) => set({ globalTags: tags }),
 
       setData: (updater) => set((state) => ({ 
         data: typeof updater === 'function' ? updater(state.data) : updater 

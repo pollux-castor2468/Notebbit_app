@@ -10,23 +10,17 @@ export default function TagModal({ visible, fileId, onClose }) {
   const styles = getStyles(colors);
 
   const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
-  const { updateFile } = useFileActions();
-  const allData = useFileStore(state => state.data);
+  const globalTags = useFileStore(state => state.globalTags || []);
+  const { updateFile, addNewTag } = useFileActions();
 
   const [selectedTags, setSelectedTags] = useState([]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTagText, setNewTagText] = useState('');
 
-  // Extract all unique tags
+  // Extract all unique tags from global tags
   const allTags = useMemo(() => {
-    const tagsSet = new Set();
-    allData.forEach(item => {
-      if (Array.isArray(item.tags)) {
-        item.tags.forEach(t => tagsSet.add(t));
-      }
-    });
-    return Array.from(tagsSet);
-  }, [allData]);
+    return globalTags.map(t => t.name);
+  }, [globalTags]);
 
   // Sync selected tags when modal opens
   useEffect(() => {
@@ -48,7 +42,14 @@ export default function TagModal({ visible, fileId, onClose }) {
   const handleAddTag = () => {
     if (newTagText.trim()) {
       const tag = newTagText.trim();
-      const newSelected = selectedTags.includes(tag) ? selectedTags : [...selectedTags, tag];
+      
+      let finalTagName = tag;
+      const allTagNames = globalTags.map(t => t.name);
+      if (!allTagNames.includes(tag)) {
+        finalTagName = addNewTag(tag);
+      }
+
+      const newSelected = selectedTags.includes(finalTagName) ? selectedTags : [...selectedTags, finalTagName];
       updateFile(fileId, { tags: newSelected });
       setSelectedTags(newSelected);
       setNewTagText('');

@@ -19,8 +19,17 @@ export const useFileActions = () => {
     if (!user) return;
 
     try {
-      const docs = await FileService.fetchDocuments(user.id);
-      const diaries = await FileService.fetchDiaries(user.id);
+      const [docs, diaries, tagsData] = await Promise.all([
+        FileService.fetchDocuments(user.id),
+        FileService.fetchDiaries(user.id),
+        FileService.fetchTags(user.id),
+      ]);
+
+      const mappedTags = (tagsData || []).map(t => ({
+        id: t.id,
+        name: t.name
+      }));
+      useFileStore.getState().setGlobalTags(mappedTags);
 
       const mappedDocs = (docs || []).map(doc => ({
         id: doc.id,
@@ -75,6 +84,7 @@ export const useFileActions = () => {
         mood: diary.mood,
         starred: false,
         content: diary.content || '',
+        edited_dates: diary.edited_dates || [],
         is_deleted: diary.is_deleted || false,
         tags: [],
         versionNumber: 0,
@@ -112,6 +122,7 @@ export const useFileActions = () => {
             edited_dates: file.edited_dates || [],
             is_starred: file.starred,
             is_deleted: file.is_deleted,
+            tags: file.tags || [],
           });
 
           if (file.version && file.version.length > 0) {
@@ -120,7 +131,6 @@ export const useFileActions = () => {
                 await FileService.upsertDocumentVersion({
                   id: v.versionId,
                   doc_id: file.id,
-                  user_id: user.id,
                   version_name: v.versionTitle,
                   content_snapshot: v.versionContent,
                 });
@@ -158,6 +168,7 @@ export const useFileActions = () => {
             weather: file.weather || null,
             mood: file.mood || null,
             diary_date: dDate,
+            edited_dates: file.edited_dates || [],
             is_deleted: file.is_deleted,
           });
         } catch (e) { console.error('Sync diary error', e); }
@@ -209,6 +220,7 @@ export const useFileActions = () => {
           user_id: user.id,
           title,
           content: '',
+          edited_dates: [now.toISOString().split('T')[0]],
           diary_date: now.toISOString().split('T')[0],
           is_deleted: false,
         }).catch(e => console.error('Error inserting diary:', e));
@@ -223,7 +235,7 @@ export const useFileActions = () => {
     const file = data.find(f => f.id === id);
     if (!file) return;
 
-    if (file.type === 'document' && (updates.content !== undefined || updates.title !== undefined)) {
+    if ((file.type === 'document' || file.type === 'diary') && (updates.content !== undefined || updates.title !== undefined)) {
       const todayStr = new Date().toISOString().split('T')[0];
       const currentEditedDates = file.edited_dates || [];
       if (!currentEditedDates.includes(todayStr)) {
@@ -249,17 +261,100 @@ export const useFileActions = () => {
       if (updates.starred !== undefined) dbUpdates.is_starred = updates.starred;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
+      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       FileService.updateDocument(id, dbUpdates).catch(e => console.error(e));
     } else if (updatedFile.type === 'diary') {
       if (updates.weather !== undefined) dbUpdates.weather = updates.weather;
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
+      if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
       FileService.updateDiary(id, dbUpdates).catch(e => console.error(e));
     }
   };
 
   const deleteItem = (id) => updateFile(id, { is_deleted: true });
   const restoreItem = (id) => updateFile(id, { is_deleted: false });
+
+  const renameTag = (oldName, newName) => {
+    const data = useFileStore.getState().data;
+    const globalTags = useFileStore.getState().globalTags || [];
+    const tag = globalTags.find(t => t.name === oldName);
+    if (!tag) return;
+
+    // Deduplicate tag name
+    let uniqueName = newName.trim();
+    let counter = 1;
+    while (globalTags.some(t => t.name === uniqueName && t.id !== tag.id)) {
+      uniqueName = `${newName.trim()}(${counter})`;
+      counter++;
+    }
+
+    // Update globalTags in store
+    const updatedGlobalTags = globalTags.map(t => t.id === tag.id ? { ...t, name: uniqueName } : t);
+    useFileStore.getState().setGlobalTags(updatedGlobalTags);
+
+    // Update documents tags list
+    data.forEach(file => {
+      if (file.type === 'document' && file.tags && file.tags.includes(oldName)) {
+        const newTags = file.tags.map(t => t === oldName ? uniqueName : t);
+        updateFile(file.id, { tags: newTags });
+      }
+    });
+
+    const user = useAuthStore.getState().user;
+    if (user) {
+      FileService.updateTag(tag.id, { name: uniqueName }).catch(e => console.error(e));
+    }
+  };
+
+  const deleteTag = (tagName) => {
+    const data = useFileStore.getState().data;
+    const globalTags = useFileStore.getState().globalTags || [];
+    // We already removed it from local globalTags, so finding it by name won't work if done after.
+    // We assume the caller handles local state, but we should do the DB call.
+    // Wait, let's just let the caller pass the ID for deletion.
+    data.forEach(file => {
+      if (file.type === 'document' && file.tags && file.tags.includes(tagName)) {
+        const newTags = file.tags.filter(t => t !== tagName);
+        updateFile(file.id, { tags: newTags });
+      }
+    });
+  };
+
+  const deleteTagById = (id, tagName) => {
+    const user = useAuthStore.getState().user;
+    deleteTag(tagName);
+    if (user) {
+      FileService.deleteTagRecord(id).catch(e => console.error(e));
+    }
+  };
+
+  const addNewTag = (name) => {
+    const user = useAuthStore.getState().user;
+    const newId = Crypto.randomUUID();
+    
+    // Deduplicate tag name
+    const currentTags = useFileStore.getState().globalTags || [];
+    let uniqueName = name.trim();
+    let counter = 1;
+    while (currentTags.some(t => t.name === uniqueName)) {
+      uniqueName = `${name.trim()}(${counter})`;
+      counter++;
+    }
+
+    const newTag = { id: newId, name: uniqueName };
+    useFileStore.getState().setGlobalTags([...currentTags, newTag]);
+
+    if (user) {
+      FileService.insertTag({
+        id: newId,
+        user_id: user.id,
+        name: uniqueName
+      }).catch(e => console.error(e));
+    }
+
+    return uniqueName;
+  };
 
   const permanentlyDeleteItem = (id) => {
     const user = useAuthStore.getState().user;
@@ -318,7 +413,6 @@ export const useFileActions = () => {
     FileService.insertDocumentVersion({
       id: versionId,
       doc_id: id,
-      user_id: user.id,
       version_name: versionTitle,
       content_snapshot: file.content,
     }).catch(e => console.error(e));
@@ -426,6 +520,9 @@ export const useFileActions = () => {
     updateFile,
     deleteItem,
     restoreItem,
+    renameTag,
+    deleteTag: deleteTagById,
+    addNewTag,
     permanentlyDeleteItem,
     toggleStar,
     saveVersion,

@@ -37,10 +37,10 @@ export default function FileBrowser() {
   const [tempPickerMonth, setTempPickerMonth] = useState(new Date().getMonth());
   const [appliedDateFilter, setAppliedDateFilter] = useState(null);
 
-  const { data } = useFileStore();
+  const { data, globalTags } = useFileStore();
   const { updateFile, deleteItem } = useFileActions();
 
-  const allTags = Array.from(new Set(data.filter(d => d.type === 'document' && !d.is_deleted).flatMap(d => d.tags || [])));
+  const allTags = (globalTags || []).map(t => t.name);
 
   const filteredData = data.filter(item => {
     if (item.is_deleted) return false;
@@ -51,8 +51,8 @@ export default function FileBrowser() {
       if (appliedStarStatus === 'unstarred' && item.starred) return false;
       
       if (appliedSelectedTags.length > 0) {
-        const hasTag = appliedSelectedTags.some(tag => (item.tags || []).includes(tag));
-        if (!hasTag) return false;
+        const hasAllTags = appliedSelectedTags.every(tag => (item.tags || []).includes(tag));
+        if (!hasAllTags) return false;
       }
     }
     

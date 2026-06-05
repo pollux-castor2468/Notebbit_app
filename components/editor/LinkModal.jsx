@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, Modal } from 'react-nativ
 import { X } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 
-export default function LinkModal({ visible, onClose, onInsert }) {
+export default function LinkModal({ visible, onClose, onInsert, initialTitle }) {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -15,10 +15,10 @@ export default function LinkModal({ visible, onClose, onInsert }) {
   useEffect(() => {
     if (visible) {
       setLinkUrl('');
-      setLinkTitle('');
+      setLinkTitle(initialTitle || '');
       setLinkError('');
     }
-  }, [visible]);
+  }, [visible, initialTitle]);
 
   const handleInsert = () => {
     const trimmedUrl = linkUrl.trim();

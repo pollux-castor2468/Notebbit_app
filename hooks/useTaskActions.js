@@ -8,6 +8,29 @@ export const useTaskActions = () => {
   const store = useTaskStore();
 
   const fetchTasks = async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Check and reset local offline tasks first
+    const currentLocalTasks = useTaskStore.getState().tasks || [];
+    let localChanged = false;
+    const resetLocalTasks = currentLocalTasks.map(t => {
+      const isCompletedToday = t.completed && t.completed_at && t.completed_at.startsWith(today);
+      if (t.completed && !isCompletedToday) {
+        localChanged = true;
+        return {
+          ...t,
+          completed: false,
+          completed_at: null,
+          isSynced: false, // Mark as unsynced so it will sync to server when online
+        };
+      }
+      return t;
+    });
+
+    if (localChanged) {
+      useTaskStore.getState().setTasks(resetLocalTasks);
+    }
+
     const user = useAuthStore.getState().user;
     if (!user) return; // If not logged in, we only use local tasks, no fetching.
 
@@ -19,21 +42,55 @@ export const useTaskActions = () => {
         profile = await TaskService.createProfile(user.id);
       }
 
-      const tasksData = await TaskService.getTasks(user.id);
+      // Fetch tasks AND completions in parallel!
+      const [tasksData, completionsData] = await Promise.all([
+        TaskService.getTasks(user.id),
+        TaskService.fetchTaskCompletions(user.id)
+      ]);
 
-      const today = new Date().toISOString().split('T')[0];
-      const todayCompleted = (tasksData || []).filter(t => 
-        t.is_completed && t.completed_at && t.completed_at.startsWith(today)
-      ).length;
-
-      const mappedTasks = (tasksData || []).map(t => ({
-        id: t.id,
-        title: t.task_name,
-        completed: t.is_completed,
-        completed_at: t.completed_at,
-        created_at: t.created_at,
+      const mappedCompletions = (completionsData || []).map(c => ({
+        id: c.id,
+        taskId: c.task_id,
+        completedDate: c.completed_date,
+        taskName: c.tasks?.task_name || '已刪除的任務',
         isSynced: true,
       }));
+      store.setTaskCompletions(mappedCompletions);
+
+      // 2. Map and reset server tasks if completed on a previous day
+      const mappedTasks = [];
+      for (const t of (tasksData || [])) {
+        const isCompletedToday = t.is_completed && t.completed_at && t.completed_at.startsWith(today);
+        if (t.is_completed && !isCompletedToday) {
+          // Reset this completed task on the server in background
+          TaskService.updateTask(t.id, {
+            is_completed: false,
+            completed_at: null
+          }).catch(e => console.error('Error resetting task on server:', e));
+
+          mappedTasks.push({
+            id: t.id,
+            title: t.task_name,
+            completed: false,
+            completed_at: null,
+            created_at: t.created_at,
+            isSynced: true,
+          });
+        } else {
+          mappedTasks.push({
+            id: t.id,
+            title: t.task_name,
+            completed: t.is_completed,
+            completed_at: t.completed_at,
+            created_at: t.created_at,
+            isSynced: true,
+          });
+        }
+      }
+
+      const todayCompleted = mappedTasks.filter(t => 
+        t.completed && t.completed_at && t.completed_at.startsWith(today)
+      ).length;
 
       // Merge local offline tasks with fetched server tasks
       const localData = useTaskStore.getState().tasks.filter(t => t.isSynced === false);
@@ -96,6 +153,24 @@ export const useTaskActions = () => {
       state.markTasksAsSynced();
     }
 
+    // 2.5. Process completions
+    const localCompletions = state.taskCompletions.filter(c => c.isSynced === false);
+    if (localCompletions.length > 0) {
+      for (const c of localCompletions) {
+        try {
+          await TaskService.insertTaskCompletion({
+            id: c.id,
+            task_id: c.taskId,
+            user_id: user.id,
+            completed_date: c.completedDate,
+          });
+        } catch (e) {
+          console.error('Sync task completion error', e);
+        }
+      }
+      state.setTaskCompletions(state.taskCompletions.map(c => ({ ...c, isSynced: true })));
+    }
+
     // 3. Process profile
     if (!state.profileIsSynced) {
       try {
@@ -140,6 +215,17 @@ export const useTaskActions = () => {
     // Optimistic Update locally
     store.updateTaskState(id, { completed: true, completed_at: now, isSynced: !!user });
     
+    // Add completion record locally
+    const newCompletionId = Crypto.randomUUID();
+    const newCompletion = {
+      id: newCompletionId,
+      taskId: id,
+      completedDate: today,
+      taskName: taskToToggle.title,
+      isSynced: !!user,
+    };
+    store.addTaskCompletionLocally(newCompletion);
+    
     // Update Profile locally
     store.setExpLevel(newExp, newLevel, newDailyCount, newLastExpDate, !!user);
 
@@ -152,6 +238,14 @@ export const useTaskActions = () => {
         completed_at: now
       });
 
+      // Insert completion record to Supabase
+      await TaskService.insertTaskCompletion({
+        id: newCompletionId,
+        task_id: id,
+        user_id: user.id,
+        completed_date: today,
+      });
+
       // Sync profile if exp gained
       if (gainedExp) {
         await TaskService.updateProfileExp(user.id, newExp, newLevel);
@@ -160,6 +254,12 @@ export const useTaskActions = () => {
       console.error('Error toggling task:', error);
       // Mark as unsynced if network fails
       store.updateTaskState(id, { isSynced: false });
+      
+      // Also mark completion as unsynced
+      store.setTaskCompletions(
+        store.taskCompletions.map(c => c.id === newCompletionId ? { ...c, isSynced: false } : c)
+      );
+
       if (gainedExp) store.setExpLevel(newExp, newLevel, newDailyCount, newLastExpDate, false);
     }
   };

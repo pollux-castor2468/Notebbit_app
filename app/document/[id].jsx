@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, Keyboard, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
 import { Edit2, Clock, Star, MoreVertical, X, Plus, ChevronRight } from 'lucide-react-native';
@@ -324,6 +324,10 @@ export default function DocumentEditor() {
                     setActiveModal('source');
                     return false;
                   }
+                  if (request.url.startsWith('http://') || request.url.startsWith('https://')) {
+                    Linking.openURL(request.url).catch(err => console.error("Couldn't open URL", err));
+                    return false;
+                  }
                   return true;
                 }}
                 webviewProps={{
@@ -333,6 +337,10 @@ export default function DocumentEditor() {
                       setAutoEditSourceId(sourceId);
                       setSourceSheetMode('view');
                       setActiveModal('source');
+                      return false;
+                    }
+                    if (request.url.startsWith('http://') || request.url.startsWith('https://')) {
+                      Linking.openURL(request.url).catch(err => console.error("Couldn't open URL", err));
                       return false;
                     }
                     return true;
@@ -488,6 +496,7 @@ export default function DocumentEditor() {
         visible={activeModal === 'link'}
         onClose={() => setActiveModal(null)}
         onInsert={handleInsertLink}
+        initialTitle={savedSelection.current?.text}
       />
 
     </SafeAreaView>

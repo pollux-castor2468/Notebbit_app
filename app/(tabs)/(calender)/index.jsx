@@ -24,7 +24,7 @@ export default function CalendarScreen() {
   const [tempPickerMonth, setTempPickerMonth] = useState(month);
 
   const { data: fileData } = useFileStore();
-  const { tasks } = useTaskStore();
+  const { tasks, taskCompletions } = useTaskStore();
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -55,14 +55,30 @@ export default function CalendarScreen() {
     const isCreatedOnDate = f.date && f.date.startsWith(selectedDateStrDots);
     return isEditedOnDate || isCreatedOnDate;
   });
-  const filteredDiaries = fileData.filter(f => f.type === 'diary' && (f.diary_date === selectedDateStrDashes || (f.date && f.date.startsWith(selectedDateStrDots))));
-  
-  const filteredTasks = tasks.filter(t => {
-    const isCompletedOnDate = t.completed && t.completed_at && t.completed_at.startsWith(selectedDateStrDashes);
-    const isCreatedOnDate = t.created_at && t.created_at.startsWith(selectedDateStrDashes);
-    const isOfflineCreatedToday = !t.created_at && selectedDateStrDashes === todayStrDashes;
-    return isCompletedOnDate || isCreatedOnDate || isOfflineCreatedToday;
+  const filteredDiaries = fileData.filter(f => {
+    if (f.type !== 'diary') return false;
+    const isEditedOnDate = f.edited_dates && f.edited_dates.includes(selectedDateStrDashes);
+    const isCreatedOnDate = f.diary_date === selectedDateStrDashes || (f.date && f.date.startsWith(selectedDateStrDots));
+    return isEditedOnDate || isCreatedOnDate;
   });
+  
+  const filteredTasks = useMemo(() => {
+    if (selectedDateStrDashes === todayStrDashes) {
+      return tasks.filter(t => {
+        const isCompletedToday = t.completed && t.completed_at && t.completed_at.startsWith(selectedDateStrDashes);
+        const isCreatedToday = t.created_at && t.created_at.startsWith(selectedDateStrDashes);
+        const isOfflineCreatedToday = !t.created_at;
+        return isCompletedToday || isCreatedToday || isOfflineCreatedToday;
+      });
+    } else {
+      const completions = (taskCompletions || []).filter(c => c.completedDate === selectedDateStrDashes);
+      return completions.map(c => ({
+        id: c.id,
+        title: c.taskName,
+        completed: true,
+      }));
+    }
+  }, [selectedDateStrDashes, tasks, taskCompletions]);
 
   const completedTasksCount = filteredTasks.filter(t => t.completed).length;
   

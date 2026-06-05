@@ -14,7 +14,7 @@ export default function CustomTasks() {
   const { layoutStyles, textStyles, colors } = useStyles();
   const styles = getStyles(colors);
   const { tasks, level, exp } = useTaskStore();
-  const { toggleTask, addTask, updateTask } = useTaskActions();
+  const { toggleTask, addTask, updateTask, fetchTasks } = useTaskActions();
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -23,7 +23,12 @@ export default function CustomTasks() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const navigation = useNavigation();
   
-  // TabBar patch removed
+  useLayoutEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchTasks();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   //新增一個自訂任務
   const handleAddTask = () => {

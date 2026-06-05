@@ -12,8 +12,15 @@ export const useTaskStore = create(
       dailyExpCount: 0,
       profileIsSynced: true,
       pendingDeletedTaskIds: [],
+      taskCompletions: [],
 
       setTasks: (tasks) => set({ tasks }),
+
+      setTaskCompletions: (completions) => set({ taskCompletions: completions }),
+
+      addTaskCompletionLocally: (completion) => set((state) => ({
+        taskCompletions: [completion, ...state.taskCompletions]
+      })),
       
       setExpLevel: (exp, level, dailyExpCount, lastExpDate, profileIsSynced = true) => set({
         exp,
@@ -35,7 +42,7 @@ export const useTaskStore = create(
         tasks: state.tasks.filter((t) => t.id !== id)
       })),
       
-      clearTasks: () => set({ tasks: [], level: 1, exp: 0, lastExpDate: '', dailyExpCount: 0, profileIsSynced: true, pendingDeletedTaskIds: [] }),
+      clearTasks: () => set({ tasks: [], level: 1, exp: 0, lastExpDate: '', dailyExpCount: 0, profileIsSynced: true, pendingDeletedTaskIds: [], taskCompletions: [] }),
 
       markTasksAsSynced: () => set((state) => ({
         tasks: state.tasks.map(t => ({ ...t, isSynced: true }))
