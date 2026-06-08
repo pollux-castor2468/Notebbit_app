@@ -46,29 +46,31 @@ export default function ResetPasswordScreen() {
         <Text style={[textStyles.h2, { flex: 1, textAlign: 'center', marginRight: 28 }]}>重新設定密碼</Text>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>輸入新密碼</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="請輸入新密碼（至少 6 字元）"
-            placeholderTextColor={colors.inactiveText}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>輸入新密碼</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="請輸入新密碼（至少 6 字元）"
+              placeholderTextColor={colors.inactiveText}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>確認新密碼</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="請再次輸入新密碼"
-            placeholderTextColor={colors.inactiveText}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>確認新密碼</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="請再次輸入新密碼"
+              placeholderTextColor={colors.inactiveText}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
         </View>
 
         <Pressable style={styles.submitBtn} onPress={handleResetPassword} disabled={isLoading}>
@@ -93,10 +95,18 @@ const getStyles = (colors) => StyleSheet.create({
   backBtn: {
     padding: 8,
   },
-  content: {
+  container: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 16,
     paddingTop: 40,
+  },
+  content: {
+    borderWidth: 1,
+    borderRadius: 20,
+    borderColor: colors.border,
+    padding: 16,
+    paddingTop: 20,
+    backgroundColor: colors.recentSection,
   },
   inputGroup: {
     marginBottom: 24,
@@ -108,7 +118,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.tertiary,
+    backgroundColor: colors.input,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,

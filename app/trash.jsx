@@ -102,7 +102,7 @@ export default function TrashScreen() {
 const getStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -115,8 +115,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
-    backgroundColor: colors.background,
+    padding: 10,
+    paddingTop: 15,
+    backgroundColor: colors.recentSection,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    margin: 16,
   },
   emptyText: {
     textAlign: 'center',

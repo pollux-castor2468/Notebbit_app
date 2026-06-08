@@ -201,14 +201,16 @@ export default function Setting() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>是否回登出帳號</Text>
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalConfirm} onPress={handleLogout}>
-                <Text style={styles.modalConfirmText}>確認</Text>
-              </Pressable>
-              <Pressable style={styles.modalCancel} onPress={() => setLogoutModalVisible(false)}>
-                <Text style={styles.modalCancelText}>取消</Text>
-              </Pressable>
+            <View style={styles.modalContentInner}>
+              <Text style={styles.modalTitle}>是否登出帳號</Text>
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalConfirm} onPress={handleLogout}>
+                  <Text style={styles.modalConfirmText}>確認</Text>
+                </Pressable>
+                <Pressable style={styles.modalCancel} onPress={() => setLogoutModalVisible(false)}>
+                  <Text style={styles.modalCancelText}>取消</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -222,14 +224,17 @@ export default function Setting() {
         onRequestClose={() => setStatModal({ visible: false, type: null })}
       >
         <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setStatModal({ visible: false, type: null })} />
           <View style={styles.statModalContainer}>
-            <Pressable 
-              style={styles.statModalCloseBtn} 
-              onPress={() => setStatModal({ visible: false, type: null })}
-            >
-              <X size={24} color={colors.text} />
-            </Pressable>
-            {renderStatModalContent()}
+            <View style={styles.statModalContainerInner}>
+              <Pressable 
+                style={styles.statModalCloseBtn} 
+                onPress={() => setStatModal({ visible: false, type: null })}
+              >
+                <X size={28} color={colors.text} />
+              </Pressable>
+              {renderStatModalContent()}
+            </View>
           </View>
         </View>
       </Modal>
@@ -247,7 +252,7 @@ const getStyles = (colors) => StyleSheet.create({
     paddingBottom: 120, // Tab bar clearance
   },
   profileCard: {
-    backgroundColor: colors.container,
+    backgroundColor: colors.secondary,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
@@ -297,7 +302,7 @@ const getStyles = (colors) => StyleSheet.create({
     padding: 8,
   },
   loginBtn: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.container,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
@@ -306,7 +311,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   loginBtnText: {
     fontWeight: 'bold',
-    color: colors.errow,
+    color: colors.text,
   },
   statsRow: {
     flexDirection: 'row',
@@ -393,12 +398,20 @@ const getStyles = (colors) => StyleSheet.create({
   },
   modalContent: {
     width: '80%',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 24,
+    padding: 5,
     alignItems: 'center',
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   modalTitle: {
     fontSize: 18,
@@ -423,7 +436,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.secondary,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
@@ -443,34 +456,44 @@ const getStyles = (colors) => StyleSheet.create({
   },
   statModalContainer: {
     width: '75%',
-    backgroundColor: '#FFFDF5',
-    borderRadius: 16,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#EFE2C2',
-    padding: 32,
+    borderColor: colors.border,
+    padding: 5,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+  },
+  statModalContainerInner: {
+    backgroundColor: colors.surface,
+    width: '100%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   statModalCloseBtn: {
     position: 'absolute',
     top: 12,
     right: 12,
     padding: 4,
+    zIndex: 10,
   },
   statModalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 16,
+    position: 'relative',
+    top: 5,
+    left: 10,
   },
   statModalCountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 20,
+    marginBottom: 100,
+    position: 'relative',
+    // top: 5,
+    left: 120,
   },
   statModalNumber: {
     fontSize: 36,
@@ -478,13 +501,16 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.text,
   },
   statModalUnit: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
     marginLeft: 8,
   },
   statModalImage: {
-    width: 150,
-    height: 120,
+    width: 200,
+    height: 150,
+    position: 'absolute',
+    top: 90,
+    left: 50,
   },
 });

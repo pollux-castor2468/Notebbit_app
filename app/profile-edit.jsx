@@ -62,14 +62,14 @@ export default function ProfileEditScreen() {
             {avatar ? (
               <Image source={{ uri: avatar }} style={styles.avatarImage} />
             ) : (
-              <Image source={require('../assets/img/1.png')} style={styles.avatarImage} resizeMode="contain" />
+              <Image source={require('../assets/img/head1.png')} style={styles.avatarImage} resizeMode="contain" />
             )}
           </View>
           <View style={styles.avatarActions}>
             <Pressable style={styles.avatarBtn} onPress={() => router.push('/avatar-select')}>
               <Text style={styles.avatarBtnText}>選擇頭像</Text>
             </Pressable>
-            <Pressable style={styles.avatarBtn} onPress={handleCustomAvatar}>
+            <Pressable style={[styles.avatarBtn, {backgroundColor: colors.secondary}]} onPress={handleCustomAvatar}>
               <Text style={styles.avatarBtnText}>自訂頭像</Text>
             </Pressable>
           </View>
@@ -147,8 +147,8 @@ const getStyles = (colors) => StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 120,
-    height: 120,
+    width: 140,
+    height: 140,
   },
   avatarActions: {
     flexDirection: 'row',
@@ -157,7 +157,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   avatarBtn: {
     flex: 0.48,
-    backgroundColor: colors.container,
+    backgroundColor: colors.recentHeader,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
@@ -179,7 +179,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#EBEBEB',
+    backgroundColor: colors.input,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -191,7 +191,7 @@ const getStyles = (colors) => StyleSheet.create({
     paddingBottom: 40,
   },
   saveBtn: {
-    backgroundColor: colors.container,
+    backgroundColor: colors.recentHeader,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,

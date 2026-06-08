@@ -41,9 +41,9 @@ export default function SettingsDetailsScreen() {
             <View style={[styles.customSwitch, isDarkMode && styles.customSwitchActive]}>
               <View style={[styles.switchThumb, isDarkMode && styles.switchThumbActive]}>
                 {isDarkMode ? (
-                  <Check size={14} color="#FFF" />
+                  <Check size={14} color={colors.border} />
                 ) : (
-                  <X size={14} color="#FFF" />
+                  <X size={14} color={colors.white} />
                 )}
               </View>
             </View>
@@ -89,26 +89,28 @@ export default function SettingsDetailsScreen() {
       <Modal visible={!!modalType} transparent animationType="fade" onRequestClose={() => setModalType(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setModalType(null)}>
           <View style={styles.modalContent}>
-            {modalType === 'day' && daysOptions.map((opt, idx) => (
-              <Pressable 
-                key={opt.value} 
-                style={[styles.modalOption, idx === daysOptions.length - 1 && { borderBottomWidth: 0 }]} 
-                onPress={() => { setFirstDayOfWeek(opt.value); setModalType(null); }}
-              >
-                <Text style={styles.modalOptionText}>{opt.label}</Text>
-                {firstDayOfWeek === opt.value && <Check size={20} color={colors.text} />}
-              </Pressable>
-            ))}
-            {modalType === 'fontSize' && fontOptions.map((opt, idx) => (
-              <Pressable 
-                key={opt} 
-                style={[styles.modalOption, idx === fontOptions.length - 1 && { borderBottomWidth: 0 }]} 
-                onPress={() => { setDefaultFontSize(opt); setModalType(null); }}
-              >
-                <Text style={styles.modalOptionText}>{opt}</Text>
-                {defaultFontSize === opt && <Check size={20} color={colors.text} />}
-              </Pressable>
-            ))}
+            <View style={styles.modalContentInner}>
+              {modalType === 'day' && daysOptions.map((opt, idx) => (
+                <Pressable 
+                  key={opt.value} 
+                  style={[styles.modalOption, idx === daysOptions.length - 1 && { borderBottomWidth: 0 }]} 
+                  onPress={() => { setFirstDayOfWeek(opt.value); setModalType(null); }}
+                >
+                  <Text style={styles.modalOptionText}>{opt.label}</Text>
+                  {firstDayOfWeek === opt.value && <Check size={20} color={colors.text} />}
+                </Pressable>
+              ))}
+              {modalType === 'fontSize' && fontOptions.map((opt, idx) => (
+                <Pressable 
+                  key={opt} 
+                  style={[styles.modalOption, idx === fontOptions.length - 1 && { borderBottomWidth: 0 }]} 
+                  onPress={() => { setDefaultFontSize(opt); setModalType(null); }}
+                >
+                  <Text style={styles.modalOptionText}>{opt}</Text>
+                  {defaultFontSize === opt && <Check size={20} color={colors.text} />}
+                </Pressable>
+              ))}
+            </View>
           </View>
         </Pressable>
       </Modal>
@@ -134,13 +136,14 @@ const getStyles = (colors) => StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   card: {
-    backgroundColor: colors.container, 
+    flex: 1,
+    backgroundColor: colors.recentSection, 
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#6b6058',
+    borderColor: colors.border,
     padding: 16,
   },
   rowItem: {
@@ -150,9 +153,9 @@ const getStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#6b6058',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   rowLeft: {
@@ -168,15 +171,15 @@ const getStyles = (colors) => StyleSheet.create({
   valuePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EAE6DF',
+    backgroundColor: colors.secondary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
   },
   rowValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#6b6058',
+    color: colors.text,
     marginRight: 4,
   },
   customSwitch: {
@@ -211,12 +214,20 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
     width: '80%',
-    padding: 16,
+    padding: 5,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   modalOption: {
     flexDirection: 'row',

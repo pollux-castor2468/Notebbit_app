@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, ChevronRight, FileText, Search, MoreVertical, Star, Edit, Tag, Filter, X, Check, Calendar } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, FileText, Search, MoreVertical, Star, Pencil, Edit, Tag, Filter, X, Check, Calendar } from 'lucide-react-native';
 import { useStyles } from '../styles';
 import { useFileStore } from '../store/useFileStore';
 import { useFileActions } from '../hooks/useFileActions';
@@ -204,68 +204,70 @@ export default function FileBrowser() {
       <Modal transparent visible={filterModalVisible} animationType="fade" onRequestClose={() => setFilterModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Pressable onPress={() => setFilterModalVisible(false)} style={{ padding: 4 }}>
-                <X size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選</Text>
-              <Pressable onPress={() => {
-                setAppliedStarStatus(tempStarStatus);
-                setAppliedSelectedTags(tempSelectedTags);
-                setFilterModalVisible(false);
-              }} style={{ padding: 4 }}>
-                <Check size={24} color={colors.text} />
-              </Pressable>
-            </View>
-            
-            <View style={styles.filterSection}>
-              <View style={styles.filterSectionHeader}>
-                <Text style={styles.filterSectionTitle}>星號</Text>
-              </View>
-              <View style={styles.filterSectionBodyRow}>
-                <Pressable 
-                  style={[styles.filterIconBtn, tempStarStatus === 'unstarred' && styles.filterIconBtnActive]}
-                  onPress={() => setTempStarStatus(s => s === 'unstarred' ? null : 'unstarred')}
-                >
-                  <Star size={24} color={colors.text} />
+            <View style={styles.modalContentInner}>
+              <View style={styles.modalHeader}>
+                <Pressable onPress={() => setFilterModalVisible(false)} style={{ padding: 4 }}>
+                  <X size={28} color={colors.text} />
                 </Pressable>
-                <Pressable 
-                  style={[styles.filterIconBtn, tempStarStatus === 'starred' && styles.filterIconBtnActive]}
-                  onPress={() => setTempStarStatus(s => s === 'starred' ? null : 'starred')}
-                >
-                  <Star size={24} color={colors.text} fill={colors.text} />
-                </Pressable>
-              </View>
-            </View>
-
-            <View style={styles.filterSection}>
-              <View style={styles.filterSectionHeader}>
-                <Text style={styles.filterSectionTitle}>標籤</Text>
+                <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選</Text>
                 <Pressable onPress={() => {
+                  setAppliedStarStatus(tempStarStatus);
+                  setAppliedSelectedTags(tempSelectedTags);
                   setFilterModalVisible(false);
-                  router.push('/tags-edit');
-                }}>
-                  <Edit size={16} color={colors.text} />
+                }} style={{ padding: 4 }}>
+                  <Check size={28} color={colors.text} />
                 </Pressable>
               </View>
-              {allTags.length > 0 ? (
-                <View style={styles.tagsGrid}>
-                  {allTags.map(tag => (
-                    <Pressable
-                      key={tag}
-                      style={[styles.tagFilterBtn, tempSelectedTags.includes(tag) && styles.tagFilterBtnActive]}
-                      onPress={() => {
-                        if (tempSelectedTags.includes(tag)) setTempSelectedTags(tempSelectedTags.filter(t => t !== tag));
-                        else setTempSelectedTags([...tempSelectedTags, tag]);
-                      }}
-                    >
-                      <Text style={[styles.tagFilterText, tempSelectedTags.includes(tag) && styles.tagFilterTextActive]}>{tag}</Text>
-                    </Pressable>
-                  ))}
+              
+              <View style={styles.filterSection}>
+                <View style={styles.filterSectionHeader}>
+                  <Text style={styles.filterSectionTitle}>星號</Text>
                 </View>
-              ) : (
-                <Text style={{color: colors.inactiveText, fontSize: 14, marginTop: 8}}>尚無標籤，請點擊右上方圖示新增標籤。</Text>
-              )}
+                <View style={styles.filterSectionBodyRow}>
+                  <Pressable 
+                    style={[styles.filterIconBtn, tempStarStatus === 'unstarred' && styles.filterIconBtnActive]}
+                    onPress={() => setTempStarStatus(s => s === 'unstarred' ? null : 'unstarred')}
+                  >
+                    <Star size={24} color={colors.text} />
+                  </Pressable>
+                  <Pressable 
+                    style={[styles.filterIconBtn, tempStarStatus === 'starred' && styles.filterIconBtnActive]}
+                    onPress={() => setTempStarStatus(s => s === 'starred' ? null : 'starred')}
+                  >
+                    <Star size={24} color={colors.text} fill={colors.text} />
+                  </Pressable>
+                </View>
+              </View>
+
+              <View style={styles.filterSection}>
+                <View style={styles.filterSectionHeader}>
+                  <Text style={styles.filterSectionTitle}>標籤</Text>
+                  <Pressable onPress={() => {
+                    setFilterModalVisible(false);
+                    router.push('/tags-edit');
+                  }}>
+                    <Pencil size={24} color={colors.text} />
+                  </Pressable>
+                </View>
+                {allTags.length > 0 ? (
+                  <View style={styles.tagsGrid}>
+                    {allTags.map(tag => (
+                      <Pressable
+                        key={tag}
+                        style={[styles.filterIconBtn, tempSelectedTags.includes(tag) && styles.filterIconBtnActive]}
+                        onPress={() => {
+                          if (tempSelectedTags.includes(tag)) setTempSelectedTags(tempSelectedTags.filter(t => t !== tag));
+                          else setTempSelectedTags([...tempSelectedTags, tag]);
+                        }}
+                      >
+                        <Text style={[styles.tagFilterText, tempSelectedTags.includes(tag) && styles.tagFilterTextActive]}>{tag}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={{color: colors.inactiveText, fontSize: 14, marginTop: 8}}>尚無標籤，請點擊右上方圖示新增標籤。</Text>
+                )}
+              </View>
             </View>
           </View>
         </View>
@@ -275,52 +277,54 @@ export default function FileBrowser() {
       <Modal visible={isMonthPickerVisible} transparent animationType="fade" onRequestClose={() => setIsMonthPickerVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Pressable onPress={() => setIsMonthPickerVisible(false)} style={{ padding: 4 }}>
-                <X size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選月份</Text>
-              <Pressable onPress={() => {
-                if (tempPickerMonth !== null) {
-                  setAppliedDateFilter({ year: tempPickerYear, month: tempPickerMonth });
-                } else {
-                  setAppliedDateFilter(null); // Clear filter
-                }
-                setIsMonthPickerVisible(false);
-              }} style={{ padding: 4 }}>
-                <Check size={24} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <View style={styles.yearSelectorRow}>
-              <Pressable onPress={() => setTempPickerYear(y => y - 1)} style={{ padding: 8 }}>
-                <ChevronLeft size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[textStyles.h3, { width: 80, textAlign: 'center' }]}>{tempPickerYear}</Text>
-              <Pressable onPress={() => setTempPickerYear(y => y + 1)} style={{ padding: 8 }}>
-                <ChevronRight size={24} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <View style={styles.monthsGrid}>
-              {[...Array(12).keys()].map((m) => (
-                <Pressable
-                  key={m}
-                  style={[
-                    styles.monthBtn,
-                    tempPickerMonth === m && styles.monthBtnActive
-                  ]}
-                  onPress={() => {
-                    if (tempPickerMonth === m) setTempPickerMonth(null);
-                    else setTempPickerMonth(m);
-                  }}
-                >
-                  <Text style={[
-                    styles.monthBtnText,
-                    tempPickerMonth === m && styles.monthBtnTextActive
-                  ]}>{m + 1}月</Text>
+            <View style={styles.modalContentInner}>
+              <View style={styles.modalHeader}>
+                <Pressable onPress={() => setIsMonthPickerVisible(false)} style={{ padding: 4 }}>
+                  <X size={28} color={colors.text} />
                 </Pressable>
-              ))}
+                <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選月份</Text>
+                <Pressable onPress={() => {
+                  if (tempPickerMonth !== null) {
+                    setAppliedDateFilter({ year: tempPickerYear, month: tempPickerMonth });
+                  } else {
+                    setAppliedDateFilter(null); // Clear filter
+                  }
+                  setIsMonthPickerVisible(false);
+                }} style={{ padding: 4 }}>
+                  <Check size={28} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <View style={styles.yearSelectorRow}>
+                <Pressable onPress={() => setTempPickerYear(y => y - 1)} style={{ paddingRight: 30 }}>
+                  <ChevronLeft size={28} color={colors.text} />
+                </Pressable>
+                <Text style={[textStyles.h3, { width: 80, textAlign: 'center' }]}>{tempPickerYear}</Text>
+                <Pressable onPress={() => setTempPickerYear(y => y + 1)} style={{ paddingLeft: 30 }}>
+                  <ChevronRight size={28} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <View style={styles.monthsGrid}>
+                {[...Array(12).keys()].map((m) => (
+                  <Pressable
+                    key={m}
+                    style={[
+                      styles.monthBtn,
+                      tempPickerMonth === m && styles.monthBtnActive
+                    ]}
+                    onPress={() => {
+                      if (tempPickerMonth === m) setTempPickerMonth(null);
+                      else setTempPickerMonth(m);
+                    }}
+                  >
+                    <Text style={[
+                      styles.monthBtnText,
+                      tempPickerMonth === m && styles.monthBtnTextActive
+                    ]}>{m + 1}月</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
           </View>
         </View>
@@ -332,68 +336,425 @@ export default function FileBrowser() {
 }
 
 const getStyles = (colors) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, height: 62 },
-  allFileSection: { flex: 1, margin: 16, marginTop: 0, marginBottom: 90, borderWidth: 1, borderColor: colors.border, borderRadius: 20 },
-  segmentedControl: { flexDirection: 'row', backgroundColor: colors.recentHeader, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 6, marginBottom: 0 },
-  segmentItem: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 12 },
-  segmentActive: { backgroundColor: colors.secondary },
-  segmentText: { fontSize: 16, color: colors.inactiveText },
-  segmentTextActive: { color: colors.text, fontWeight: '700' },
-  filterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 12 },
-  totalText: { fontSize: 14, color: colors.inactiveText, fontWeight: 'bold' },
-  filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
-  filterBtnText: { fontSize: 14, color: colors.text, fontWeight: 'bold' },
-  listContent: { paddingHorizontal: 16, paddingBottom: 40 },
-  emptyText: { textAlign: 'center', marginTop: 40, color: colors.inactiveText, fontSize: 16 },
-  listItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 16, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  iconBox: { width: 48, height: 52, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginRight: 16 },
-  itemTextContainer: { flex: 1 },
-  dotsBtn: { padding: 8, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  dotsBtnActive: { backgroundColor: colors.recentSection },
-  timelineGroup: { marginBottom: 0 },
-  timelineTitleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  timelineTitleLineContainer: { width: 30, alignItems: 'center' },
-  timelineLineTitle: { width: 2, backgroundColor: colors.border, position: 'absolute', top: '50%', bottom: -16 },
-  timelineTitleDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: '#6b6058', backgroundColor: colors.surface, zIndex: 2 },
-  timelineBubble: { backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, marginLeft: 16, position: 'relative', justifyContent: 'center' },
-  timelineBubbleTail: { position: 'absolute', left: -6, top: '50%', marginTop: -6, width: 12, height: 12, backgroundColor: colors.surface, borderLeftWidth: 1, borderBottomWidth: 1, borderColor: colors.border, transform: [{ rotate: '45deg' }] },
-  timelineTitleText: { fontSize: 16, fontWeight: 'bold', color: colors.text },
-  timelineItemContainer: { flexDirection: 'row' },
-  timelineLineContainer: { width: 30, alignItems: 'center' },
-  timelineDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#6b6058', marginTop: 35, zIndex: 2 },
-  timelineLineItem: { width: 2, backgroundColor: colors.border, position: 'absolute', top: 0, bottom: -16 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: colors.surface, borderRadius: 16, width: '85%', padding: 20, borderWidth: 1, borderColor: colors.border },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  yearSelectorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24, gap: 16 },
-  monthsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  monthBtn: { width: '30%', paddingVertical: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: 'center', marginBottom: 16 },
-  monthBtnActive: { backgroundColor: '#FFF4E0', borderColor: '#E8A317' },
-  monthBtnText: { fontSize: 16, color: colors.text, fontWeight: '500' },
-  monthBtnTextActive: { fontWeight: 'bold' },
-  filterModalContent: { position: 'absolute', top: 160, right: 30, width: 220, backgroundColor: colors.surfaceVariant, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  filterSection: { marginBottom: 24 },
-  filterSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.text, paddingBottom: 8, marginBottom: 16 },
-  filterSectionTitle: { fontSize: 16, fontWeight: 'bold', color: colors.text },
-  filterSectionBodyRow: { flexDirection: 'row' },
-  filterIconBtn: { width: 72, height: 48, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, marginRight: 16 },
-  filterIconBtnActive: { backgroundColor: '#FFF4E0', borderColor: '#E8A317' },
-  tagsGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  tagFilterBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, marginRight: 12, marginBottom: 12 },
-  tagFilterBtnActive: { backgroundColor: '#FFF4E0', borderColor: '#E8A317' },
-  tagFilterText: { fontSize: 16, color: colors.text },
-  tagFilterTextActive: { fontWeight: 'bold' },
-  modalInnerContainer: { position: 'absolute', right: 28, width: 160, backgroundColor: colors.surfaceVariant, borderRadius: 10, padding: 8, borderWidth: 1, borderColor: colors.border },
-  modalBtn: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingVertical: 14, alignItems: 'center', marginBottom: 6 },
-  modalBtnText: { fontSize: 16, fontWeight: '600', color: colors.text },
-  renameOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalBigContent: { padding: 10, width: '80%', backgroundColor: colors.tertiary, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
-  renameContent: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 24 },
-  renameInput: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginTop: 16, fontSize: 16, color: colors.text },
-  renameActions: { flexDirection: 'row', marginTop: 24 },
-  renameBtnCancel: { flex: 1, paddingVertical: 12, backgroundColor: colors.tertiary, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginRight: 8 },
-  renameBtnSubmit: { flex: 1, paddingVertical: 12, backgroundColor: colors.secondary, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginLeft: 8 },
-  modalBtnTextS: { fontSize: 16, fontWeight: 'bold', color: colors.errow },
-  modalBtnTextC: { fontSize: 16, fontWeight: 'bold' },
+  root: { 
+    flex: 1, 
+    backgroundColor: colors.surface,
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    height: 62 
+  },
+  allFileSection: { 
+    flex: 1, 
+    margin: 16, 
+    marginTop: 0, 
+    marginBottom: 90, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    borderRadius: 20, 
+    backgroundColor: colors.recentSection,
+  },
+  segmentedControl: { 
+    flexDirection: 'row', 
+    backgroundColor: colors.recentHeader, 
+    borderTopLeftRadius: 20, 
+    borderTopRightRadius: 20, 
+    // padding: 6, 
+    // marginBottom: 0, 
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  segmentItem: { 
+    flex: 1, 
+    paddingVertical: 12, 
+    alignItems: 'center', 
+    // borderRadius: 12 
+  },
+  segmentActive: { 
+    backgroundColor: colors.secondary 
+  },
+  segmentText: { 
+    fontSize: 16, 
+    color: colors.inactiveText 
+  },
+  segmentTextActive: { 
+    color: colors.text, 
+    fontWeight: '700' 
+  },
+  filterHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    borderBottomWidth: 1, 
+    borderBottomColor: colors.border, 
+    marginBottom: 12 
+  },
+  totalText: { 
+    fontSize: 14, 
+    color: colors.inactiveText, 
+    fontWeight: 'bold' 
+  },
+  filterBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: colors.surface, 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  filterBtnText: { 
+    fontSize: 14, 
+    color: colors.text, 
+    fontWeight: 'bold' 
+  },
+  listContent: { 
+    paddingHorizontal: 16, 
+    paddingBottom: 40 
+  },
+  emptyText: { 
+    textAlign: 'center', 
+    marginTop: 40, 
+    color: colors.inactiveText, 
+    fontSize: 16 
+  },
+  listItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: colors.surface, 
+    padding: 16, 
+    borderRadius: 20, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  iconBox: { 
+    width: 48, 
+    height: 52, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: 16 
+  },
+  itemTextContainer: { 
+    flex: 1 
+  },
+  dotsBtn: { 
+    padding: 8, 
+    borderRadius: 20, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  dotsBtnActive: { 
+    backgroundColor: colors.recentSection 
+  },
+  timelineGroup: { 
+    marginBottom: 0 
+  },
+  timelineTitleContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 16 
+  },
+  timelineTitleLineContainer: { 
+    width: 30, 
+    alignItems: 'center' 
+  },
+  timelineLineTitle: { 
+    width: 2, 
+    backgroundColor: colors.border, 
+    position: 'absolute', 
+    top: '50%', 
+    bottom: -16 
+  },
+  timelineTitleDot: { 
+    width: 16, 
+    height: 16, 
+    borderRadius: 8, 
+    borderWidth: 2, 
+    borderColor: colors.border, 
+    backgroundColor: colors.surface, 
+    zIndex: 2 
+  },
+  timelineBubble: { 
+    backgroundColor: colors.surface, 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    marginLeft: 16, 
+    position: 'relative', 
+    justifyContent: 'center' 
+  },
+  timelineBubbleTail: { 
+    position: 'absolute', 
+    left: -6, top: '50%', 
+    marginTop: -6, 
+    width: 12, 
+    height: 12, 
+    backgroundColor: colors.surface, 
+    borderLeftWidth: 1, 
+    borderBottomWidth: 1, 
+    borderColor: colors.border, 
+    transform: [{ rotate: '45deg' }] 
+  },
+  timelineTitleText: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: colors.text 
+  },
+  timelineItemContainer: { 
+    flexDirection: 'row' 
+  },
+  timelineLineContainer: { 
+    width: 30, 
+    alignItems: 'center' 
+  },
+  timelineDot: { 
+    width: 12, 
+    height: 12, 
+    borderRadius: 6, 
+    backgroundColor: colors.border, 
+    marginTop: 35, 
+    zIndex: 2 
+  },
+  timelineLineItem: { 
+    width: 2, 
+    backgroundColor: colors.border, 
+    position: 'absolute', 
+    top: 0, 
+    bottom: -16 
+  },
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    alignItems: 'center'
+  },
+  modalContent: { 
+    backgroundColor: colors.surfaceVariant, 
+    borderRadius: 20, 
+    width: '85%', 
+    padding: 5, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
+  yearSelectorRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginBottom: 16, 
+    gap: 16 
+  },
+  monthsGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between' 
+  },
+  monthBtn: { 
+    width: '30%', 
+    paddingVertical: 12, 
+    backgroundColor: colors.surface, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    borderRadius: 10, 
+    alignItems: 'center', 
+    marginBottom: 10, 
+  },
+  monthBtnActive: { 
+    backgroundColor: colors.secondary,
+    // borderColor: '#E8A317' 
+  },
+  monthBtnText: { 
+    fontSize: 16, 
+    color: colors.text, 
+    fontWeight: '500' 
+  },
+  monthBtnTextActive: { 
+    fontWeight: 'bold' 
+  },
+  filterModalContent: { 
+    position: 'absolute', 
+    top: 160, 
+    right: 30, 
+    width: 220, 
+    backgroundColor: colors.surfaceVariant, 
+    borderRadius: 16, 
+    padding: 16, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  filterSection: { 
+    marginBottom: 24 
+  },
+  filterSectionHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+     alignItems: 'center', 
+     borderBottomWidth: 1, 
+     borderBottomColor: colors.text, 
+     paddingBottom: 8,
+    marginBottom: 16 
+    },
+  filterSectionTitle: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: colors.text 
+  },
+  filterSectionBodyRow: { 
+    flexDirection: 'row' 
+  },
+  filterIconBtn: { 
+    minWidth: 70, 
+    minHeightheight: 48, 
+    paddingHorizontal: 16, 
+    paddingVertical: 10, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: colors.surface, 
+    marginRight: 12,
+    marginBottom: 12,
+  },
+  filterIconBtnActive: { 
+    backgroundColor: colors.recentHeader, 
+    // borderColor: '#E8A317' 
+  },
+  tagsGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap' 
+  },
+  // tagFilterBtn: { 
+  //   paddingHorizontal: 16, 
+  //   paddingVertical: 10, 
+  //   borderRadius: 12, 
+  //   borderWidth: 1, 
+  //   borderColor: colors.border, 
+  //   backgroundColor: colors.surface, 
+  //   marginRight: 12, 
+  //   marginBottom: 12,
+  // },
+  // tagFilterBtnActive: { 
+  //   backgroundColor: '#FFF4E0', 
+  //   borderColor: '#E8A317' 
+  // },
+  tagFilterText: { 
+    fontSize: 16, 
+    color: colors.text 
+  },
+  tagFilterTextActive: { 
+    fontWeight: 'bold' 
+  },
+  modalInnerContainer: { 
+    position: 'absolute', 
+    right: 28, 
+    width: 160, 
+    backgroundColor: colors.surfaceVariant, 
+    borderRadius: 10, 
+    padding: 8, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  modalBtn: { 
+    backgroundColor: colors.surface, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    marginBottom: 6 
+  },
+  modalBtnText: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: colors.text 
+  },
+  renameOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  modalBigContent: { 
+    padding: 10, 
+    width: '80%', 
+    backgroundColor: colors.tertiary, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border 
+  },
+  renameContent: { 
+    backgroundColor: colors.surface, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    padding: 24 
+  },
+  renameInput: { 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    borderRadius: 8, 
+    padding: 12, 
+    marginTop: 16, 
+    fontSize: 16, 
+    color: colors.text 
+  },
+  renameActions: { 
+    flexDirection: 'row', 
+    marginTop: 24 
+  },
+  renameBtnCancel: { 
+    flex: 1, 
+    paddingVertical: 12, 
+    backgroundColor: colors.tertiary, 
+    borderRadius: 10, 
+    borderWidth: 1,
+    borderColor: colors.border, 
+    alignItems: 'center', 
+    marginRight: 8 
+  },
+  renameBtnSubmit: { 
+    flex: 1, 
+    paddingVertical: 12, 
+    backgroundColor: colors.secondary, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: colors.border, 
+    alignItems: 'center', 
+    marginLeft: 8 
+  },
+  modalBtnTextS: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: colors.errow 
+  },
+  modalBtnTextC: { 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
 });

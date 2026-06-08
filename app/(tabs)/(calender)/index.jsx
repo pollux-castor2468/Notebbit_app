@@ -233,16 +233,16 @@ export default function CalendarScreen() {
     const isDoc = item.type === 'document';
     const isDiary = item.type === 'diary';
 
-    let iconBg = '#F3F4F6';
+    let iconBg = colors.tertiary;
     let iconComp = null;
     if (isDoc) {
-      iconBg = '#F9D9D9'; // Soft pink
+      iconBg = colors.container; // Soft pink
       iconComp = <FileText size={22} color={colors.text} />;
     } else if (isDiary) {
-      iconBg = '#FFF2CC'; // Soft yellow/beige
+      iconBg = colors.secondary; // Soft yellow/beige
       iconComp = <Book size={22} color={colors.text} />;
     } else if (isTask) {
-      iconBg = '#D1E8E2'; // Soft green
+      iconBg = colors.tertiary; // Soft green
       iconComp = <CheckSquare size={22} color={colors.text} />;
     }
 
@@ -273,7 +273,7 @@ export default function CalendarScreen() {
             <Text style={styles.calendarItemTitle} numberOfLines={1}>{item.title}</Text>
             <Text style={styles.calendarItemDate}>{item.date || '2026.04.04 11:46'}</Text>
           </View>
-          {item.starred && <Star size={24} color="#4B5563" fill="#4B5563" />}
+          {item.starred && <Star size={24} color={colors.text} fill={colors.text} />}
         </View>
         {!!previewText && <Text style={styles.calendarItemPreview} numberOfLines={1}>{previewText}...</Text>}
       </Pressable>
@@ -586,7 +586,7 @@ const getStyles = (colors) => StyleSheet.create({
   weekDayText: {
     flex: 1,
     textAlign: 'center',
-    color: '#FFF',
+    color: colors.white,
     fontWeight: 'bold',
   },
   daysGrid: {
@@ -617,7 +617,7 @@ const getStyles = (colors) => StyleSheet.create({
     bottom: 5,
   },
   selectedDayText: {
-    color: '#FFF',
+    color: colors.white,
     fontWeight: 'bold',
   },
   dotsContainer: {
@@ -636,7 +636,7 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   dotBorderSelected: {
-    borderColor: '#FFF',
+    borderColor: colors.white,
   },
   //給點點固定位置才看得出是什麼咚咚，點太小看不出顏色啦
   dotDoc: { backgroundColor: colors.container, position: 'absolute', right: '15%', },
@@ -678,12 +678,12 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: 'bold',
   },
   listContainerCustom: {
-    backgroundColor: '#FFFDF5',
+    backgroundColor: colors.recentSection,
     borderWidth: 1,
     borderColor: colors.border,
     borderTopWidth: 0,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     padding: 16,
     minHeight: 200,
     marginTop: -1,
@@ -729,7 +729,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   calendarItemPreview: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.onPrimary,
   },
   statsRow: {
     flexDirection: 'row',
@@ -966,10 +966,10 @@ const getStyles = (colors) => StyleSheet.create({
     position: 'relative',
     height: 80,
   },
-  statModalImage: {
-    width: 200,
-    height: 120,
-  },
+  // statModalImage: {
+  //   width: 200,
+  //   height: 120,
+  // },
   statModalImageLeft: {
     width: 200,
     height: 120,

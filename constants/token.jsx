@@ -1,7 +1,7 @@
 export const colors = {
   text: '#6C5E4F',           // 文字顏色 (咖啡)
   inactiveText: 'rgba(108, 94, 79, 0.6)', 
-  onPrimary: '#6C5E4F',      // border colors
+  onPrimary: '#777777',      // 灰一點的字
   surface: '#FFFFF9',        // 背景顏色 (淺黃)
   secondary: '#FFF1E3',      // 建立日記 (粉橘)
   tertiary: '#FFFAE3',       // 開啟文件 (淺黃)
@@ -20,19 +20,19 @@ export const colors = {
 export const darkColors = {
   text: '#FFFFFF',           // 文字與Icon (白)
   inactiveText: 'rgba(255, 255, 255, 0.6)', 
-  onPrimary: '#FFFFFF',      //
-  surface: '#6C5E4F',        // 背景顏色: 深咖
-  secondary: '#89AD89',      // 建立日記: 綠色
-  tertiary: '#8A896B',       // 開啟文件: 枯綠 (used for list item background)
-  container: '#B78D85',      // 建立文件: 桃紅
-  surfaceVariant: '#8A896B', //
+  onPrimary: '#dfdfdf',      //
+  surface: '#5A4F42',        // 背景顏色: 深咖
+  secondary: '#699469',      // 建立日記: 綠色
+  tertiary: '#7D8469',       // 開啟文件: 枯綠 (used for list item background)
+  container: '#9A6C63',      // 建立文件: 桃紅
+  surfaceVariant: '#7D8469', //
   recentSection: '#8B8979',  // 最近開啟區: 深咖 (different shade)
-  recentHeader: '#AD967D',   // 最近開啟頭: 中咖
+  recentHeader: '#7B6861',   // 最近開啟頭: 中咖
   fab: '#FFED64',            // fab按鍵: 黃色
   border: '#FFFFFF',         // 邊框顏色: 白色
-  canva: '#8B3DFF',          // 
-  errow: '#FF5252',          // darker red maybe lighter for dark mode?
-  input: '#eee',             //輸入框?
+  canva: '#8B3DFF',          // ?
+  errow: '#f9b5b5',          // darker red maybe lighter for dark mode?
+  input: '#9f9f9f',             //輸入框?
   white: '#333',
 }
 

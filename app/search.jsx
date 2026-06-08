@@ -115,7 +115,7 @@ export default function SearchScreen() {
           </View>
           
           <Pressable onPress={() => router.back()} style={{ marginLeft: 16 }}>
-            <Text style={[textStyles.body, { color: '#B3261E', fontWeight: '600' }]}>取消</Text>
+            <Text style={[textStyles.body, { color: colors.errow, fontWeight: '600' }]}>取消</Text>
           </Pressable>
         </View>
 
@@ -142,93 +142,95 @@ export default function SearchScreen() {
         <Modal transparent visible={filterModalVisible} animationType="fade" onRequestClose={() => setFilterModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              {/* Modal Header */}
-              <View style={styles.modalHeader}>
-                <Pressable onPress={() => setFilterModalVisible(false)} style={{ padding: 4 }}>
-                  <X size={24} color={colors.text} />
-                </Pressable>
-                <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>進階篩選</Text>
-                <Pressable onPress={() => {
-                  setAppliedType(tempType);
-                  setAppliedStarStatus(tempStarStatus);
-                  setAppliedSelectedTags(tempSelectedTags);
-                  setFilterModalVisible(false);
-                }} style={{ padding: 4 }}>
-                  <Check size={24} color={colors.text} />
-                </Pressable>
-              </View>
-              
-              {/* Type Section (文件/日記) */}
-              <View style={styles.filterSection}>
-                <View style={styles.filterSectionHeader}>
-                  <Text style={styles.filterSectionTitle}>文件/日記</Text>
-                </View>
-                <View style={styles.filterSectionBodyRow}>
-                  <Pressable 
-                    style={[styles.filterPill, tempType === 'document' && styles.filterPillActive]}
-                    onPress={() => setTempType(t => t === 'document' ? null : 'document')}
-                  >
-                    <Text style={[styles.filterPillText, tempType === 'document' && styles.filterPillTextActive]}>文件</Text>
+              <View style={styles.modalContentInner}>
+                {/* Modal Header */}
+                <View style={styles.modalHeader}>
+                  <Pressable onPress={() => setFilterModalVisible(false)} style={{ padding: 4 }}>
+                    <X size={28} color={colors.text} />
                   </Pressable>
-                  <Pressable 
-                    style={[styles.filterPill, tempType === 'diary' && styles.filterPillActive]}
-                    onPress={() => setTempType(t => t === 'diary' ? null : 'diary')}
-                  >
-                    <Text style={[styles.filterPillText, tempType === 'diary' && styles.filterPillTextActive]}>日記</Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Star Status Section */}
-              <View style={styles.filterSection}>
-                <View style={styles.filterSectionHeader}>
-                  <Text style={styles.filterSectionTitle}>星號</Text>
-                </View>
-                <View style={styles.filterSectionBodyRow}>
-                  <Pressable 
-                    style={[styles.filterIconBtn, tempStarStatus === 'unstarred' && styles.filterIconBtnActive]}
-                    onPress={() => setTempStarStatus(s => s === 'unstarred' ? null : 'unstarred')}
-                  >
-                    <Star size={24} color={colors.text} />
-                  </Pressable>
-                  <Pressable 
-                    style={[styles.filterIconBtn, tempStarStatus === 'starred' && styles.filterIconBtnActive]}
-                    onPress={() => setTempStarStatus(s => s === 'starred' ? null : 'starred')}
-                  >
-                    <Star size={24} color={colors.text} fill={colors.text} />
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Tags Grid Section */}
-              <View style={styles.filterSection}>
-                <View style={styles.filterSectionHeader}>
-                  <Text style={styles.filterSectionTitle}>標籤</Text>
+                  <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>進階篩選</Text>
                   <Pressable onPress={() => {
+                    setAppliedType(tempType);
+                    setAppliedStarStatus(tempStarStatus);
+                    setAppliedSelectedTags(tempSelectedTags);
                     setFilterModalVisible(false);
-                    router.push('/tags-edit');
-                  }}>
-                    <Pencil size={16} color={colors.text} />
+                  }} style={{ padding: 4 }}>
+                    <Check size={28} color={colors.text} />
                   </Pressable>
                 </View>
-                {allTags.length > 0 ? (
-                  <View style={styles.tagsGrid}>
-                    {allTags.map(tag => (
-                      <Pressable
-                        key={tag}
-                        style={[styles.tagFilterBtn, tempSelectedTags.includes(tag) && styles.tagFilterBtnActive]}
-                        onPress={() => {
-                          if (tempSelectedTags.includes(tag)) setTempSelectedTags(tempSelectedTags.filter(t => t !== tag));
-                          else setTempSelectedTags([...tempSelectedTags, tag]);
-                        }}
-                      >
-                        <Text style={[styles.tagFilterText, tempSelectedTags.includes(tag) && styles.tagFilterTextActive]}>{tag}</Text>
-                      </Pressable>
-                    ))}
+                
+                {/* Type Section (文件/日記) */}
+                <View style={styles.filterSection}>
+                  <View style={styles.filterSectionHeader}>
+                    <Text style={styles.filterSectionTitle}>文件/日記</Text>
                   </View>
-                ) : (
-                  <Text style={{color: colors.inactiveText, fontSize: 14, marginTop: 8}}>尚無標籤，請點擊右上方圖示新增標籤。</Text>
-                )}
+                  <View style={styles.filterSectionBodyRow}>
+                    <Pressable 
+                      style={[styles.filterPill, tempType === 'document' && styles.filterPillActive]}
+                      onPress={() => setTempType(t => t === 'document' ? null : 'document')}
+                    >
+                      <Text style={[styles.filterPillText, tempType === 'document' && styles.filterPillTextActive]}>文件</Text>
+                    </Pressable>
+                    <Pressable 
+                      style={[styles.filterPill, tempType === 'diary' && styles.filterPillActive]}
+                      onPress={() => setTempType(t => t === 'diary' ? null : 'diary')}
+                    >
+                      <Text style={[styles.filterPillText, tempType === 'diary' && styles.filterPillTextActive]}>日記</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Star Status Section */}
+                <View style={styles.filterSection}>
+                  <View style={styles.filterSectionHeader}>
+                    <Text style={styles.filterSectionTitle}>星號</Text>
+                  </View>
+                  <View style={styles.filterSectionBodyRow}>
+                    <Pressable 
+                      style={[styles.filterPill, tempStarStatus === 'unstarred' && styles.filterPillActive]}
+                      onPress={() => setTempStarStatus(s => s === 'unstarred' ? null : 'unstarred')}
+                    >
+                      <Star size={24} color={colors.text} />
+                    </Pressable>
+                    <Pressable 
+                      style={[styles.filterPill, tempStarStatus === 'starred' && styles.filterPillActive]}
+                      onPress={() => setTempStarStatus(s => s === 'starred' ? null : 'starred')}
+                    >
+                      <Star size={24} color={colors.text} fill={colors.text} />
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Tags Grid Section */}
+                <View style={styles.filterSection}>
+                  <View style={styles.filterSectionHeader}>
+                    <Text style={styles.filterSectionTitle}>標籤</Text>
+                    <Pressable onPress={() => {
+                      setFilterModalVisible(false);
+                      router.push('/tags-edit');
+                    }}>
+                      <Pencil size={24} color={colors.text} />
+                    </Pressable>
+                  </View>
+                  {allTags.length > 0 ? (
+                    <View style={styles.tagsGrid}>
+                      {allTags.map(tag => (
+                        <Pressable
+                          key={tag}
+                          style={[styles.filterPill, tempSelectedTags.includes(tag) && styles.filterPillActive]}
+                          onPress={() => {
+                            if (tempSelectedTags.includes(tag)) setTempSelectedTags(tempSelectedTags.filter(t => t !== tag));
+                            else setTempSelectedTags([...tempSelectedTags, tag]);
+                          }}
+                        >
+                          <Text style={[styles.filterPillText, tempSelectedTags.includes(tag) && styles.filterPillTextActive]}>{tag}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={{color: colors.inactiveText, fontSize: 14, marginTop: 8}}>尚無標籤，請點擊右上方圖示新增標籤。</Text>
+                  )}
+                </View>
               </View>
             </View>
           </View>
@@ -306,12 +308,20 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center' 
   },
   modalContent: { 
-    backgroundColor: colors.surface, 
-    borderRadius: 24, 
+    backgroundColor: colors.surfaceVariant, 
+    borderRadius: 20, 
     width: '85%', 
-    padding: 20, 
+    padding: 5, 
     borderWidth: 1, 
     borderColor: colors.border 
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   modalHeader: { 
     flexDirection: 'row', 
@@ -319,7 +329,7 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 20 
   },
   filterSection: { 
-    marginBottom: 24 
+    marginBottom: 10,
   },
   filterSectionHeader: { 
     flexDirection: 'row', 
@@ -339,19 +349,23 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row' 
   },
   filterPill: { 
-    paddingHorizontal: 20, 
+    minWidth: 70, 
+    minHeightheight: 48, 
+    paddingHorizontal: 16, 
     paddingVertical: 10, 
-    borderRadius: 12, 
-    borderWidth: 1, 
+    borderRadius: 10, 
+    borderWidth: 1,
     borderColor: colors.border, 
     backgroundColor: colors.surface, 
     marginRight: 16, 
     alignItems: 'center', 
-    justifyContent: 'center' 
+    justifyContent: 'center',
+    marginRight: 12,
+    marginBottom: 12,
   },
   filterPillActive: { 
-    backgroundColor: '#FFF4E0', 
-    borderColor: '#E8A317' 
+    backgroundColor: colors.recentHeader, 
+    // borderColor: '#E8A317' 
   },
   filterPillText: { 
     fontSize: 16, 
@@ -360,44 +374,44 @@ const getStyles = (colors) => StyleSheet.create({
   filterPillTextActive: { 
     fontWeight: 'bold' 
   },
-  filterIconBtn: { 
-    width: 72, 
-    height: 48, 
-    borderRadius: 12, 
-    borderWidth: 1, 
-    borderColor: colors.border, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: colors.surface, 
-    marginRight: 16 
-  },
-  filterIconBtnActive: { 
-    backgroundColor: '#FFF4E0', 
-    borderColor: '#E8A317' 
-  },
+  // filterIconBtn: { 
+  //   width: 72, 
+  //   height: 48, 
+  //   borderRadius: 12, 
+  //   borderWidth: 1, 
+  //   borderColor: colors.border, 
+  //   alignItems: 'center', 
+  //   justifyContent: 'center', 
+  //   backgroundColor: colors.surface, 
+  //   marginRight: 16 
+  // },
+  // filterIconBtnActive: { 
+  //   backgroundColor: '#FFF4E0', 
+  //   borderColor: '#E8A317' 
+  // },
   tagsGrid: { 
     flexDirection: 'row', 
     flexWrap: 'wrap' 
   },
-  tagFilterBtn: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 10, 
-    borderRadius: 12, 
-    borderWidth: 1, 
-    borderColor: colors.border, 
-    backgroundColor: colors.surface, 
-    marginRight: 12, 
-    marginBottom: 12 
-  },
-  tagFilterBtnActive: { 
-    backgroundColor: '#FFF4E0', 
-    borderColor: '#E8A317' 
-  },
-  tagFilterText: { 
-    fontSize: 16, 
-    color: colors.text 
-  },
-  tagFilterTextActive: { 
-    fontWeight: 'bold' 
-  },
+  // tagFilterBtn: { 
+  //   paddingHorizontal: 16, 
+  //   paddingVertical: 10, 
+  //   borderRadius: 12, 
+  //   borderWidth: 1, 
+  //   borderColor: colors.border, 
+  //   backgroundColor: colors.surface, 
+  //   marginRight: 12, 
+  //   marginBottom: 12 
+  // },
+  // tagFilterBtnActive: { 
+  //   backgroundColor: '#FFF4E0', 
+  //   borderColor: '#E8A317' 
+  // },
+  // tagFilterText: { 
+  //   fontSize: 16, 
+  //   color: colors.text 
+  // },
+  // tagFilterTextActive: { 
+  //   fontWeight: 'bold' 
+  // },
 });
