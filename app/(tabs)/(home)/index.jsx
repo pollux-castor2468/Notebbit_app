@@ -101,7 +101,7 @@ export default function Home() {
   };
 
   //最近開啟
-  const recentHistory = historyData.slice(0, 3); 
+  const recentHistory = historyData.slice(0, 4); 
   //開啟新文件
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
@@ -148,8 +148,8 @@ export default function Home() {
               onPress={handleCreateDiary}
             >
               <View style={layoutStyles.rowCenter}>
-                <Book size={24} color={colors.onPrimary} style={{marginLeft: 5,}} />
-                <Text style={[textStyles.h3, { marginLeft: 5, color: colors.onPrimary }]}>建立日記</Text>
+                <Book size={24} color={colors.onPrimary} style={{marginLeft: 15,}} />
+                <Text style={[textStyles.h3, { marginLeft: 10, color: colors.onPrimary }]}>建立日記</Text>
               </View>
             </Pressable>
 
@@ -158,8 +158,8 @@ export default function Home() {
               onPress={handleOpenLocalFile}
             >
               <View style={layoutStyles.rowCenter}>
-                <FolderOpen size={24} color={colors.text} style={{marginLeft: 5,}} />
-                <Text style={[textStyles.h3, { marginLeft: 5 }]}>開啟文件</Text>
+                <FolderOpen size={24} color={colors.text} style={{marginLeft: 15,}} />
+                <Text style={[textStyles.h3, { marginLeft: 10 }]}>開啟文件</Text>
               </View>
             </Pressable>
           </View>
@@ -239,6 +239,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 24,
     overflow: 'hidden',
+    position: 'relative',
   },
   taskBannerContent: {
     flexDirection: 'row',
@@ -246,24 +247,35 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    minHeight: 100,
+    minHeight: 80,
   },
   taskBannerImg: {
-    width: 100,
-    height: 90,
-    marginRight: 40,
+    width: 130,
+    height: 110,
+    // marginRight: 40,
+    position: 'absolute',
+    top: -15,
+    left: 50,
   },
   taskBannerTextContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    width: 110,
+    justifyContent: 'space-around',
+    // alignItems: 'center',
+    // justifyContent: 'center',
+    position: 'relative',
+    left: 40,
+    top: 5,
   },
   historySection: {
     backgroundColor: colors.recentSection,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    minHeight: 300,
+    minHeight: 400,
+    // maxHeight: 400,
     overflow: 'hidden',
+    // overflow: 'scroll',
     // position: 'relative',
   },
   historyHeader: {
@@ -275,6 +287,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   historyBody: {
     padding: 16,
+    // maxHeight: 100,
+    // overflow: 'scroll',
   },
   historyItem: {
     flexDirection: 'row',

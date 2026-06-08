@@ -210,7 +210,7 @@ export default function EditorToolbar({
 
   return (
     <View style={styles.bottomToolbar}>
-      <View style={styles.dragPill} />
+      {/* <View style={styles.dragPill} /> */}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarRow}>
         {isDocument && (
@@ -304,11 +304,11 @@ export default function EditorToolbar({
             <Link size={isDocument ? 20 : 24} color={colors.text} />
           </Pressable>
 
-          {isDocument && (
+          {/* {isDocument && (
             <Pressable style={({ pressed }) => [styles.toolIcon, pressed ? styles.toolIconPressed : null]} onPress={onAddSource}>
               <Edit2 size={20} color={colors.text} />
             </Pressable>
-          )}
+          )} */}
         </View>
       </ScrollView>
 
@@ -353,10 +353,10 @@ const getStyles = (colors) =>
   StyleSheet.create({
     bottomToolbar: {
       backgroundColor: colors.tertiary,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      paddingHorizontal: 24,
-      paddingTop: 12,
+      // borderTopLeftRadius: 20,
+      // borderTopRightRadius: 20,
+      paddingHorizontal: 12,
+      paddingTop: 24,
       paddingBottom: 24,
       borderWidth: 1,
       borderColor: colors.border,
@@ -417,6 +417,7 @@ const getStyles = (colors) =>
     toolIconActive: {
       backgroundColor: colors.recentSection,
       borderWidth: 1,
+      padding: 7,
       borderColor: colors.border,
     },
     toolIconPressed: {

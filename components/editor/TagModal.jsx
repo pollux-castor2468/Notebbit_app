@@ -61,25 +61,27 @@ export default function TagModal({ visible, fileId, onClose }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
-          <Text style={styles.title}>設定標籤</Text>
-          
-          <ScrollView style={styles.tagList} showsVerticalScrollIndicator={false}>
-            {allTags.map(tag => {
-              const isSelected = selectedTags.includes(tag);
-              return (
-                <Pressable key={tag} style={styles.tagItem} onPress={() => toggleTag(tag)}>
-                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    {isSelected && <Check size={14} color="#000" />}
-                  </View>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <View style={styles.subModalContentInner}>
+            <Text style={styles.title}>設定標籤</Text>
+            
+            <ScrollView style={styles.tagList} showsVerticalScrollIndicator={false}>
+              {allTags.map(tag => {
+                const isSelected = selectedTags.includes(tag);
+                return (
+                  <Pressable key={tag} style={styles.tagItem} onPress={() => toggleTag(tag)}>
+                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                      {isSelected && <Check size={14} color="#000" />}
+                    </View>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
-          <Pressable style={styles.addBtn} onPress={() => setIsAddingTag(true)}>
-            <Text style={styles.addBtnText}>+ 新增標籤</Text>
-          </Pressable>
+            <Pressable style={styles.addBtn} onPress={() => setIsAddingTag(true)}>
+              <Text style={styles.addBtnText}>+ 新增標籤</Text>
+            </Pressable>
+          </View>
         </Pressable>
       </Pressable>
 
@@ -88,22 +90,24 @@ export default function TagModal({ visible, fileId, onClose }) {
         <Modal visible transparent animationType="fade">
           <Pressable style={styles.overlay} onPress={() => setIsAddingTag(false)}>
             <Pressable style={styles.subModalContent} onPress={e => e.stopPropagation()}>
-              <Text style={styles.title}>新增標籤</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="輸入文字..."
-                placeholderTextColor={colors.inactiveText}
-                value={newTagText}
-                onChangeText={setNewTagText}
-                autoFocus
-              />
-              <View style={styles.actionRow}>
-                <Pressable style={styles.cancelBtn} onPress={() => setIsAddingTag(false)}>
-                  <Text style={styles.btnText}>取消</Text>
-                </Pressable>
-                <Pressable style={styles.confirmBtn} onPress={handleAddTag}>
-                  <Text style={styles.btnText}>確認</Text>
-                </Pressable>
+              <View style={styles.subModalContentInner}>
+                <Text style={styles.title}>新增標籤</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="輸入文字..."
+                  placeholderTextColor={colors.inactiveText}
+                  value={newTagText}
+                  onChangeText={setNewTagText}
+                  autoFocus
+                />
+                <View style={styles.actionRow}>
+                  <Pressable style={styles.cancelBtn} onPress={() => setIsAddingTag(false)}>
+                    <Text style={styles.btnText}>取消</Text>
+                  </Pressable>
+                  <Pressable style={styles.confirmBtn} onPress={handleAddTag}>
+                    <Text style={styles.btnText}>確認</Text>
+                  </Pressable>
+                </View>
               </View>
             </Pressable>
           </Pressable>
@@ -121,12 +125,12 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 250,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 5,
     maxHeight: '60%',
   },
   title: {
@@ -175,15 +179,23 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.text,
   },
   subModalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 280,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 5,
+  },
+  subModalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 20,
   },
   input: {
-    backgroundColor: colors.tertiary,
+    backgroundColor: colors.input,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,

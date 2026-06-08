@@ -40,42 +40,54 @@ export default function LinkModal({ visible, onClose, onInsert, initialTitle }) 
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <View style={layoutStyles.rowBetween}>
-            <Text style={textStyles.h3}>插入連結</Text>
-            <Pressable onPress={onClose} style={{ padding: 4 }}>
-              <X size={24} color={colors.text} />
-            </Pressable>
+          <View style={styles.modalContentInner}>
+            <View style={layoutStyles.rowBetween}>
+              <Text style={textStyles.h3}>插入連結</Text>
+              {/* <Pressable onPress={onClose} style={{ padding: 4 }}>
+                <X size={24} color={colors.text} />
+              </Pressable> */}
+            </View>
+
+            <View style={{ marginTop: 16 }}>
+              <Text style={[textStyles.body, { marginBottom: 8 }]}>顯示文字 (選填)</Text>
+              <TextInput
+                style={styles.linkInput}
+                placeholder="在此輸入顯示的文字..."
+                placeholderTextColor={colors.inactiveText}
+                value={linkTitle}
+                onChangeText={setLinkTitle}
+              />
+
+              <Text style={[textStyles.body, { marginBottom: 8 }]}>網址連結 (必填)</Text>
+              <TextInput
+                style={[styles.linkInput, linkError ? { borderColor: colors.errow } : null]}
+                placeholder="https://..."
+                placeholderTextColor={colors.inactiveText}
+                value={linkUrl}
+                onChangeText={(text) => {
+                  setLinkUrl(text);
+                  setLinkError('');
+                }}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
+            </View>
+
+            {/* <Pressable style={styles.saveBtn} onPress={handleInsert}>
+              <Text style={styles.saveBtnText}>確定</Text>
+            </Pressable> */}
+
+            <View style={styles.rowBottom}>
+              <Pressable style={styles.cancleBtn} onPress={onClose}>
+                <Text style={styles.saveBtnText}>取消</Text>
+              </Pressable>
+              <Pressable style={styles.saveBtn} onPress={handleInsert}>
+                <Text style={styles.saveBtnText}>確認</Text>
+              </Pressable>
+            </View>
+
           </View>
-
-          <View style={{ marginTop: 16 }}>
-            <Text style={[textStyles.body, { marginBottom: 8 }]}>顯示文字 (選填)</Text>
-            <TextInput
-              style={styles.linkInput}
-              placeholder="在此輸入顯示的文字..."
-              placeholderTextColor={colors.inactiveText}
-              value={linkTitle}
-              onChangeText={setLinkTitle}
-            />
-
-            <Text style={[textStyles.body, { marginBottom: 8 }]}>網址連結 (必填)</Text>
-            <TextInput
-              style={[styles.linkInput, linkError ? { borderColor: colors.errow } : null]}
-              placeholder="https://..."
-              placeholderTextColor={colors.inactiveText}
-              value={linkUrl}
-              onChangeText={(text) => {
-                setLinkUrl(text);
-                setLinkError('');
-              }}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-            {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
-          </View>
-
-          <Pressable style={styles.saveBtn} onPress={handleInsert}>
-            <Text style={styles.saveBtnText}>確定</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
@@ -91,11 +103,19 @@ const getStyles = (colors) => StyleSheet.create({
   },
   modalContent: {
     width: '90%',
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
+    padding: 5,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   linkInput: {
     borderWidth: 1,
@@ -112,15 +132,33 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 12,
     marginBottom: 16,
   },
+  rowBottom: {
+    flexDirection: 'row',
+    // marginTop: 24,
+  },
   saveBtn: {
-    backgroundColor: colors.text, // adapt to theme (black in light mode)
-    borderRadius: 8,
+    flex: 1,
+    backgroundColor: colors.secondary, // adapt to theme (black in light mode)
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+    marginLeft: 10,
+  },
+  cancleBtn: {
+    flex: 1,
+    backgroundColor: colors.tertiary, // adapt to theme (black in light mode)
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
   saveBtnText: {
-    color: colors.surface, // inverted color
+    color: colors.text, // inverted color
     fontSize: 16,
     fontWeight: '600',
   },

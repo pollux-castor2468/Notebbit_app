@@ -304,7 +304,11 @@ export default function CalendarScreen() {
               <Text style={styles.statModalNumber}>{filteredDocuments.length}</Text>
               <Text style={styles.statModalUnit}> 篇文件</Text>
             </View>
-            <Image source={require('../../../assets/img/good_rabbit1.png')} style={styles.statModalImage} resizeMode="contain" />
+            <View style={styles.statModalImgRow}>
+              <Image source={require('../../../assets/img/good_rabbit1.png')} style={styles.statModalImageLeft} resizeMode="contain" />
+              <Text style={styles.statModalImageText}>好棒</Text>
+              <Image source={require('../../../assets/img/good_rabbit1.png')} style={styles.statModalImageRight} resizeMode="contain" />
+            </View>
           </>
         );
       case 'diary':
@@ -315,7 +319,11 @@ export default function CalendarScreen() {
               <Text style={styles.statModalNumber}>{filteredDiaries.length}</Text>
               <Text style={styles.statModalUnit}> 篇日記</Text>
             </View>
-            <Image source={require('../../../assets/img/good_rabbit2.png')} style={styles.statModalImage} resizeMode="contain" />
+            <View style={styles.statModalImgRow}>
+              <Image source={require('../../../assets/img/good_rabbit2.png')} style={styles.statModalImageLeft} resizeMode="contain" />
+              <Text style={styles.statModalImageText}>好棒</Text>
+              <Image source={require('../../../assets/img/good_rabbit2.png')} style={styles.statModalImageRight} resizeMode="contain" />
+            </View>
           </>
         );
       case 'task':
@@ -326,7 +334,11 @@ export default function CalendarScreen() {
               <Text style={styles.statModalNumber}>{completedTasksCount}</Text>
               <Text style={styles.statModalUnit}> 次任務</Text>
             </View>
-            <Image source={require('../../../assets/img/good_rabbit3.png')} style={styles.statModalImage} resizeMode="contain" />
+            <View style={styles.statModalImgRow}>
+              <Image source={require('../../../assets/img/good_rabbit3.png')} style={styles.statModalImageLeft} resizeMode="contain" />
+              <Text style={styles.statModalImageText}>好棒</Text>
+              <Image source={require('../../../assets/img/good_rabbit3.png')} style={styles.statModalImageRight} resizeMode="contain" />
+            </View>
           </>
         );
       default:
@@ -406,13 +418,13 @@ export default function CalendarScreen() {
               </View>
 
               <View style={styles.tabContainerCustom}>
-                <Pressable style={[styles.tabBtnCustom, { borderTopLeftRadius: 16 }, activeTab === 'document' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('document')}>
+                <Pressable style={[styles.tabBtnCustom, /*{ borderTopLeftRadius: 16},*/ activeTab === 'document' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('document')}>
                   <Text style={styles.tabTextCustom}>文件</Text>
                 </Pressable>
-                <Pressable style={[styles.tabBtnCustom, activeTab === 'diary' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive, { borderLeftWidth: 0 }]} onPress={() => setActiveTab('diary')}>
+                <Pressable style={[styles.tabBtnCustom, activeTab === 'diary' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('diary')}>
                   <Text style={styles.tabTextCustom}>日記</Text>
                 </Pressable>
-                <Pressable style={[styles.tabBtnCustom, { borderTopRightRadius: 16, borderLeftWidth: 0 }, activeTab === 'task' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('task')}>
+                <Pressable style={[styles.tabBtnCustom, /*{ borderTopRightRadius: 16},*/ activeTab === 'task' ? styles.tabBtnCustomActive : styles.tabBtnCustomInactive]} onPress={() => setActiveTab('task')}>
                   <Text style={styles.tabTextCustom}>任務</Text>
                 </Pressable>
               </View>
@@ -445,45 +457,47 @@ export default function CalendarScreen() {
       <Modal visible={isMonthPickerVisible} transparent animationType="fade" onRequestClose={() => setIsMonthPickerVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Pressable onPress={() => setIsMonthPickerVisible(false)} style={{ padding: 4 }}>
-                <X size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選月份</Text>
-              <Pressable onPress={() => {
-                setCurrentDate(new Date(tempPickerYear, tempPickerMonth, 1));
-                setIsMonthPickerVisible(false);
-              }} style={{ padding: 4 }}>
-                <Check size={24} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <View style={styles.yearSelectorRow}>
-              <Pressable onPress={() => setTempPickerYear(y => y - 1)} style={{ padding: 8 }}>
-                <ChevronLeft size={24} color={colors.text} />
-              </Pressable>
-              <Text style={[textStyles.h3, { width: 80, textAlign: 'center' }]}>{tempPickerYear}</Text>
-              <Pressable onPress={() => setTempPickerYear(y => y + 1)} style={{ padding: 8 }}>
-                <ChevronRight size={24} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <View style={styles.monthsGrid}>
-              {[...Array(12).keys()].map((m) => (
-                <Pressable
-                  key={m}
-                  style={[
-                    styles.monthBtn,
-                    tempPickerMonth === m && styles.monthBtnActive
-                  ]}
-                  onPress={() => setTempPickerMonth(m)}
-                >
-                  <Text style={[
-                    styles.monthBtnText,
-                    tempPickerMonth === m && styles.monthBtnTextActive
-                  ]}>{m + 1}月</Text>
+            <View style={styles.modalContentInner}>
+              <View style={styles.modalHeader}>
+                <Pressable onPress={() => setIsMonthPickerVisible(false)} style={{ padding: 4 }}>
+                  <X size={28} color={colors.text} />
                 </Pressable>
-              ))}
+                <Text style={[textStyles.h3, { flex: 1, textAlign: 'center' }]}>篩選月份</Text>
+                <Pressable onPress={() => {
+                  setCurrentDate(new Date(tempPickerYear, tempPickerMonth, 1));
+                  setIsMonthPickerVisible(false);
+                }} style={{ padding: 4 }}>
+                  <Check size={28} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <View style={styles.yearSelectorRow}>
+                <Pressable onPress={() => setTempPickerYear(y => y - 1)} style={{ paddingRight: 30 }}>
+                  <ChevronLeft size={28} color={colors.text} />
+                </Pressable>
+                <Text style={[textStyles.h3, { width: 80, textAlign: 'center' }]}>{tempPickerYear}</Text>
+                <Pressable onPress={() => setTempPickerYear(y => y + 1)} style={{ paddingLeft: 30 }}>
+                  <ChevronRight size={28} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <View style={styles.monthsGrid}>
+                {[...Array(12).keys()].map((m) => (
+                  <Pressable
+                    key={m}
+                    style={[
+                      styles.monthBtn,
+                      tempPickerMonth === m && styles.monthBtnActive
+                    ]}
+                    onPress={() => setTempPickerMonth(m)}
+                  >
+                    <Text style={[
+                      styles.monthBtnText,
+                      tempPickerMonth === m && styles.monthBtnTextActive
+                    ]}>{m + 1}月</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
           </View>
         </View>
@@ -497,14 +511,17 @@ export default function CalendarScreen() {
         onRequestClose={() => setStatModal({ visible: false, type: null })}
       >
         <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setStatModal({ visible: false, type: null })} />
           <View style={styles.statModalContainer}>
-            <Pressable 
-              style={styles.statModalCloseBtn} 
-              onPress={() => setStatModal({ visible: false, type: null })}
-            >
-              <X size={24} color={colors.text} />
-            </Pressable>
-            {renderStatModalContent()}
+            <View style={styles.statModalContainerInner}>
+              <Pressable 
+                style={styles.statModalCloseBtn} 
+                onPress={() => setStatModal({ visible: false, type: null })}
+              >
+                <X size={28} color={colors.text} />
+              </Pressable>
+              {renderStatModalContent()}
+            </View>
           </View>
         </View>
       </Modal>
@@ -518,12 +535,14 @@ const getStyles = (colors) => StyleSheet.create({
   topToggleContainer: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
     marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 4,
+    marginBottom: 10,
+    height: 40,
+    // padding: 4,
+    overflow: 'hidden',
   },
   topToggleBtn: {
     flex: 1,
@@ -532,9 +551,11 @@ const getStyles = (colors) => StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
     borderRadius: 10,
+    // borderTopRightRadius: 20,
+    // borderBottomRightRadius: 20,
   },
   topToggleBtnActive: {
-    backgroundColor: colors.recentHeader,
+    backgroundColor: colors.secondary,
   },
   topToggleText: { fontSize: 14, color: colors.inactiveText, fontWeight: 'bold' },
   topToggleTextActive: { fontSize: 14, color: colors.text, fontWeight: 'bold' },
@@ -546,20 +567,21 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   calendarContainer: {
-    backgroundColor: colors.container,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+    paddingBottom: 5,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: colors.border,
     marginHorizontal: 16,
+    overflow: 'hidden',
   },
   weekHeader: {
     flexDirection: 'row',
-    backgroundColor: '#6b6058',
-    borderRadius: 8,
+    backgroundColor: colors.border,
+    // borderRadius: 10,
     paddingVertical: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   weekDayText: {
     flex: 1,
@@ -572,43 +594,54 @@ const getStyles = (colors) => StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayCell: {
-    width: '14.28%',
+    width: '12%',
+    height: 40,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 10,
+    // borderWidth: 1,
+    // borderColor: colors.border,
+    margin: '1.1%',
+    paddingVertical: 10,
+    // backgroundColor: colors.surface,
   },
   selectedDayCell: {
-    backgroundColor: '#6b6058',
+    backgroundColor: colors.border,
   },
   dayText: {
     fontSize: 16,
     color: colors.text,
     fontWeight: '500',
+    position: 'relative',
+    bottom: 5,
   },
   selectedDayText: {
     color: '#FFF',
     fontWeight: 'bold',
   },
   dotsContainer: {
-    flexDirection: 'row',
-    marginTop: 2,
-    gap: 3,
+    // flexDirection: 'row',
+    // marginTop: 2,
+    // gap: 3,
+    position: 'relative',
+    bottom: 2,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     borderWidth: 1,
-    borderColor: '#6b6058',
+    borderColor: colors.border,
     backgroundColor: 'transparent',
   },
   dotBorderSelected: {
     borderColor: '#FFF',
   },
-  dotDoc: { backgroundColor: colors.container },
-  dotDiary: { backgroundColor: colors.secondary },
-  dotTask: { backgroundColor: colors.fab },
+  //給點點固定位置才看得出是什麼咚咚，點太小看不出顏色啦
+  dotDoc: { backgroundColor: colors.container, position: 'absolute', right: '15%', },
+  dotDiary: { backgroundColor: colors.secondary, position: 'absolute', right: -3, },
+  dotTask: { backgroundColor: colors.fab, position: 'absolute', left: '15%', },
   selectedDateSection: {
     marginTop: 8,
     paddingHorizontal: 16,
@@ -616,25 +649,29 @@ const getStyles = (colors) => StyleSheet.create({
   tabContainerCustom: {
     flexDirection: 'row',
     zIndex: 2,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    backgroundColor: colors.recentHeader,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderColor: colors.border,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   tabBtnCustom: {
     flex: 1,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   tabBtnCustomActive: {
-    backgroundColor: '#FFFDF5',
-    borderBottomColor: '#FFFDF5',
-    borderBottomWidth: 1,
+    backgroundColor: colors.secondary,
   },
-  tabBtnCustomInactive: {
-    backgroundColor: '#FAD57B',
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-  },
+  // tabBtnCustomInactive: {
+  //   backgroundColor: colors.recentHeader,
+  //   // borderBottomColor: colors.border,
+  //   // borderBottomWidth: 1,
+  // },
   tabTextCustom: {
     fontSize: 16,
     color: colors.text,
@@ -704,9 +741,9 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 4,
+    borderRadius: 20,
+    padding: 10,
+    marginHorizontal: 5,
     alignItems: 'center',
   },
   statLabel: {
@@ -812,12 +849,20 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
     width: '85%',
-    padding: 20,
+    padding: 5,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -828,7 +873,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
     gap: 16,
   },
   monthsGrid: {
@@ -842,13 +887,13 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   monthBtnActive: {
-    backgroundColor: '#FFF4E0',
-    borderColor: '#E8A317',
+    backgroundColor: colors.secondary,
+    // borderColor: '#E8A317',
   },
   monthBtnText: {
     fontSize: 16,
@@ -860,34 +905,49 @@ const getStyles = (colors) => StyleSheet.create({
   },
   statModalContainer: {
     width: '75%',
-    backgroundColor: '#FFFDF5',
-    borderRadius: 16,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#EFE2C2',
-    padding: 32,
+    borderColor: colors.border,
+    padding: 5,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 10,
+    // elevation: 5,
+  },
+  statModalContainerInner: {
+    backgroundColor: colors.surface,
+    width: '100%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   statModalCloseBtn: {
     position: 'absolute',
     top: 12,
     right: 12,
     padding: 4,
+    zIndex: 10,
   },
   statModalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 16,
+    position: 'relative',
+    top: 5,
+    left: 10,
   },
   statModalCountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     marginBottom: 20,
+    position: 'relative',
+    top: 5,
+    left: 120,
   },
   statModalNumber: {
     fontSize: 36,
@@ -895,13 +955,43 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.text,
   },
   statModalUnit: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
     marginLeft: 8,
+  },
+  statModalImgRow: {
+    // flexDirection: 'row',
+    // justifyContent: 'space-around',
+    position: 'relative',
+    height: 80,
   },
   statModalImage: {
     width: 200,
     height: 120,
   },
+  statModalImageLeft: {
+    width: 200,
+    height: 120,
+    position: 'absolute',
+    left: -50,
+    top: -20,
+  },
+  statModalImageRight: {
+    width: 200,
+    height: 120,
+    transform: [{scaleX: -1}],  //左右翻轉
+    position: 'absolute',
+    right: -50,
+    top: -20,
+  },
+  statModalImageText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+    position: 'relative',
+    top: 15,
+    left: '42%',
+  }
 });

@@ -69,13 +69,13 @@ export default function ColorPickerModal({
         <Pressable style={styles.popoverContainer} onPress={(e) => e.stopPropagation()}>
           
           {/* Top Drag Pill */}
-          <View style={styles.dragPill} />
+          {/* <View style={styles.dragPill} /> */}
           
           {/* Header */}
           <View style={styles.colorHeader}>
             <Text style={styles.colorTitle}>{headerTitle}</Text>
             <Pressable style={styles.closeBtn} onPress={handleClose}>
-              <XIcon size={18} color={colors.text} />
+              <XIcon size={28} color={colors.text} />
             </Pressable>
           </View>
 
@@ -224,10 +224,10 @@ const getStyles = (colors) =>
       color: colors.text,
     },
     closeBtn: {
-      backgroundColor: '#F3F4F6',
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+      // backgroundColor: '#F3F4F6',
+      // width: 36,
+      // height: 36,
+      // borderRadius: 50,
       alignItems: 'center',
       justifyContent: 'center',
     },

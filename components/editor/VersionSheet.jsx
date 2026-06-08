@@ -64,10 +64,10 @@ export default function VersionSheet({ visible, onClose, fileId }) {
             <Text style={styles.sheetTitle}>版本歷史</Text>
             <View style={layoutStyles.rowCenter}>
               <Pressable style={styles.bluePlusBtn} onPress={() => setAddModalVisible(true)}>
-                <Plus size={20} color={colors.text} />
+                <Plus size={24} color={colors.text} />
               </Pressable>
               <Pressable style={styles.closeBtn} onPress={onClose}>
-                <X size={24} color={colors.text} />
+                <X size={28} color={colors.text} />
               </Pressable>
             </View>
           </View>
@@ -95,7 +95,7 @@ export default function VersionSheet({ visible, onClose, fileId }) {
             <Text style={[styles.subheadText, { width: 40, textAlign: 'center' }]}>其他</Text>
           </View>
 
-          <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1, marginTop: 5 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
             {filteredVersions.map((v, index) => {
               const versionNum = filteredVersions.length - index; // just for display within filtered
               return (
@@ -145,22 +145,24 @@ export default function VersionSheet({ visible, onClose, fileId }) {
         <Modal visible transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>新增版本名稱</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="輸入文字..."
-                placeholderTextColor={colors.inactiveText}
-                value={newVersionTitle}
-                onChangeText={setNewVersionTitle}
-                autoFocus
-              />
-              <View style={styles.actionRow}>
-                <Pressable style={styles.cancelBtn} onPress={() => setAddModalVisible(false)}>
-                  <Text style={styles.btnText}>取消</Text>
-                </Pressable>
-                <Pressable style={styles.confirmBtn} onPress={handleAddVersion}>
-                  <Text style={styles.btnText}>確認</Text>
-                </Pressable>
+              <View style={styles.modalContentInner}>
+                <Text style={styles.modalTitle}>新增版本名稱</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="輸入文字..."
+                  placeholderTextColor={colors.inactiveText}
+                  value={newVersionTitle}
+                  onChangeText={setNewVersionTitle}
+                  autoFocus
+                />
+                <View style={styles.actionRow}>
+                  <Pressable style={styles.cancelBtn} onPress={() => setAddModalVisible(false)}>
+                    <Text style={styles.btnText}>取消</Text>
+                  </Pressable>
+                  <Pressable style={styles.confirmBtn} onPress={handleAddVersion}>
+                    <Text style={styles.btnText}>確認</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -172,15 +174,17 @@ export default function VersionSheet({ visible, onClose, fileId }) {
         <Modal visible transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContentSmall}>
-              <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 4 }]}>是否回退到此版本</Text>
-              <Text style={[styles.modalTextRed, { textAlign: 'center', marginBottom: 20 }]}>*回退前記得儲存目前檔案！</Text>
-              <View style={styles.actionRow}>
-                <Pressable style={[styles.cancelBtn, { backgroundColor: '#FFF2F2', borderColor: '#FFB3B3' }]} onPress={executeRestore}>
-                  <Text style={[styles.btnText, { color: '#C1272D' }]}>確認</Text>
-                </Pressable>
-                <Pressable style={styles.confirmBtn} onPress={() => setConfirmRestoreId(null)}>
-                  <Text style={styles.btnText}>取消</Text>
-                </Pressable>
+              <View style={styles.modalContentInner}>
+                <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 4 }]}>是否回退到此版本</Text>
+                <Text style={[styles.modalTextRed, { textAlign: 'center', marginBottom: 20 }]}>*回退前記得儲存目前檔案！</Text>
+                <View style={styles.actionRow}>
+                  <Pressable style={[styles.cancelBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={executeRestore}>
+                    <Text style={[styles.btnText, { color: /*'#C1272D'*/ colors.errow }]}>確認</Text>
+                  </Pressable>
+                  <Pressable style={styles.confirmBtn} onPress={() => setConfirmRestoreId(null)}>
+                    <Text style={styles.btnText}>取消</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -204,7 +208,7 @@ const getStyles = (colors) => StyleSheet.create({
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     height: '65%',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
   },
   sheetDragPill: {
@@ -228,9 +232,9 @@ const getStyles = (colors) => StyleSheet.create({
   },
   bluePlusBtn: {
     backgroundColor: '#F5C4C4', // Soft pinkish from screenshot
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -242,15 +246,17 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 16,
+    height: 45,
   },
   tabButton: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#FDF8E8', // Slightly darker beige for inactive
+    // backgroundColor: '#FDF8E8', // Slightly darker beige for inactive
+    backgroundColor: colors.secondary,
   },
   tabButtonActive: {
     backgroundColor: colors.surface, // Active is solid surface
@@ -259,10 +265,12 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     fontWeight: '600',
+    // position: 'relative',
+    // top: -5,
   },
   sheetSubheadPill: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.recentHeader,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
@@ -344,20 +352,28 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 280,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 5,
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 20,
   },
   modalContentSmall: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 250,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 5,
   },
   modalTitle: {
     fontSize: 18,
@@ -371,10 +387,10 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '600',
   },
   input: {
-    backgroundColor: colors.tertiary,
+    backgroundColor: colors.input,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
     fontSize: 16,
     color: colors.text,
@@ -391,6 +407,7 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
+    marginRight: 10,
   },
   confirmBtn: {
     flex: 1,

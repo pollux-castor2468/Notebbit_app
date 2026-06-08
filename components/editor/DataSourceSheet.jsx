@@ -57,7 +57,7 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
       setEditModalVisible(false);
       if (mode === 'select') {
         if (onSourceBound) onSourceBound(editSourceId);
-        onClose();
+        // onClose();
       }
     }
   };
@@ -90,10 +90,10 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
             </View>
             <View style={layoutStyles.rowCenter}>
               <Pressable style={styles.bluePlusBtn} onPress={handleAddSource}>
-                <Plus size={20} color={colors.text} />
+                <Plus size={24} color={colors.text} />
               </Pressable>
               <Pressable style={styles.closeBtn} onPress={onClose}>
-                <X size={24} color={colors.text} />
+                <X size={28} color={colors.text} />
               </Pressable>
             </View>
           </View>
@@ -114,11 +114,11 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
             <Text style={[styles.subheadText, { width: 40, textAlign: 'center' }]}>其他</Text>
           </View>
 
-          <ScrollView style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1, marginTop: 5 }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
             {sources.map((s, index) => {
               const num = sources.length - index;
               return (
-                <Pressable key={s.sourceId} style={({ pressed }) => [styles.sheetCard, mode === 'select' && { borderColor: '#fb8c00', borderWidth: 1 }, pressed && { opacity: 0.6 }]} onPress={() => {
+                <Pressable key={s.sourceId} style={({ pressed }) => [styles.sheetCard, mode === 'select' && { borderColor: /*'#fb8c00'*/ colors.border, borderWidth: 1 }, pressed && { opacity: 0.6 }]} onPress={() => {
                   if (mode === 'select' && pendingMarkedText) {
                     appendMarkedText(fileId, s.sourceId, pendingMarkedText);
                     if (onSourceBound) onSourceBound(s.sourceId);
@@ -175,35 +175,37 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
         <Modal visible transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>編輯資料</Text>
+              <View style={styles.modalContentInner}>
+                <Text style={styles.modalTitle}>編輯資料</Text>
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="AI內容"
+                  placeholderTextColor={colors.inactiveText}
+                  value={editAIContent}
+                  onChangeText={setEditAIContent}
+                />
+                
+                <TextInput
+                  style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
+                  placeholder="資料來源詳細說明..."
+                  placeholderTextColor={colors.inactiveText}
+                  value={editNoteContent}
+                  onChangeText={setEditNoteContent}
+                  multiline
+                />
               
-              <TextInput
-                style={styles.input}
-                placeholder="AI內容"
-                placeholderTextColor={colors.inactiveText}
-                value={editAIContent}
-                onChangeText={setEditAIContent}
-              />
-              
-              <TextInput
-                style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
-                placeholder="資料來源詳細說明..."
-                placeholderTextColor={colors.inactiveText}
-                value={editNoteContent}
-                onChangeText={setEditNoteContent}
-                multiline
-              />
-              
-              <View style={styles.actionRow}>
-                <Pressable style={[styles.cancelBtn, { marginRight: 6 }]} onPress={() => {
-                  setEditModalVisible(false);
-                  if (mode === 'select') onClose();
-                }}>
-                  <Text style={styles.btnText}>取消</Text>
-                </Pressable>
-                <Pressable style={[styles.confirmBtn, { marginLeft: 6 }]} onPress={handleSaveEdit}>
-                  <Text style={styles.btnText}>儲存</Text>
-                </Pressable>
+                <View style={styles.actionRow}>
+                  <Pressable style={[styles.cancelBtn, { marginRight: 6 }]} onPress={() => {
+                    setEditModalVisible(false);
+                    // if (mode === 'select') onClose();
+                  }}>
+                    <Text style={styles.btnText}>取消</Text>
+                  </Pressable>
+                  <Pressable style={[styles.confirmBtn, { marginLeft: 6 }]} onPress={handleSaveEdit}>
+                    <Text style={styles.btnText}>儲存</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -215,14 +217,16 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
         <Modal visible transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContentSmall}>
-              <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 24 }]}>是否刪除資料</Text>
-              <View style={styles.actionRow}>
-                <Pressable style={[styles.confirmBtn, { borderColor: '#C1272D', backgroundColor: '#FFF0F0', marginRight: 6, marginLeft: 0 }]} onPress={executeDelete}>
-                  <Text style={[styles.btnText, { color: '#C1272D' }]}>刪除</Text>
-                </Pressable>
-                <Pressable style={[styles.cancelBtn, { marginLeft: 6, marginRight: 0 }]} onPress={() => setConfirmDeleteId(null)}>
-                  <Text style={styles.btnText}>取消</Text>
-                </Pressable>
+              <View style={styles.modalContentInner}>
+                <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 24 }]}>是否刪除資料</Text>
+                <View style={styles.actionRow}>
+                  <Pressable style={[styles.confirmBtn, { borderColor: colors.border, backgroundColor: /*'#FFF0F0'*/ colors.secondary, marginRight: 6, marginLeft: 0 }]} onPress={executeDelete}>
+                    <Text style={[styles.btnText, { color: /*'#C1272D'*/ colors.errow }]}>刪除</Text>
+                  </Pressable>
+                  <Pressable style={[styles.cancelBtn, { marginLeft: 6, marginRight: 0 }]} onPress={() => setConfirmDeleteId(null)}>
+                    <Text style={styles.btnText}>取消</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -246,7 +250,7 @@ const getStyles = (colors) => StyleSheet.create({
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     height: '65%',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
   },
   sheetDragPill: {
@@ -261,7 +265,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    // marginBottom: 5,
   },
   sheetTitle: {
     fontSize: 20,
@@ -270,9 +274,9 @@ const getStyles = (colors) => StyleSheet.create({
   },
   bluePlusBtn: {
     backgroundColor: '#F5C4C4', // Soft pinkish from screenshot
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -284,7 +288,7 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
     paddingHorizontal: 4,
   },
   toggleText: {
@@ -294,7 +298,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   sheetSubheadPill: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.recentHeader,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
@@ -336,11 +340,11 @@ const getStyles = (colors) => StyleSheet.create({
     borderColor: colors.border,
     padding: 8,
     width: 140,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    // elevation: 8,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
   },
   popoverItem: {
     paddingVertical: 12,
@@ -376,20 +380,28 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 320,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 5,
+  },
+  modalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 20,
   },
   modalContentSmall: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceVariant,
     width: 250,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 5,
   },
   modalTitle: {
     fontSize: 18,
@@ -398,7 +410,8 @@ const getStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   input: {
-    backgroundColor: colors.tertiary,
+    // backgroundColor: colors.tertiary,
+    backgroundColor: colors.input,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,

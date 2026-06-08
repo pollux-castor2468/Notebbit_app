@@ -58,16 +58,16 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   modalBigContent: {
-    padding: 10,
-    width: '80%',
+    padding: 5,
+    width: '75%',
     backgroundColor: colors.tertiary,
-    borderRadius: 10,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
   renameContent: {
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 24,
@@ -75,11 +75,12 @@ const getStyles = (colors) => StyleSheet.create({
   renameInput: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
     marginTop: 16,
     fontSize: 16,
     color: colors.text,
+    backgroundColor: colors.input,
   },
   renameActions: {
     flexDirection: 'row',
@@ -98,7 +99,7 @@ const getStyles = (colors) => StyleSheet.create({
   renameBtnSubmit: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.secondary,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,

@@ -156,7 +156,7 @@ export default function CustomTasks() {
         <Pressable style={styles.rabbit} onPress={handleRabbitPress}>
           <Image 
             source={RABBIT_IMAGES[rabbitState][safeLevel]} 
-            style={{ width: 250, height: 180 }} 
+            style={{ width: 400, height: 220 }} 
             resizeMode="contain" 
           />
         </Pressable>
@@ -189,7 +189,7 @@ export default function CustomTasks() {
                   disabled={task.completed}
                 >
                   <View style={[styles.checkbox, task.completed && styles.checkboxActive]}>
-                    {task.completed && <Check size={14} color={colors.surface} strokeWidth={4} />}
+                    {task.completed && <Check size={14} color={colors.text} strokeWidth={4} />}
                   </View>
                 </Pressable>
                 <Text style={styles.taskTitle}>{task.title}</Text>
@@ -291,16 +291,18 @@ export default function CustomTasks() {
       >
         <Pressable style={styles.modalOverlayCenter} onPress={() => setInfoModalVisible(false)}>
           <Pressable style={styles.infoModalContent} onPress={e => e.stopPropagation()}>
-            <Pressable style={styles.infoCloseBtn} onPress={() => setInfoModalVisible(false)}>
-              <X size={20} color="#FFF" />
-            </Pressable>
-            <Text style={styles.infoModalTitle}>自訂任務說明</Text>
-            
-            <View style={{ marginTop: 16 }}>
-              <Text style={styles.infoModalText}>1. 為自己設立每日指標吧，點擊新增按鍵可以增加一個新任務。</Text>
-              <Text style={styles.infoModalText}>2. 如果要更改任務目標可以點擊右邊的修改按鍵。</Text>
-              <Text style={styles.infoModalText}>3. 完成後在左邊的勾選欄位打勾就能完成任務啦！</Text>
-              <Text style={styles.infoModalText}>4. 每天完成的前五個任務可以獲得1點經驗值，快來給激動兔深升級吧！</Text>
+            <View style={styles.infoModalContentInner}>
+              <Pressable style={styles.infoCloseBtn} onPress={() => setInfoModalVisible(false)}>
+                <X size={28} color={colors.text} />
+              </Pressable>
+              <Text style={styles.infoModalTitle}>自訂任務說明</Text>
+              
+              <View style={{ marginTop: 16 }}>
+                <Text style={styles.infoModalText}>1. 為自己設立每日指標吧，點擊新增按鍵可以增加一個新任務。</Text>
+                <Text style={styles.infoModalText}>2. 如果要更改任務目標可以點擊右邊的修改按鍵。</Text>
+                <Text style={styles.infoModalText}>3. 完成後在左邊的勾選欄位打勾就能完成任務啦！</Text>
+                <Text style={styles.infoModalText}>4. 每天完成的前五個任務可以獲得1點經驗值，快來給激動兔深升級吧！</Text>
+              </View>
             </View>
           </Pressable>
         </Pressable>
@@ -386,11 +388,14 @@ const getStyles = (colors) => StyleSheet.create({
     borderTopWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
+    paddingTop: 24,
   },
   scrollContent: {
     padding: 24,
+    paddingTop: 0,
     paddingBottom: 60, // 依建議增加底部邊距
     flexGrow: 1,
+    // marginTop: 10,
   },
   titleBadge: {
     backgroundColor: colors.surface,
@@ -431,7 +436,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   checkboxActive: {
     backgroundColor: colors.fab,
-    borderColor: colors.fab,
+    // borderColor: colors.fab,
   },
   taskTitle: {
     fontSize: 15,
@@ -482,6 +487,7 @@ const getStyles = (colors) => StyleSheet.create({
   modalInput: {
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.input,
     borderRadius: 8,
     padding: 12,
     marginTop: 16,
@@ -533,36 +539,45 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.surface,
-    padding: 24,
-    paddingTop: 32,
+    padding: 5,
+    // paddingTop: 32,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 10,
+    // elevation: 8,
+  },
+  infoModalContentInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
   },
   infoCloseBtn: {
     position: 'absolute',
-    top: -10,
-    right: -10,
+    top: 20,
+    right: 20,
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.errow,
+    // borderRadius: 12,
+    // backgroundColor: colors.errow,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
   },
   infoModalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#FFF',
+    color: colors.text,
     textAlign: 'center',
   },
   infoModalText: {
-    fontSize: 14,
-    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
     lineHeight: 22,
     marginBottom: 8,
   },
