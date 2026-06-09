@@ -28,7 +28,7 @@ export const darkColors = {
   surfaceVariant: '#7D8469', //
   recentSection: '#8B8979',  // 最近開啟區: 深咖 (different shade)
   recentHeader: '#7B6861',   // 最近開啟頭: 中咖
-  fab: '#FFED64',            // fab按鍵: 黃色
+  fab: '#d3b42a',            // fab按鍵: 黃色
   border: '#FFFFFF',         // 邊框顏色: 白色
   canva: '#8B3DFF',          // ?
   errow: '#f9b5b5',          // darker red maybe lighter for dark mode?

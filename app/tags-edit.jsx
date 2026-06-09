@@ -288,8 +288,8 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1, 
     paddingVertical: 12, 
     alignItems: 'center', 
-    borderRadius: 12, 
-    backgroundColor: '#FFF9E6',
+    borderRadius: 10, 
+    backgroundColor: colors.tertiary,
     borderWidth: 1, 
     borderColor: colors.border 
   },
@@ -297,8 +297,8 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1, 
     paddingVertical: 12, 
     alignItems: 'center', 
-    borderRadius: 12, 
-    backgroundColor: '#FFF1E6', 
+    borderRadius: 10, 
+    backgroundColor: colors.secondary, 
     borderWidth: 1, 
     borderColor: colors.border 
   },

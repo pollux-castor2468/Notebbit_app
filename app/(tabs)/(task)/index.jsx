@@ -148,7 +148,7 @@ export default function CustomTasks() {
           </View>
           <Pressable style={{ padding: 4 }} onPress={() => setInfoModalVisible(true)}>
             <View style={styles.infoIconWrapper}>
-              <Info size={16} color="#FFF" strokeWidth={3} />
+              <Info size={16} color={colors.border} strokeWidth={3} />
             </View>
           </Pressable>
         </View>
@@ -319,8 +319,8 @@ const getStyles = (colors) => StyleSheet.create({
   infoIconWrapper: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.text,
+    borderRadius: 50,
+    backgroundColor: '#6C5E4F',
     alignItems: 'center',
     justifyContent: 'center',
   },

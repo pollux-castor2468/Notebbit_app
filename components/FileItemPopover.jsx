@@ -26,7 +26,7 @@ export default function FileItemPopover({ visible, type, popoverPos, onClose, on
           )}
 
           <Pressable style={[styles.btn, { marginBottom: 0 }]} onPress={() => { onClose(); onDelete(); }}>
-            <Text style={[styles.btnText, { color: '#B91C1C' }]}>{type === 'diary' ? '刪除日記' : '刪除文件'}</Text>
+            <Text style={[styles.btnText, { color: colors.errow }]}>{type === 'diary' ? '刪除日記' : '刪除文件'}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
