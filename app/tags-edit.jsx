@@ -17,6 +17,7 @@ export default function TagsEditScreen() {
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editTagData, setEditTagData] = useState(null);
+  const [deleteConfirmData, setDeleteConfirmData] = useState(null);
 
   const handleOpenAddModal = () => {
     setActiveMenuId(null);
@@ -30,11 +31,13 @@ export default function TagsEditScreen() {
     setEditModalVisible(true);
   };
 
-  const handleDeleteTag = (id, name) => {
-    setActiveMenuId(null);
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmData) return;
+    const { id, name } = deleteConfirmData;
     const newTags = (globalTags || []).filter(t => t.id !== id);
     setGlobalTags(newTags);
     deleteTag(id, name);
+    setDeleteConfirmData(null);
   };
 
   const handleConfirmEdit = () => {
@@ -97,7 +100,10 @@ export default function TagsEditScreen() {
                       <Text style={styles.popupMenuText}>修改標籤</Text>
                     </Pressable>
                     {/* <View style={styles.popupDivider} /> */}
-                    <Pressable style={styles.popupMenuItem} onPress={() => handleDeleteTag(item.id, item.name)}>
+                    <Pressable style={styles.popupMenuItem} onPress={() => {
+                      setActiveMenuId(null);
+                      setDeleteConfirmData({ id: item.id, name: item.name });
+                    }}>
                       <Text style={[styles.popupMenuText, { color: colors.errow }]}>刪除標籤</Text>
                     </Pressable>
                   </View>
@@ -132,6 +138,24 @@ export default function TagsEditScreen() {
             </View>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal transparent visible={!!deleteConfirmData} animationType="fade" onRequestClose={() => setDeleteConfirmData(null)}>
+        <View style={styles.confirmModalOverlay}>
+          <View style={styles.confirmModalBox}>
+            <Text style={styles.confirmTitle}>是否刪除標籤</Text>
+            
+            <View style={styles.confirmBtnRow}>
+              <Pressable style={styles.confirmDeleteBtn} onPress={handleConfirmDelete}>
+                <Text style={styles.confirmDeleteBtnText}>刪除</Text>
+              </Pressable>
+              <Pressable style={styles.confirmCancelBtn} onPress={() => setDeleteConfirmData(null)}>
+                <Text style={styles.confirmCancelBtnText}>取消</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -311,5 +335,62 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16, 
     fontWeight: 'bold', 
     color: colors.text 
+  },
+  confirmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmModalBox: {
+    width: 280,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    alignItems: 'center',
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 24,
+  },
+  confirmBtnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    backgroundColor: '#FFE6E6',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  confirmDeleteBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.errow,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  confirmCancelBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });

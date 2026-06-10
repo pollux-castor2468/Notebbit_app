@@ -101,7 +101,7 @@ export default function Home() {
   };
 
   //最近開啟
-  const recentHistory = historyData.slice(0, 4); 
+  const recentHistory = historyData.filter(item => !item.is_deleted).slice(0, 4); 
   //開啟新文件
   const handleCreateDocument = () => {
     const newFile = createFile('document', '未命名文件');
@@ -168,7 +168,7 @@ export default function Home() {
         {/* Today's Tasks Banner */}
         <Pressable 
           style={styles.taskBanner}
-          onPress={() => router.push('/task')}
+          onPress={() => router.push('/(task)')}
         >
           <View style={styles.taskBannerContent}>
             <Image 

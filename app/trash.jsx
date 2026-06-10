@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, FileText, Edit, MoreVertical } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -16,6 +16,7 @@ export default function TrashScreen() {
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [popoverPos, setPopoverPos] = useState(0);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const deletedItems = data.filter(item => item.is_deleted);
 
@@ -28,8 +29,15 @@ export default function TrashScreen() {
 
   const handlePermanentDelete = () => {
     if (selectedItem) {
-      permanentlyDeleteItem(selectedItem.id);
+      setDeleteConfirmId(selectedItem.id);
       setSelectedItem(null);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmId) {
+      permanentlyDeleteItem(deleteConfirmId);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -94,6 +102,25 @@ export default function TrashScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Custom Delete Confirmation Modal */}
+      <Modal transparent visible={!!deleteConfirmId} animationType="fade" onRequestClose={() => setDeleteConfirmId(null)}>
+        <View style={styles.confirmModalOverlay}>
+          <View style={styles.confirmModalBox}>
+            <Text style={styles.confirmTitle}>是否永久刪除此檔案</Text>
+            <Text style={styles.confirmSubText}>*檔案將從裝置上永久刪除!</Text>
+            
+            <View style={styles.confirmBtnRow}>
+              <Pressable style={styles.confirmDeleteBtn} onPress={confirmDelete}>
+                <Text style={styles.confirmDeleteBtnText}>刪除</Text>
+              </Pressable>
+              <Pressable style={styles.confirmCancelBtn} onPress={() => setDeleteConfirmId(null)}>
+                <Text style={styles.confirmCancelBtnText}>取消</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -187,5 +214,68 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  confirmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmModalBox: {
+    width: 280,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    alignItems: 'center',
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 8,
+  },
+  confirmSubText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.errow,
+    marginBottom: 24,
+  },
+  confirmBtnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    backgroundColor: '#FFE6E6',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  confirmDeleteBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.errow,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  confirmCancelBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });

@@ -7,6 +7,7 @@ import { useStyles } from '../../../styles';
 import TopHeader from '../../../components/TopHeader';
 import { useFileStore } from '../../../store/useFileStore';
 import { useTaskStore } from '../../../store/useTaskStore';
+import { useSettingsStore } from '../../../store/useSettingsStore';
 import FileItem from '../../../components/FileItem';
 import { useFileActionModals, FileActionModals } from '../../../components/FileActionModals';
 
@@ -29,6 +30,7 @@ export default function CalendarScreen() {
 
   const { data: fileData } = useFileStore();
   const { tasks, taskCompletions } = useTaskStore();
+  const { firstDayOfWeek } = useSettingsStore();
 
   const { openPopover, closePopover, modalProps } = useFileActionModals();
 
@@ -43,8 +45,12 @@ export default function CalendarScreen() {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
+  const emptyDaysCount = firstDayOfWeek === 'monday' 
+    ? (firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1)
+    : firstDayOfMonth;
+
   const days = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
+  for (let i = 0; i < emptyDaysCount; i++) {
     days.push(null);
   }
   for (let i = 1; i <= daysInMonth; i++) {
@@ -56,12 +62,14 @@ export default function CalendarScreen() {
   const todayStrDashes = new Date().toISOString().split('T')[0];
 
   const filteredDocuments = fileData.filter(f => {
+    if (f.is_deleted) return false;
     if (f.type !== 'document') return false;
     const isEditedOnDate = f.edited_dates && f.edited_dates.includes(selectedDateStrDashes);
     const isCreatedOnDate = f.date && f.date.startsWith(selectedDateStrDots);
     return isEditedOnDate || isCreatedOnDate;
   });
   const filteredDiaries = fileData.filter(f => {
+    if (f.is_deleted) return false;
     if (f.type !== 'diary') return false;
     const isEditedOnDate = f.edited_dates && f.edited_dates.includes(selectedDateStrDashes);
     const isCreatedOnDate = f.diary_date === selectedDateStrDashes || (f.date && f.date.startsWith(selectedDateStrDots));
@@ -108,7 +116,7 @@ export default function CalendarScreen() {
       
       const dayItems = [];
       fileData.forEach(f => {
-        if (f.type === 'document' || f.type === 'diary') {
+        if (!f.is_deleted && (f.type === 'document' || f.type === 'diary')) {
           if ((f.edited_dates && f.edited_dates.includes(dateStrDashes)) || 
               (f.diary_date === dateStrDashes) || 
               (f.date && f.date.startsWith(dateStrDots))) {
@@ -149,14 +157,14 @@ export default function CalendarScreen() {
     const todayStrDashes = new Date().toISOString().split('T')[0];
     
     const hasDoc = fileData.some(f => {
-      if (f.type !== 'document') return false;
+      if (f.is_deleted || f.type !== 'document') return false;
       const isEdited = f.edited_dates && f.edited_dates.includes(dateStrDashes);
       const isCreated = f.date && f.date.startsWith(dateStrDots);
       return isEdited || isCreated;
     });
     
     const hasDiary = fileData.some(f => {
-      if (f.type !== 'diary') return false;
+      if (f.is_deleted || f.type !== 'diary') return false;
       const isEdited = f.edited_dates && f.edited_dates.includes(dateStrDashes);
       const isCreated = f.diary_date === dateStrDashes || (f.date && f.date.startsWith(dateStrDots));
       return isEdited || isCreated;
@@ -178,7 +186,9 @@ export default function CalendarScreen() {
   };
 
   const renderCalendarDays = () => {
-    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    const weekDays = firstDayOfWeek === 'monday' 
+      ? ['一', '二', '三', '四', '五', '六', '日']
+      : ['日', '一', '二', '三', '四', '五', '六'];
     return (
       <View style={styles.calendarContainer}>
         <View style={styles.weekHeader}>

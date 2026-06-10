@@ -5,11 +5,13 @@ import { ChevronLeft, ChevronRight, Moon, Calendar, Type, Keyboard, X, Check } f
 import { router } from 'expo-router';
 import { useStyles } from '../styles';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function SettingsDetailsScreen() {
-  const { colors, textStyles, isDarkMode } = useStyles();
+  const { colors, textStyles } = useStyles();
   const styles = getStyles(colors);
-  const { toggleDarkMode, firstDayOfWeek, setFirstDayOfWeek, defaultFontSize, setDefaultFontSize } = useSettingsStore();
+  const { toggleDarkMode, isDarkMode, firstDayOfWeek, setFirstDayOfWeek, defaultFontSize, setDefaultFontSize } = useSettingsStore();
+  const { user } = useAuthStore();
 
   const [modalType, setModalType] = useState(null); // 'day', 'fontSize', null
 
@@ -74,13 +76,15 @@ export default function SettingsDetailsScreen() {
           </Pressable>
 
           {/* Reset Password */}
-          <Pressable style={[styles.rowItem, { marginBottom: 0 }]} onPress={() => router.push('/reset-password')}>
-            <View style={styles.rowLeft}>
-              <Keyboard size={24} color={colors.text} />
-              <Text style={styles.rowLabel}>重新設定密碼</Text>
-            </View>
-            <ChevronRight size={20} color={colors.text} />
-          </Pressable>
+          {user && (
+            <Pressable style={[styles.rowItem, { marginBottom: 0 }]} onPress={() => router.push('/reset-password')}>
+              <View style={styles.rowLeft}>
+                <Keyboard size={24} color={colors.text} />
+                <Text style={styles.rowLabel}>重新設定密碼</Text>
+              </View>
+              <ChevronRight size={20} color={colors.text} />
+            </Pressable>
+          )}
 
         </View>
       </View>
