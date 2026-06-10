@@ -108,16 +108,18 @@ export default function TrashScreen() {
       <Modal transparent visible={!!deleteConfirmId} animationType="fade" onRequestClose={() => setDeleteConfirmId(null)}>
         <View style={styles.confirmModalOverlay}>
           <View style={styles.confirmModalBox}>
-            <Text style={styles.confirmTitle}>是否永久刪除此檔案</Text>
-            <Text style={styles.confirmSubText}>*檔案將從裝置上永久刪除!</Text>
-            
-            <View style={styles.confirmBtnRow}>
-              <Pressable style={styles.confirmDeleteBtn} onPress={confirmDelete}>
-                <Text style={styles.confirmDeleteBtnText}>刪除</Text>
-              </Pressable>
-              <Pressable style={styles.confirmCancelBtn} onPress={() => setDeleteConfirmId(null)}>
-                <Text style={styles.confirmCancelBtnText}>取消</Text>
-              </Pressable>
+            <View style={styles.confirmModalBoxInner}>
+              <Text style={styles.confirmTitle}>是否永久刪除此檔案</Text>
+              <Text style={styles.confirmSubText}>*檔案將從裝置上永久刪除!</Text>
+              
+              <View style={styles.confirmBtnRow}>
+                <Pressable style={styles.confirmDeleteBtn} onPress={confirmDelete}>
+                  <Text style={styles.confirmDeleteBtnText}>刪除</Text>
+                </Pressable>
+                <Pressable style={styles.confirmCancelBtn} onPress={() => setDeleteConfirmId(null)}>
+                  <Text style={styles.confirmCancelBtnText}>取消</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -224,16 +226,24 @@ const getStyles = (colors) => StyleSheet.create({
   confirmModalBox: {
     width: 280,
     backgroundColor: colors.surfaceVariant,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 5,
+    alignItems: 'center',
+  },
+  confirmModalBoxInner: {
+    backgroundColor: colors.surface,
+    // width: '90%',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 24,
-    alignItems: 'center',
   },
   confirmTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: colors.text,
     marginBottom: 8,
   },
   confirmSubText: {
@@ -246,14 +256,14 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   confirmDeleteBtn: {
     flex: 1,
-    backgroundColor: '#FFE6E6',
+    backgroundColor: colors.secondary,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     marginRight: 8,
@@ -276,6 +286,6 @@ const getStyles = (colors) => StyleSheet.create({
   confirmCancelBtnText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: colors.text,
   },
 });
