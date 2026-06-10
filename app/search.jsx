@@ -69,7 +69,7 @@ export default function SearchScreen() {
       }}
     >
       <View style={[styles.iconContainer, { backgroundColor: item.type === 'diary' ? colors.secondary : colors.container }]}> 
-        {item.type === 'diary' ? <Book size={20} color="#fff" /> : <FileText size={20} color="#fff" />}
+        {item.type === 'diary' ? <Book size={20} color={colors.text} /> : <FileText size={20} color={colors.text} />}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[textStyles.body, { fontWeight: '700', marginBottom: 4 }]} numberOfLines={1}>{item.title}</Text>
@@ -254,7 +254,7 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     height: 44,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: colors.border,
@@ -289,14 +289,18 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 12,
   },
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,

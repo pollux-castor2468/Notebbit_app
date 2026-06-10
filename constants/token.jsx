@@ -38,7 +38,7 @@ export const darkColors = {
 
 export const defaultTabBarStyle = {
   position: 'absolute',
-  bottom: 15,
+  bottom: 40,
   height: 80,
   width: '95%',
   marginLeft: 8,

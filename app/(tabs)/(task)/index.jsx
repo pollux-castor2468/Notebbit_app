@@ -123,7 +123,10 @@ export default function CustomTasks() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <TopHeader title="自訂任務" />
+      <View style={{paddingHorizontal: 16,}}>
+        <TopHeader title="自訂任務" />
+      </View>
+      
 
       {/* Top empty white space area as seen in screenshot */}
       <View style={styles.topEmptySpace}>
@@ -148,7 +151,7 @@ export default function CustomTasks() {
           </View>
           <Pressable style={{ padding: 4 }} onPress={() => setInfoModalVisible(true)}>
             <View style={styles.infoIconWrapper}>
-              <Info size={16} color={colors.border} strokeWidth={3} />
+              <Info size={16} color={colors.surface} strokeWidth={3} />
             </View>
           </Pressable>
         </View>
@@ -156,7 +159,7 @@ export default function CustomTasks() {
         <Pressable style={styles.rabbit} onPress={handleRabbitPress}>
           <Image 
             source={RABBIT_IMAGES[rabbitState][safeLevel]} 
-            style={{ width: 400, height: 220 }} 
+            style={{ width: 380, height: 220 }} 
             resizeMode="contain" 
           />
         </Pressable>
@@ -315,12 +318,13 @@ const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
+    // paddingHorizontal: 16,
   },
   infoIconWrapper: {
     width: 24,
     height: 24,
     borderRadius: 50,
-    backgroundColor: '#6C5E4F',
+    backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -376,11 +380,12 @@ const getStyles = (colors) => StyleSheet.create({
   },
   rabbit: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 40,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    height: 120,
   },
   bottomSection: {
     flex: 0.6,
