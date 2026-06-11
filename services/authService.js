@@ -51,8 +51,15 @@ export const AuthService = {
     const { params, errorCode } = QueryParams.getQueryParams(url);
     if (errorCode) throw new Error(errorCode);
     
+    // Supabase PKCE flow usually returns a 'code' parameter
+    if (params.code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(params.code);
+      if (error) throw error;
+      return data;
+    }
+    
     const { access_token, refresh_token } = params;
-    if (!access_token) throw new Error('No access token found');
+    if (!access_token) throw new Error('找不到登入憑證 (No access token or code found)');
 
     const { data, error } = await supabase.auth.setSession({
       access_token,
