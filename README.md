@@ -46,6 +46,18 @@ Notebbit 是一款結合了**知識管理**、**日常紀錄**與**遊戲化目�
 
 ### 架構設計 (Architecture)
 為了讓應用程式具備企業級的維護性，本專案採用了 **Service-Hook-Store** 的三層架構分離模式：
+
+```text
+📦 Notebbit_app
+ ┣ 📂 app          # 頁面路由 (Expo Router)
+ ┣ 📂 components   # 共用的 UI 元件
+ ┣ 📂 constants    # 全域常數與 Supabase 初始化
+ ┣ 📂 hooks        # 封裝業務邏輯與狀態操作 (useAuthActions...)
+ ┣ 📂 services     # 負責對外 API 請求與資料庫溝通 (authService...)
+ ┣ 📂 store        # Zustand 全域狀態中心
+ ┗ 📂 styles       # 共用樣式與設計系統 Token
+```
+
 1. **Store 層 (Zustand)**：退化為純粹的狀態容器 (Pure State Container)，不牽涉任何非同步邏輯。
 2. **Service 層**：專責處理所有的外部 API 請求與 Supabase 互動 (`authService`, `fileService`, `taskService`)。
 3. **Hook 層**：作為 UI 與後端的橋樑 (`useAuthActions`, `useFileActions`, `useTaskActions`)，封裝了複雜的業務邏輯與副作用，讓 UI 元件保持絕對的乾淨。
@@ -77,12 +89,23 @@ Notebbit 是一款結合了**知識管理**、**日常紀錄**與**遊戲化目�
    EXPO_PUBLIC_SUPABASE_URL=你的_SUPABASE_URL
    EXPO_PUBLIC_SUPABASE_ANON_KEY=你的_SUPABASE_ANON_KEY
    ```
-3. **啟動專案**：
+
+3. **Supabase 資料庫與 OAuth 設定**：
+   - **資料表建立**：請確保在您的 Supabase 中建立對應的 `user_profiles`, `files`, `tasks` 等資料表，並設定正確的 Row Level Security (RLS) 規則。
+   - **Google 登入設定**：若要測試 Google 登入，請至 Supabase Dashboard 的 Authentication -> Providers 中啟用 Google，並將 Expo 的重新導向網址（如 `exp://127.0.0.1:19000/--/expo-auth-session`）加入到 Supabase 的 Redirect URLs 白名單中。
+
+4. **啟動專案**：
    ```bash
    npx expo start
    ```
    您可以掃描終端機上的 QR Code，使用 **Expo Go** 在實體手機上預覽，或是開啟 iOS/Android 模擬器執行。
 
----
+5. **發布與打包 (EAS Build)**：
+   若要自行打包發布 APK 或 iOS 檔案，請確保安裝 `eas-cli`：
+   ```bash
+   npm install -g eas-cli
+   eas login
+   eas build --profile preview
+   ```
 
 > *"記錄生活，完成挑戰，和激動兔一起成長吧！"* 🐰✨
