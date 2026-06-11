@@ -1,9 +1,12 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, Keyboard, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform, Modal, ScrollView, Keyboard, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
 import { Edit2, Clock, Star, MoreVertical, X, Plus, ChevronRight, Paperclip } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
 import { useStyles } from '../../styles';
 import { useFileStore } from '../../store/useFileStore';
@@ -41,7 +44,8 @@ export default function DocumentEditor() {
 
 
   //關於這份文件(找到文件?儲存文件、修改文件之類的都放這裡)
-  const fileData = useFileStore(state => state.data.find(d => d.id === id));
+  const data = useFileStore(state => state.data);
+  const fileData = data.find(d => d.id === id);
   const { updateFile, toggleStar, addSource, permanentlyDeleteItem, saveVersion } = useFileActions();
 
   const fileDataRef = React.useRef(fileData);
@@ -132,6 +136,43 @@ export default function DocumentEditor() {
       })();
       true;
     `);
+    
+    // Add custom CSS for reference highlights and setup link interceptor
+    richText.current?.injectJavascript(`
+      (function() {
+        var style = document.getElementById('ref-highlight-style');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'ref-highlight-style';
+          document.head.appendChild(style);
+        }
+        style.innerHTML = '${showReferences ? 
+          '.ref-highlight { border-bottom: 2px dotted orange !important; background-color: rgba(251, 140, 0, 0.15) !important; cursor: pointer !important; color: inherit; text-decoration: none; }' : 
+          '.ref-highlight { border-bottom: none !important; background-color: transparent !important; cursor: inherit !important; color: inherit; text-decoration: none; pointer-events: none !important; }'
+        }';
+        
+        // Setup link click interceptor once
+        if (!window.__linkInterceptorSetup) {
+          window.__linkInterceptorSetup = true;
+          document.addEventListener('click', function(e) {
+            var target = e.target;
+            while (target && target.tagName !== 'A') {
+              target = target.parentNode;
+            }
+            if (target && target.href && !target.hasAttribute('data-dynamic')) {
+              e.preventDefault();
+              var msg = JSON.stringify({ type: 'LINK_CLICK', url: target.href });
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(msg);
+              } else if (window.postMessage) {
+                window.postMessage(msg, '*');
+              }
+            }
+          });
+        }
+        true;
+      })();
+    `);
   };
 
   React.useEffect(() => {
@@ -184,7 +225,7 @@ export default function DocumentEditor() {
             }
             nodes.forEach(node => {
               const span = document.createElement('span');
-              span.innerHTML = node.nodeValue.split(t).join('<a href="source://' + s.sourceId + '" data-source-id="' + s.sourceId + '" data-dynamic="true" class="ref-highlight">' + t + '</a>');
+              span.innerHTML = node.nodeValue.split(t).join('<a href="javascript:void(0);" onclick="window.ReactNativeWebView.postMessage(JSON.stringify({type: \\'SOURCE_CLICK\\', id: \\'' + s.sourceId + '\\'}));" data-source-id="' + s.sourceId + '" data-dynamic="true" class="ref-highlight">' + t + '</a>');
               node.parentNode.replaceChild(span, node);
             });
           });
@@ -257,6 +298,68 @@ export default function DocumentEditor() {
     richText.current?.blurContentEditor();
   };
 
+  const handleExport = () => {
+    Alert.alert(
+      '選擇匯出格式',
+      '請選擇您要匯出的檔案格式：',
+      [
+        {
+          text: 'PDF',
+          onPress: async () => {
+            try {
+              const htmlContent = `
+                <html>
+                  <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+                    <style>
+                      body { font-family: -apple-system, system-ui, sans-serif; padding: 20px; line-height: 1.6; color: #333; }
+                      img { max-width: 100%; height: auto; border-radius: 8px; }
+                      h1 { font-size: 24px; margin-bottom: 20px; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>${fileData?.title || '未命名文件'}</h1>
+                    ${content}
+                  </body>
+                </html>
+              `;
+              const { uri } = await Print.printToFileAsync({ html: htmlContent });
+              await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+            } catch (err) {
+              console.log(err);
+              Alert.alert('錯誤', '匯出 PDF 發生錯誤: ' + String(err));
+            }
+          }
+        },
+        {
+          text: '純文字 (TXT)',
+          onPress: async () => {
+            try {
+              let plainText = (content || '').replace(/<br\s*[\/]?>/gi, '\n');
+              plainText = plainText.replace(/<\/p>/gi, '\n');
+              plainText = plainText.replace(/<[^>]+>/g, '');
+              // Decode HTML entities
+              plainText = plainText.replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+              
+              const title = (fileData?.title || '未命名文件').replace(/[\\/:*?"<>|]/g, '_');
+              const fileUri = `${FileSystem.cacheDirectory}${title}.txt`;
+              await FileSystem.writeAsStringAsync(fileUri, plainText, { encoding: 'utf8' });
+              await Sharing.shareAsync(fileUri, { UTI: 'public.plain-text', mimeType: 'text/plain' });
+            } catch (err) {
+              console.log(err);
+              Alert.alert('錯誤', '匯出 TXT 發生錯誤: ' + String(err));
+            }
+          }
+        },
+        {
+          text: '取消',
+          style: 'cancel',
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1 }}>
@@ -302,10 +405,15 @@ export default function DocumentEditor() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             {/* Content Area */}
-            <View style={[styles.bodyInput, { overflow: 'hidden', paddingHorizontal: 24, paddingTop: 16 }]}>
+            <ScrollView 
+              style={[styles.bodyInput, { overflow: 'hidden', paddingHorizontal: 24, paddingTop: 16 }]}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 60 }}
+              keyboardShouldPersistTaps="handled"
+            >
               <RichEditor
                 ref={richText}
-                style={{ flex: 1 }}
+                useContainer={false}
+                style={{ flex: 1, minHeight: 300 }}
                 placeholder="輸入內容..."
                 initialContentHTML={content}
                 editorInitializedCallback={handleEditorInitialized}
@@ -345,11 +453,17 @@ export default function DocumentEditor() {
                   if (id) updateFile(id, { content: html });
                 }}
                 onMessage={(message) => {
+                  if (message && message.type === 'LINK_CLICK') {
+                    if (message.url.startsWith('http://') || message.url.startsWith('https://')) {
+                      Linking.openURL(message.url).catch(err => console.error("Couldn't open URL", err));
+                    }
+                  }
                   if (message && message.type === 'SELECTION_CHANGE') {
                     savedSelection.current.text = message.text;
                   }
                   if (message && message.type === 'SOURCE_CLICK') {
                     setAutoEditSourceId(message.id);
+                    setSourceSheetMode('view');
                     setActiveModal('source');
                   }
                   if (message && message.type === 'ADD_SOURCE_SELECTION') {
@@ -369,7 +483,7 @@ export default function DocumentEditor() {
                   placeholderColor: colors.inactiveText,
                 }}
               />
-            </View>
+            </ScrollView>
 
             {/* Bottom Format Toolbar Box (Floating) */}
             <EditorToolbar
@@ -419,7 +533,7 @@ export default function DocumentEditor() {
                 if (window.absoluteLastRange) {
                   sel.addRange(window.absoluteLastRange);
                   var text = window.absoluteLastRange.toString();
-                  var html = '<a href="source://' + sourceId + '" data-source-id="' + sourceId + '" class="ref-highlight">' + text + '</a>';
+                  var html = '<a href="javascript:void(0);" onclick="window.ReactNativeWebView.postMessage(JSON.stringify({type: \\'SOURCE_CLICK\\', id: \\'' + sourceId + '\\'}));" data-source-id="' + sourceId + '" class="ref-highlight">' + text + '</a>';
                   document.execCommand('insertHTML', false, html);
                   var editorContent = document.querySelector('.pell-content');
                   if (editorContent) {
@@ -459,6 +573,7 @@ export default function DocumentEditor() {
           setActiveModal(null);
           setRenameModalVisible(true);
         }}
+        onExport={handleExport}
       />
 
       {/* 4. Rename Dialog Modal (Added from requirement) */}

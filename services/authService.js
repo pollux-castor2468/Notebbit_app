@@ -36,11 +36,14 @@ export const AuthService = {
   },
 
   async signInWithGoogle() {
-    const redirectUri = makeRedirectUri();
+    const redirectUri = makeRedirectUri({
+      path: '/auth/callback'
+    });
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectUri,
+        skipBrowserRedirect: true,
       },
     });
     if (error) throw error;
@@ -59,7 +62,7 @@ export const AuthService = {
     }
     
     const { access_token, refresh_token } = params;
-    if (!access_token) throw new Error('找不到登入憑證 (No access token or code found)');
+    if (!access_token) throw new Error(`找不到登入憑證 (No access token or code found)\nURL: ${url}`);
 
     const { data, error } = await supabase.auth.setSession({
       access_token,

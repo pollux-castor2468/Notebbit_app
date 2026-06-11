@@ -25,7 +25,8 @@ export default function DiaryEditor() {
 
   // TabBar patch removed as the editor is now a full stack screen
 
-  const fileData = useFileStore(state => state.data.find(d => d.id === id));
+  const data = useFileStore(state => state.data);
+  const fileData = data.find(d => d.id === id);
   const { updateFile, toggleStar, permanentlyDeleteItem } = useFileActions();
 
   const fileDataRef = useRef(fileData);
@@ -89,6 +90,33 @@ export default function DiaryEditor() {
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleEditorInitialized = () => {
+    richText.current?.injectJavascript(`
+      (function() {
+        // Setup link click interceptor once
+        if (!window.__linkInterceptorSetup) {
+          window.__linkInterceptorSetup = true;
+          document.addEventListener('click', function(e) {
+            var target = e.target;
+            while (target && target.tagName !== 'A') {
+              target = target.parentNode;
+            }
+            if (target && target.href && !target.hasAttribute('data-dynamic')) {
+              e.preventDefault();
+              var msg = JSON.stringify({ type: 'LINK_CLICK', url: target.href });
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(msg);
+              } else if (window.postMessage) {
+                window.postMessage(msg, '*');
+              }
+            }
+          });
+        }
+        true;
+      })();
+    `);
+  };
 
   const handleRenameConfirm = (updatedTitle) => {
     if (id && updatedTitle.trim() !== '') {
@@ -279,20 +307,35 @@ export default function DiaryEditor() {
                 </View>
               </View>
 
-              <View style={[styles.bodyInput, { overflow: 'hidden' }]}>
+              <ScrollView 
+                style={[styles.bodyInput, { overflow: 'hidden' }]}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 60 }}
+                keyboardShouldPersistTaps="handled"
+              >
                 <RichEditor
                   ref={richText}
+                  useContainer={false}
                   style={{ flex: 1 }}
                   placeholder="輸入內容..."
                   initialContentHTML={content}
+                  editorInitializedCallback={handleEditorInitialized}
                   onChange={setContent}
+                  onMessage={(message) => {
+                    if (message && message.type === 'LINK_CLICK') {
+                      if (message.url.startsWith('http://') || message.url.startsWith('https://')) {
+                        import('react-native').then(({ Linking }) => {
+                          Linking.openURL(message.url).catch(err => console.error("Couldn't open URL", err));
+                        });
+                      }
+                    }
+                  }}
                   editorStyle={{
                     backgroundColor: 'transparent',
                     color: colors.text,
                     placeholderColor: colors.inactiveText,
                   }}
                 />
-              </View>
+              </ScrollView>
             </View>
 
             {/* Bottom Toolbar Box */}

@@ -9,8 +9,9 @@ export default function TagModal({ visible, fileId, onClose }) {
   const { colors } = useStyles();
   const styles = getStyles(colors);
 
-  const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
+  const data = useFileStore(state => state.data);
   const globalTags = useFileStore(state => state.globalTags || []);
+  const fileData = data.find(d => d.id === fileId);
   const { updateFile, addNewTag } = useFileActions();
 
   const [selectedTags, setSelectedTags] = useState([]);

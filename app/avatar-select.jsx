@@ -29,11 +29,9 @@ export default function AvatarSelectScreen() {
   const { updateProfile } = useAuthActions();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (selectedAvatar !== null) {
-      // Get the URI for the required image. In Expo, Image.resolveAssetSource can get the URI
-      const asset = Image.resolveAssetSource(AVATAR_OPTIONS[selectedAvatar]);
-      await updateProfile(profileName, profileDesc, asset.uri);
+      updateProfile(profileName, profileDesc, `app-avatar-${selectedAvatar}`);
     }
     router.back();
   };

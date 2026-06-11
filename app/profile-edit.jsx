@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -7,6 +7,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { useStyles } from '../styles';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuthActions } from '../hooks/useAuthActions';
+
+const AVATAR_OPTIONS = [
+  require('../assets/img/head1.png'),
+  require('../assets/img/head2.png'),
+  require('../assets/img/head3.png'),
+  require('../assets/img/head4.png'),
+  require('../assets/img/head5.png'),
+  require('../assets/img/head6.png'),
+  require('../assets/img/head7.png'),
+  require('../assets/img/head8.png'),
+  require('../assets/img/head9.png'),
+  require('../assets/img/head10.png'),
+];
 
 export default function ProfileEditScreen() {
   const { colors, textStyles } = useStyles();
@@ -28,13 +41,16 @@ export default function ProfileEditScreen() {
   const handleCustomAvatar = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
+      allowsEditing: false,
+      quality: 0.1,
+      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setAvatar(result.assets[0].uri);
+      const asset = result.assets[0];
+      const mimeType = asset.mimeType || 'image/jpeg';
+      const base64Img = `data:${mimeType};base64,${asset.base64}`;
+      setAvatar(base64Img);
     }
   };
 
@@ -56,11 +72,24 @@ export default function ProfileEditScreen() {
         <Text style={[textStyles.h3, { flex: 1, textAlign: 'center', marginRight: 28 }]}>編輯個人檔案</Text>
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.avatarSection}>
           <View style={styles.avatarCircle}>
             {avatar ? (
-              <Image source={{ uri: avatar }} style={styles.avatarImage} />
+              avatar.startsWith('app-avatar-') ? (
+                <Image source={AVATAR_OPTIONS[parseInt(avatar.replace('app-avatar-', ''), 10)]} style={styles.avatarImage} resizeMode="contain" />
+              ) : (
+                <Image source={{ uri: avatar }} style={styles.avatarImage} />
+              )
             ) : (
               <Image source={require('../assets/img/head1.png')} style={styles.avatarImage} resizeMode="contain" />
             )}
@@ -96,12 +125,13 @@ export default function ProfileEditScreen() {
           />
         </View>
 
-      </View>
-      <View style={styles.footer}>
-         <Pressable style={styles.saveBtn} onPress={handleSave}>
-            <Text style={styles.saveBtnText}>保存</Text>
-         </Pressable>
-      </View>
+        </ScrollView>
+        <View style={styles.footer}>
+           <Pressable style={styles.saveBtn} onPress={handleSave}>
+              <Text style={styles.saveBtnText}>保存</Text>
+           </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

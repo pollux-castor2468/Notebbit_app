@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import mammoth from 'mammoth/mammoth.browser.js';
 import { toByteArray } from 'base64-js';
 import { useStyles } from '../../../styles';

@@ -114,7 +114,7 @@ export const useFileActions = () => {
       
       useFileStore.getState().setData(allFiles);
     } catch (error) {
-      console.error('Error fetching files:', error);
+      console.warn('Error fetching files:', error);
     }
   };
 
@@ -165,7 +165,6 @@ export const useFileActions = () => {
                 await FileService.upsertDataSource({
                   id: s.sourceId,
                   doc_id: file.id,
-                  user_id: user.id,
                   source_name: s.sourceName,
                   note: s.sourceContent,
                   marked_text: JSON.stringify(s.markedText || []),
@@ -173,7 +172,7 @@ export const useFileActions = () => {
               }
             }
           }
-        } catch (e) { console.error('Sync doc error', e); }
+        } catch (e) { console.warn('Sync doc error', e); }
       } else if (file.type === 'diary') {
         let dDate = new Date().toISOString().split('T')[0];
         try {
@@ -194,7 +193,7 @@ export const useFileActions = () => {
             daily_snippets: file.daily_snippets || {},
             is_deleted: file.is_deleted,
           });
-        } catch (e) { console.error('Sync diary error', e); }
+        } catch (e) { console.warn('Sync diary error', e); }
       }
     }
 
@@ -238,7 +237,10 @@ export const useFileActions = () => {
           daily_snippets: {},
           is_starred: false,
           is_deleted: false,
-        }).catch(e => console.error('Error inserting document:', e));
+        }).catch(e => {
+          console.warn('Error inserting document:', e);
+          useFileStore.getState().updateFileLocally(newId, {}, false);
+        });
       } else if (type === 'diary') {
         FileService.insertDiary({
           id: newId,
@@ -249,7 +251,10 @@ export const useFileActions = () => {
           daily_snippets: {},
           diary_date: now.toISOString().split('T')[0],
           is_deleted: false,
-        }).catch(e => console.error('Error inserting diary:', e));
+        }).catch(e => {
+          console.warn('Error inserting diary:', e);
+          useFileStore.getState().updateFileLocally(newId, {}, false);
+        });
       }
     }
 
@@ -291,7 +296,8 @@ export const useFileActions = () => {
     }
 
     const user = useAuthStore.getState().user;
-    useFileStore.getState().updateFileLocally(id, updates, !!user);
+    // 先存在本地，並一律標記為未同步 (false)
+    useFileStore.getState().updateFileLocally(id, updates, false);
 
     if (!user) return;
 
@@ -309,24 +315,38 @@ export const useFileActions = () => {
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
       if (updates.daily_snippets !== undefined) dbUpdates.daily_snippets = updates.daily_snippets;
-      FileService.updateDocument(id, dbUpdates).catch(e => console.error(e));
-
-      if (updates.tags !== undefined) {
-        const globalTags = useFileStore.getState().globalTags || [];
-        const tagIds = updates.tags.map(tagName => {
-          const found = globalTags.find(t => t.name === tagName);
-          return found ? found.id : null;
-        }).filter(Boolean);
-        FileService.updateDocumentTags(id, tagIds).catch(e => console.error('Error updating doc tags:', e));
-      }
     } else if (updatedFile.type === 'diary') {
       if (updates.weather !== undefined) dbUpdates.weather = updates.weather;
       if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
       if (updates.is_deleted !== undefined) dbUpdates.is_deleted = updates.is_deleted;
       if (updates.edited_dates !== undefined) dbUpdates.edited_dates = updates.edited_dates;
       if (updates.daily_snippets !== undefined) dbUpdates.daily_snippets = updates.daily_snippets;
-      FileService.updateDiary(id, dbUpdates).catch(e => console.error(e));
     }
+
+    if (!window.updateTimeouts) window.updateTimeouts = {};
+    clearTimeout(window.updateTimeouts[id]);
+    
+    window.updateTimeouts[id] = setTimeout(async () => {
+      try {
+        if (updatedFile.type === 'document') {
+          await FileService.updateDocument(id, dbUpdates);
+          if (updates.tags !== undefined) {
+            const globalTags = useFileStore.getState().globalTags || [];
+            const tagIds = updates.tags.map(tagName => {
+              const found = globalTags.find(t => t.name === tagName);
+              return found ? found.id : null;
+            }).filter(Boolean);
+            await FileService.updateDocumentTags(id, tagIds);
+          }
+        } else if (updatedFile.type === 'diary') {
+          await FileService.updateDiary(id, dbUpdates);
+        }
+        // 同步成功後標記為已同步
+        useFileStore.getState().updateFileLocally(id, {}, true);
+      } catch (e) {
+        console.warn(e);
+      }
+    }, 1500);
   };
 
   const deleteItem = (id) => updateFile(id, { is_deleted: true });
@@ -360,7 +380,7 @@ export const useFileActions = () => {
 
     const user = useAuthStore.getState().user;
     if (user) {
-      FileService.updateTag(tag.id, { name: uniqueName }).catch(e => console.error(e));
+      FileService.updateTag(tag.id, { name: uniqueName }).catch(e => console.warn(e));
     }
   };
 
@@ -379,7 +399,7 @@ export const useFileActions = () => {
     const user = useAuthStore.getState().user;
     deleteTag(tagName);
     if (user) {
-      FileService.deleteTagRecord(id).catch(e => console.error(e));
+      FileService.deleteTagRecord(id).catch(e => console.warn(e));
     }
   };
 
@@ -404,7 +424,7 @@ export const useFileActions = () => {
         id: newId,
         user_id: user.id,
         name: uniqueName
-      }).catch(e => console.error(e));
+      }).catch(e => console.warn(e));
     }
 
     return uniqueName;
@@ -421,9 +441,9 @@ export const useFileActions = () => {
     if (!user) return;
 
     if (file.type === 'document') {
-      FileService.deleteDocument(id).catch(e => console.error(e));
+      FileService.deleteDocument(id).catch(e => console.warn(e));
     } else {
-      FileService.deleteDiary(id).catch(e => console.error(e));
+      FileService.deleteDiary(id).catch(e => console.warn(e));
     }
   };
 
@@ -439,7 +459,10 @@ export const useFileActions = () => {
     if (!user) return;
 
     if (file.type === 'document') {
-      FileService.updateDocument(id, { is_starred: newStarred }).catch(e => console.error(e));
+      FileService.updateDocument(id, { is_starred: newStarred }).catch(e => {
+        console.warn(e);
+        useFileStore.getState().updateFileLocally(id, { starred: newStarred }, false);
+      });
     }
   };
 
@@ -469,7 +492,10 @@ export const useFileActions = () => {
       doc_id: id,
       version_name: versionTitle,
       content_snapshot: file.content,
-    }).catch(e => console.error(e));
+    }).catch(e => {
+      console.warn(e);
+      useFileStore.getState().addVersionLocally(id, newVersion, false);
+    });
   };
 
   const restoreVersion = (fileId, versionId) => {
@@ -488,7 +514,7 @@ export const useFileActions = () => {
     useFileStore.getState().removeVersionLocally(id, versionId, !!user);
 
     if (!user) return;
-    FileService.deleteDocumentVersion(versionId).catch(e => console.error(e));
+    FileService.deleteDocumentVersion(versionId).catch(e => console.warn(e));
   };
 
   const addSource = (id, markedText = '') => {
@@ -512,11 +538,13 @@ export const useFileActions = () => {
       FileService.insertDataSource({
         id: sourceId,
         doc_id: id,
-        user_id: user.id,
         source_name: '',
         note: '',
         marked_text: JSON.stringify(markedText ? [markedText] : []),
-      }).catch(e => console.error(e));
+      }).catch(e => {
+        console.warn(e);
+        useFileStore.getState().updateSourceLocally(id, sourceId, {}, false);
+      });
     }
     
     return sourceId;
@@ -540,7 +568,10 @@ export const useFileActions = () => {
     const currentMarkedText = Array.isArray(source.markedText) ? source.markedText : (source.markedText ? [source.markedText] : []);
     if (!currentMarkedText.includes(text)) {
       const newArray = [...currentMarkedText, text];
-      FileService.updateDataSource(sourceId, { marked_text: JSON.stringify(newArray) }).catch(e => console.error(e));
+      FileService.updateDataSource(sourceId, { marked_text: JSON.stringify(newArray) }).catch(e => {
+        console.warn(e);
+        useFileStore.getState().updateSourceLocally(fileId, sourceId, {}, false);
+      });
     }
   };
 
@@ -555,7 +586,10 @@ export const useFileActions = () => {
     if (updates.sourceContent !== undefined) dbUpdates.note = updates.sourceContent;
     
     if (Object.keys(dbUpdates).length > 0) {
-      FileService.updateDataSource(sourceId, dbUpdates).catch(e => console.error(e));
+      FileService.updateDataSource(sourceId, dbUpdates).catch(e => {
+        console.warn(e);
+        useFileStore.getState().updateSourceLocally(fileId, sourceId, {}, false);
+      });
     }
   };
 
@@ -564,7 +598,7 @@ export const useFileActions = () => {
     useFileStore.getState().removeSourceLocally(fileId, sourceId, !!user);
 
     if (!user) return;
-    FileService.deleteDataSource(sourceId).catch(e => console.error(e));
+    FileService.deleteDataSource(sourceId).catch(e => console.warn(e));
   };
 
   return React.useMemo(() => ({

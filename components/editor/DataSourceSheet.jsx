@@ -9,7 +9,8 @@ export default function DataSourceSheet({ visible, onClose, fileId, autoEditSour
   const { layoutStyles, colors } = useStyles();
   const styles = getStyles(colors);
 
-  const fileData = useFileStore(state => state.data.find(d => d.id === fileId));
+  const data = useFileStore(state => state.data);
+  const fileData = data.find(d => d.id === fileId);
   const { addSource, updateSource, deleteSource, appendMarkedText } = useFileActions();
 
   const sources = fileData?.source || [];

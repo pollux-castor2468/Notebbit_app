@@ -11,6 +11,19 @@ import { useFileStore } from '../../../store/useFileStore';
 import { useTaskStore } from '../../../store/useTaskStore';
 import { useTaskActions } from '../../../hooks/useTaskActions';
 
+const AVATAR_OPTIONS = [
+  require('../../../assets/img/head1.png'),
+  require('../../../assets/img/head2.png'),
+  require('../../../assets/img/head3.png'),
+  require('../../../assets/img/head4.png'),
+  require('../../../assets/img/head5.png'),
+  require('../../../assets/img/head6.png'),
+  require('../../../assets/img/head7.png'),
+  require('../../../assets/img/head8.png'),
+  require('../../../assets/img/head9.png'),
+  require('../../../assets/img/head10.png'),
+];
+
 export default function Setting() {
   const { colors, layoutStyles, textStyles } = useStyles();
   const styles = getStyles(colors);
@@ -63,7 +76,11 @@ export default function Setting() {
       <View style={styles.profileCard}>
         <View style={styles.profileInfo}>
           {profileAvatar ? (
-            <Image source={{ uri: profileAvatar }} style={styles.avatarImage} />
+             profileAvatar.startsWith('app-avatar-') ? (
+                <Image source={AVATAR_OPTIONS[parseInt(profileAvatar.replace('app-avatar-', ''), 10)]} style={styles.avatarImage} resizeMode="contain" />
+             ) : (
+                <Image source={{ uri: profileAvatar }} style={styles.avatarImage} />
+             )
           ) : (
              <Image source={require('../../../assets/img/1.png')} style={styles.avatarImage} resizeMode="contain" />
           )}

@@ -5,6 +5,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TouchableWithoutFeedback, Keyboard, View } from "react-native";
 
 import { useEffect } from "react";
+import * as WebBrowser from 'expo-web-browser';
+
+// 確保在背景時能正確關閉 AuthSession 瀏覽器視窗
+WebBrowser.maybeCompleteAuthSession();
+
 import { useAuthStore } from "../store/useAuthStore";
 import { useAuthActions } from "../hooks/useAuthActions";
 import { useFileActions } from "../hooks/useFileActions";

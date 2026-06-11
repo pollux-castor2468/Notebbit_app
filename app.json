@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Notebbit",
-    "slug": "mid_13_Notebbit",
-    "version": "1.0.0",
+    "slug": "fin_20_Notebbit",
+    "version": "2.0.0",
     "scheme": "notebbit",
     "orientation": "portrait",
     "icon": "./assets/img/1.png",
@@ -19,6 +19,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.notebbit.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/img/1.png",
         "backgroundColor": "#FFFFF9"
@@ -34,14 +35,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "10c395dc-8f30-4d9e-8960-0450c17274d7"
+        "projectId": "366777a6-36aa-431b-9391-0b3ae9839bdf"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/10c395dc-8f30-4d9e-8960-0450c17274d7"
-    }
+    "runtimeVersion": "1.0.0"
   }
 }

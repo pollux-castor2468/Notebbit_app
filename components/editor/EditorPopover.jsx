@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ChevronRight, Star } from 'lucide-react-native';
 import { useStyles } from '../../styles';
 
-export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', onOpenSource, onOpenVersion, onClose, onRename }) {
+export default function EditorPopover({ visible, popoverPos, wordCount, type = 'document', onOpenSource, onOpenVersion, onClose, onRename, onExport }) {
   const { colors } = useStyles();
   const styles = getStyles(colors);
 
@@ -64,7 +64,7 @@ export default function EditorPopover({ visible, popoverPos, wordCount, type = '
                 style={[styles.popoverBtn, { marginBottom: 0 }]}
                 onPress={() => {
                   onClose();
-                  alert('匯出文件功能開發中');
+                  onExport && onExport();
                 }}
               >
                 <Text style={styles.popoverText}>匯出文件</Text>
